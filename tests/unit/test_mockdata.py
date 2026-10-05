@@ -336,6 +336,21 @@ def test_a_title_is_written_by_the_naming_rule_of_the_catalog(data):
     assert (far.kind, far.words, far.role) == ("far", 2, role)
 
 
+def test_a_near_wording_shares_a_word_with_the_roles_name_and_a_far_one_shares_none():
+    # What the wording knob promises: a "far" title is one its words cannot place.
+    def words(text: str) -> set[str]:
+        return set(text.lower().replace("-", " ").split())
+
+    wordings = set()
+    for role_id, job in mockdata._JOBS.items():
+        name = words(job.name)
+        for near in job.near:
+            assert words(near) & name and near != job.name, (role_id, near)
+        assert not words(job.far) & name, (role_id, job.far)
+        wordings |= {(role_id[:3], wording) for wording in (job.name, *job.near, job.far)}
+    assert len(wordings) == 48 * 4  # no wording twice in a family
+
+
 def test_a_wording_that_holds_a_listed_name_is_refused(data):
     role = naming.get_role(data.catalog, "SAL-01")
     name = reference.GIVEN_NAMES[0].capitalize()

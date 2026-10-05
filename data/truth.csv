@@ -1,10 +1,9 @@
 job_title,job_family_code,true_role_id
 Staff Accountant,,FIN-02
 Office Manager,ADM,OPS-01
-"application support analyst, senior",CUS,CUS-02
-ASSOCIATE APPLICATION SUPPORT ANALYST,CUS,CUS-02
-Assoc Application Support Analyst,CUS,CUS-02
 Associate Contact Center Agent - SYD,CUS,CUS-01
+Associate Field Service Technician - SEA,CUS,CUS-02
+associate field service technician,CUS,CUS-02
 Billing Coord 1 #190047 (DEN),CUS,CUS-04
 Billing Spec,CUS,CUS-04
 Billing Specialist,CUS,CUS-04
@@ -36,6 +35,8 @@ CUSTOMER SERVICE REPRESENTATIVE II,CUS,CUS-01
 Cust Svc Rep II,CUS,CUS-01
 "Customer Service Representative, Senior",CUS,CUS-01
 "Customer Service Representative, Sr REQ-926604",CUS,CUS-01
+"Field Service Technician, Senior (ATL)",CUS,CUS-02
+"Field Svc. Tech., Sr.",CUS,CUS-02
 Jr Billing Spec,CUS,CUS-04
 Jr Call Ctr Supv,CUS,CUS-03
 Junior Call Ctr Supervisor - CHI,CUS,CUS-03
@@ -430,8 +431,7 @@ Operations Mgr II (BOS),OPS,OPS-01
 "OPERATIONS MANAGER III, Remote",OPS,OPS-01
 Operations Manager III (NYC),OPS,OPS-01
 Operator,OPS,OPS-03
-Prin Buyer - DEN,OPS,OPS-05
-"Principal Buyer, CHI",OPS,OPS-05
+Principal Buyer,OPS,OPS-05
 Prin. Forklift Driver,OPS,OPS-03
 Principal Forklift Driver (REQ-269502),OPS,OPS-03
 Principal Health and Safety Inspector,OPS,OPS-06

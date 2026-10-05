@@ -445,7 +445,7 @@ _FAMILIES = (
              ("troubleshoots product problems reported by customers", "documents fixes",
               "reproduces faults and raises defects", "guides users through installation"),
              ("Technical Support Specialist", "Product Support Engineer"),
-             "Application Support Analyst"),
+             "Field Service Technician"),
         _Job("Call Center Supervisor", "Call Ctr Supv", 2, "Contact Center",
              ("supervises a team of agents", "monitors call quality", "sets rosters and breaks",
               "coaches new starters"),
@@ -474,10 +474,10 @@ _JOBS = {
 
 _DEPARTMENTS = {code: sorted({job.department for job in jobs}) for code, _, _, jobs in _FAMILIES}
 
-# Descriptions that say nothing about the job.
+# Descriptions that say nothing about the job: no word of a role's name or definition.
 _VAGUE = (
-    "Supports the group and takes on other tasks as assigned.",
-    "Works with colleagues across the business to meet agreed goals.",
+    "Assists the group and takes on other tasks as assigned.",
+    "Works with colleagues across the company to meet agreed goals.",
     "Carries out the duties of the post as directed.",
     "Contributes to departmental objectives and ad hoc projects.",
     "Full-time position based at the main office.",
@@ -616,7 +616,7 @@ class _Title:
     headcount: int = 0
     spellings: tuple[str, ...] = ()  # the job titles as recorded, the commonest first
     description: str = ""
-    # What every third employee has instead, where the row is a mixed one (Q11).
+    # What about a third of its employees have instead, in a mixed row (Q11).
     other_description: str | None = None
 
     @property
@@ -684,11 +684,10 @@ def _title(
     worded = role
     if kind != "name":
         worded = dataclasses.replace(role, role_name=wording, short_name=_abbreviate(wording))
-    # A level word in front comes from a grade of that level, as for an employee.
-    in_front = form.suffix is None
-    grade = next(
-        (row.grade for row in catalog.grade_levels if in_front and row.level == form.level), None
-    )
+    grade = None
+    if form.suffix is None:
+        # A level word in front: the title of an employee at a grade of that level.
+        grade = next(row.grade for row in catalog.grade_levels if row.level == form.level)
     named = naming.standard_title(catalog, worded, grade)
     suffix = form.suffix or ""
     long, short = named.long_title + suffix, named.short_title + _abbreviate(suffix)

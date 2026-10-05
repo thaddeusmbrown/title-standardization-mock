@@ -545,6 +545,20 @@ def test_about_four_bare_titles_draw_insufficient_data_and_no_other_title_does(
         assert len(row.key.cleaned_title.split()) == 1 and not row.record.description
 
 
+def test_a_vague_description_gives_the_stand_in_no_word_of_any_role(inputs: InputData, models):
+    # What the description knob promises: "vague" says nothing about the job,
+    # so such a row is placed by its title or not at all.
+    content_words = models.llm.chooser.content_words
+    role_words = set().union(
+        *(
+            content_words(f"{role.role_name} {role.definition}")
+            for role in naming.model_visible_roles(inputs.catalog)
+        )
+    )
+    for description in mockdata._VAGUE:
+        assert content_words(description) and not content_words(description) & role_words
+
+
 def test_the_special_titles_sit_in_the_long_tail(rows, wave1):
     special = {title for title, *_ in mockdata.SPECIAL_TITLES}
     listed = {raw for row in wave1 for raw in row.raw_titles}

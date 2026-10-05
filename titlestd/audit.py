@@ -36,6 +36,14 @@ Decided on this branch, where the record says nothing:
   the design states (0.90 is nine tenths, not the nearest binary float) and
   the binomial is summed in fractions, so a count never falls on the other
   side of a line through rounding.
+- The labels handed in must be the blind labels of the sample: one for every
+  title of a path of AUDIT_SAMPLE_SIZE or fewer, AUDIT_SAMPLE_SIZE of them
+  otherwise, each for a title of the path. Anything else is a ValueError, as
+  is a label "could not decide", which a blind label never is (Q01).
+- An audited title the SME marked "no suitable role" (Q03; only a title with
+  no truth row) counts as wrong: the machine named a role and the SME says
+  none suits.
+- A path with no title is "all labeled", with nothing audited.
 """
 
 from __future__ import annotations
@@ -50,8 +58,10 @@ from titlestd.contracts import (
     AUDIT_PASS_CHANCE,
     AUDIT_SAMPLE_SIZE,
     AUDIT_STOP_SHARE,
+    AuditOutcome,
     AuditResult,
     Decision,
+    HumanAnswer,
     HumanDecision,
     MachinePath,
     TitleKey,
@@ -114,9 +124,20 @@ def audit_path(
     """Compare the labels with the machine's roles and decide the outcome.
 
     machine_roles holds every title of the path; labels holds the SME's blind
-    label for each title drawn by draw_sample.
+    label for each title drawn by draw_sample. Raises ValueError when the
+    labels cannot be those of the path's sample.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    _check_labels(machine_roles, labels)
+    audited_keys = tuple(sorted(labels))
+    # "No suitable role" has no role, so it differs from whatever the machine chose.
+    wrong = sum(machine_roles[key] != labels[key].role_id for key in audited_keys)
+    return AuditResult(
+        path=path,
+        path_size=len(machine_roles),
+        audited_keys=audited_keys,
+        wrong=wrong,
+        outcome=_outcome(len(machine_roles), len(audited_keys), wrong),
+    )
 
 
 def path_decisions(
@@ -132,3 +153,34 @@ def path_decisions(
     counted in the legacy row with ExceptionReason.STOPPED_PATH (Q16).
     """
     raise NotImplementedError(_NOT_BUILT)
+
+
+def _check_labels(
+    machine_roles: Mapping[TitleKey, str], labels: Mapping[TitleKey, HumanDecision]
+) -> None:
+    """Refuse labels that cannot be the blind labels of the path's sample."""
+    outside = sorted(set(labels) - set(machine_roles))
+    if outside:
+        raise ValueError(f"a label for a title that is not in the path: {tuple(outside[0])!r}")
+    expected = min(len(machine_roles), AUDIT_SAMPLE_SIZE)
+    if len(labels) != expected:
+        raise ValueError(
+            f"the audit of a path of {len(machine_roles)} titles labels {expected} of them, "
+            f"got {len(labels)} labels"
+        )
+    for key in sorted(labels):
+        if labels[key].answer is HumanAnswer.UNDECIDED:
+            raise ValueError(
+                f"a blind label is never {HumanAnswer.UNDECIDED.value!r}: {tuple(key)!r}"
+            )
+
+
+def _outcome(path_size: int, audited: int, wrong: int) -> AuditOutcome:
+    """The outcome of one path's audit (2.4)."""
+    if path_size <= AUDIT_SAMPLE_SIZE:
+        return AuditOutcome.ALL_LABELED
+    if wrong <= confirm_limit(audited):
+        return AuditOutcome.CONFIRMED
+    if wrong > stop_limit(audited):
+        return AuditOutcome.STOPPED
+    return AuditOutcome.PROVISIONAL

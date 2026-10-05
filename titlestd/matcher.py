@@ -41,6 +41,10 @@ Decided here, where the record is silent:
 - A Matcher keeps the vector of every text it has embedded, since the same
   text always gives the same vector (contracts.Embedder). So match makes one
   embed call, for the texts that are new, and none when no row is eligible.
+- ml_alone_eligible reads the family code as titlestd.catalog does: trimmed,
+  then compared exactly. A blank or unknown code, an empty shortlist and a
+  generic or unknown first choice are never eligible. "Clears the cut-off"
+  is "at least the cut-off".
 """
 
 from __future__ import annotations
@@ -48,7 +52,7 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-from titlestd.catalog import model_visible_roles
+from titlestd.catalog import model_visible_roles, roles_in_family
 from titlestd.contracts import (
     SHORTLIST_SIZE,
     Catalog,
@@ -63,8 +67,6 @@ from titlestd.contracts import (
 )
 from titlestd.lookup import Knowledge
 from titlestd.settings import Settings
-
-_NOT_BUILT = "titlestd.matcher is built by feat/lookup-ml-match"
 
 
 def role_text(role: CatalogRole) -> str:
@@ -146,4 +148,10 @@ def ml_alone_eligible(
     is on, the margin is at least settings.ml_margin_cutoff, the first choice
     has at least settings.ml_min_examples approved examples and is in the
     recorded family. The title still goes to a person."""
-    raise NotImplementedError(_NOT_BUILT)
+    in_family = {role.role_id for role in roles_in_family(catalog, family_code)}
+    return (
+        settings.ml_alone
+        and match.first_choice in in_family
+        and match.margin >= settings.ml_margin_cutoff
+        and match.first_choice_examples >= settings.ml_min_examples
+    )

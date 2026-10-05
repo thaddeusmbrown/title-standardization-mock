@@ -24,12 +24,14 @@ from titlestd.contracts import (
     CatalogRole,
     MatchResult,
     Record,
+    ScoredRole,
     TitleKey,
     TitleRow,
     Vector,
 )
 from titlestd.lookup import Knowledge
-from titlestd.matcher import Matcher, cosine, embed_text, role_text
+from titlestd.matcher import Matcher, cosine, embed_text, ml_alone_eligible, role_text
+from titlestd.settings import Settings
 
 
 class WordEmbedder:
@@ -465,3 +467,84 @@ def test_an_embedder_that_does_not_answer_text_for_text_is_refused():
 
     with pytest.raises(ValueError):
         Matcher(TRADES, Short()).match([_row("FOOD", "baker")], Knowledge())
+
+
+# --- ML-alone eligibility (1.6 step 4, Q04) -------------------------------------------
+
+
+def _match(*scores: float, first: str = "SAL-01", examples: int = 3) -> MatchResult:
+    role_ids = [first, "SAL-02", "FIN-01"]
+    pairs = zip(role_ids, scores, strict=False)
+    shortlist = tuple(ScoredRole(role_id, score) for role_id, score in pairs)
+    return MatchResult(shortlist, first_choice_examples=examples)
+
+
+ON = Settings(ml_alone=True)  # cut-off 0.10, three examples
+
+
+def test_the_route_is_off_by_default(mini_catalog):
+    clear = _match(0.9, 0.2)
+    assert Settings().ml_alone is False
+    assert ml_alone_eligible(clear, "SAL", mini_catalog, Settings()) is False
+    assert ml_alone_eligible(clear, "SAL", mini_catalog, ON) is True
+
+
+@pytest.mark.parametrize(
+    ("scores", "cutoff", "expected"),
+    [
+        ((0.9, 0.2), 0.10, True),
+        ((0.5, 0.45), 0.10, False),
+        ((0.5, 0.25), 0.25, True),  # at the cut-off: "at least"
+        ((0.5, 0.25), 0.26, False),
+        ((0.5, 0.5), 0.0, True),
+        ((0.5,), 0.10, False),  # one role on the shortlist: no margin
+        ((0.5,), 0.0, True),
+    ],
+)
+def test_the_margin_must_clear_the_cut_off(mini_catalog, scores, cutoff, expected):
+    settings = Settings(ml_alone=True, ml_margin_cutoff=cutoff)
+    assert ml_alone_eligible(_match(*scores), "SAL", mini_catalog, settings) is expected
+
+
+@pytest.mark.parametrize(
+    ("examples", "needed", "expected"),
+    [(3, 3, True), (2, 3, False), (0, 3, False), (7, 3, True), (2, 2, True), (0, 0, True)],
+)
+def test_the_first_choice_needs_enough_approved_examples(mini_catalog, examples, needed, expected):
+    settings = Settings(ml_alone=True, ml_min_examples=needed)
+    match = _match(0.9, 0.2, examples=examples)
+    assert ml_alone_eligible(match, "SAL", mini_catalog, settings) is expected
+
+
+@pytest.mark.parametrize(
+    ("family_code", "expected"),
+    [("SAL", True), (" SAL ", True), ("FIN", False), ("sal", False), ("", False), ("XYZ", False)],
+)
+def test_the_first_choice_must_be_in_the_recorded_family(mini_catalog, family_code, expected):
+    assert ml_alone_eligible(_match(0.9, 0.2), family_code, mini_catalog, ON) is expected
+
+
+@pytest.mark.parametrize("first", ["SAL-GEN", "SAL-99"], ids=["generic", "not in the catalog"])
+def test_a_first_choice_no_model_may_be_shown_is_never_eligible(mini_catalog, first):
+    assert ml_alone_eligible(_match(0.9, 0.2, first=first), "SAL", mini_catalog, ON) is False
+
+
+def test_an_empty_shortlist_is_never_eligible(mini_catalog):
+    settings = Settings(ml_alone=True, ml_margin_cutoff=0.0, ml_min_examples=0)
+    assert ml_alone_eligible(MatchResult(()), "SAL", mini_catalog, settings) is False
+
+
+def test_eligibility_follows_from_what_the_matcher_returned():
+    matcher = Matcher(TRADES, WordEmbedder())
+    knowledge = Knowledge()
+    row = _row("FOOD", "baker")
+    for title in ("baker one", "baker two"):
+        knowledge.learn(_row("FOOD", title), "T-02")
+    settings = Settings(ml_alone=True)
+    two = _only(matcher.match([row], knowledge))
+    assert two.margin > settings.ml_margin_cutoff and two.first_choice_examples == 2
+    assert ml_alone_eligible(two, "FOOD", TRADES, settings) is False
+    knowledge.learn(_row("FOOD", "baker three"), "T-02")
+    three = _only(matcher.match([row], knowledge))
+    assert ml_alone_eligible(three, "FOOD", TRADES, settings) is True
+    assert ml_alone_eligible(three, "SHOP", TRADES, settings) is False

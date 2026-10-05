@@ -278,6 +278,25 @@ def test_a_name_bearing_title_does_not_count_toward_the_three_examples():
     assert knowledge.example_count("SAL-06") == 1
 
 
+def test_a_later_decision_on_a_row_with_a_persons_name_leaves_no_stale_example():
+    # Rows from prepare cannot do this: the name mask is part of the key, so
+    # the rows of one key carry the same flag. A hand-built row can.
+    flagged = _row("SAL", "account manager", has_person_name=True)
+    assert flagged.key == MANAGER.key
+    knowledge = Knowledge()
+    knowledge.learn(MANAGER, "SAL-01")
+    assert knowledge.learn(flagged, "SAL-06") is True
+    assert knowledge.entries() == ((MANAGER.key, "SAL-06"),)
+    # The earlier example would name a role the look-up no longer gives.
+    assert knowledge.examples() == ()
+    assert knowledge.example_count("SAL-01") == 0
+    assert knowledge.example_count("SAL-06") == 0
+    # The other way round, the later decision is an example like any other.
+    knowledge.learn(MANAGER, "SAL-02")
+    assert knowledge.entries() == ((MANAGER.key, "SAL-02"),)
+    assert knowledge.examples() == (Example(MANAGER.record, "SAL-02"),)
+
+
 @pytest.mark.parametrize("row", [NO_FAMILY, UNKNOWN_FAMILY], ids=["blank", "unknown"])
 def test_a_decision_on_a_title_with_no_usable_family_joins_under_its_key(row):
     knowledge = Knowledge()

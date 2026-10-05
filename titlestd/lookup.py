@@ -22,8 +22,12 @@ Decided here, where the record is silent:
   case-folded here, so the family code "FIN " is not the key's "FIN" (S05
   leaves the trimming to whoever builds the key).
 - One role per key. A later decision on a title replaces the earlier one, in
-  the look-up table and in the examples together, so the two never disagree.
-  Within a run it does not happen: a title is decided once.
+  the look-up table and in the examples together, so the two never disagree:
+  an example always carries the role the look-up gives for its key. When the
+  later row carries a person's name, the earlier example is dropped and none
+  takes its place (Q14). Within a run neither happens: a title is decided
+  once, and the rows prepare builds for one key carry the same flag, because
+  the name mask is part of the key.
 - learn has no catalog and does not check that the role exists. It is
   handed a person's decision or a seed row, and both are checked where they
   are made (titlestd.people, titlestd.datafiles). The matcher lists only the
@@ -84,7 +88,10 @@ class Knowledge:
         if key in self._golden:
             return False
         self._roles[key] = role_id
-        if not row.has_person_name:
+        if row.has_person_name:
+            # An example left from an earlier decision would name the old role.
+            self._examples.pop(key, None)
+        else:
             self._examples[key] = Example(row.record, role_id)
         return True
 

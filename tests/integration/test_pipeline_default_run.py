@@ -49,6 +49,8 @@ from titlestd.settings import Settings
 
 ROW_NAMES = [row.value for row in TableRow]
 PATH_ROWS = ("models agree", "agent-settled")
+# The occasions on which an HR SME decides, as the state file names them.
+SME_ASKED = (pipeline.OCCASION_WAVE1, pipeline.OCCASION_GOLDEN, pipeline.OCCASION_AUDIT)
 
 # After the import guard: the run command exactly as "python3 -m titlestd run"
 # makes it, then what the guard saw, on standard error.
@@ -491,6 +493,30 @@ def test_the_review_queue_file_lists_every_title_that_entered_the_queue(default_
     }
     # Every title has a truth row in the mock data, so nothing is marked (Q03).
     assert "no suitable role" not in {line["decision"] for line in queue.values()}
+
+
+def test_every_model_answer_is_labeled_and_every_person_marked_as_simulated(default_run):
+    # 2.5, Q40: "stand-in", "live" or "recorded <date>, <model>" on every answer.
+    answers = default_run.state("SELECT step, source, count(*) FROM model_answers GROUP BY 1, 2")
+    assert [(step, source) for step, source, _ in answers] == [
+        ("choose", "stand-in"),
+        ("review", "stand-in"),
+    ]
+    assert sum(count for _, _, count in answers) > 400
+    assert default_run.state("SELECT label FROM answer_labels") == [("stand-in",)]
+    # 2.4, Q27: every simulated decision is marked, and names a persona, not a person.
+    people = default_run.state(
+        "SELECT occasion, decided_by, min(simulated), count(*) FROM human_decisions GROUP BY 1, 2"
+    )
+    assert {(occasion, decided_by) for occasion, decided_by, _, _ in people} == {
+        *(
+            (occasion, f"SME {number} (simulated)")
+            for number in (1, 2, 3)
+            for occasion in SME_ASKED
+        ),
+        ("review-queue decision", "Reviewer (simulated)"),
+    }
+    assert {marked for _, _, marked, _ in people} == {1}
 
 
 # --- the eight rules of 2.7, on the run's files and state ----------------------------------

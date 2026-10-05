@@ -68,6 +68,13 @@ Decided here, where the record leaves the detail open:
   query, or more than one in a turn. A number beside any other answer than
   "role" is dropped. The range of a number and the quote itself are not
   judged here: shared code maps the number and checks the quote (Q15).
+- A quote or a search query that is not valid Unicode fails validation too.
+  A JSON answer can carry a lone surrogate as an escape, and UTF-8 cannot
+  encode one: the recorder could not write the answer, nor could the key of
+  the next agent turn be made. Such a turn is invalid like any other, so it
+  is recorded and the title goes to a person, where the run used to stop
+  with a UnicodeEncodeError (found and fixed by feat/recordings-replay-e2e,
+  rule 9 of the build).
 """
 
 from __future__ import annotations
@@ -196,6 +203,8 @@ def _search(response: Any) -> dict[str, Any]:
         return recording.invalid_turn(f"the model asked for {name!r}, which is no search")
     if set(given) != {"query"} or not isinstance(given["query"], str):
         return recording.invalid_turn(f"a search takes one text query, not {dict(given)!r}")
+    if not _is_unicode(given["query"]):
+        return recording.invalid_turn("the query of a search is not valid Unicode text")
     return recording.search_turn(name, given["query"])
 
 
@@ -214,6 +223,8 @@ def _answer(response: Any, kinds: Sequence[str]) -> dict[str, Any]:
         return recording.invalid_turn(f"the answer {answer!r} is not one of {', '.join(kinds)}")
     if not isinstance(quote, str):
         return recording.invalid_turn("the quote is not text")
+    if not _is_unicode(quote):
+        return recording.invalid_turn("the quote is not valid Unicode text")
     if number is not None and (isinstance(number, bool) or not isinstance(number, int)):
         return recording.invalid_turn(f"the number {number!r} is not a whole number")
     if answer != ChooseKind.ROLE.value:  # the same word in both steps
@@ -221,6 +232,16 @@ def _answer(response: Any, kinds: Sequence[str]) -> dict[str, Any]:
     elif number is None:
         return recording.invalid_turn('the answer "role" names no number')
     return recording.answer_turn(answer, number, quote)
+
+
+def _is_unicode(text: str) -> bool:
+    """False for text that UTF-8 cannot encode: it holds a lone surrogate,
+    which a JSON answer can carry as an escape. No recording could hold it."""
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
 
 
 # --- The provider -------------------------------------------------------------

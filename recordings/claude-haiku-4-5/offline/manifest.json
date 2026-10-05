@@ -1,0 +1,23 @@
+{
+  "model": "claude-haiku-4-5",
+  "embedder": "offline",
+  "seed": 20260101,
+  "wave1_size": 40,
+  "golden_size": 40,
+  "ml_alone": false,
+  "ml_margin_cutoff": 0.1,
+  "ml_min_examples": 3,
+  "embed_dim": 32768,
+  "agent_search_k": 5,
+  "sme_error_rate": 0.02,
+  "undecided_rate": 0.1,
+  "generic_cap_share": 0.02,
+  "release_stopped_paths": false,
+  "data_fingerprint": "52a0fb49729353f4c725e70a49dd8af0b2f4b6eb5a4e1cb2476699067aceb8e1",
+  "prompt_version": 1,
+  "key_version": 1,
+  "started": "2026-10-05T11:06:21Z",
+  "ended": "2026-10-05T11:14:46Z",
+  "requests": 480,
+  "complete": true
+}

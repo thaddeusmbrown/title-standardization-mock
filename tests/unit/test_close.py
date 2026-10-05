@@ -12,11 +12,10 @@ from __future__ import annotations
 import dataclasses
 import itertools
 import math
-import random
 
 import pytest
 
-from titlestd import catalog, close
+from titlestd import catalog, close, seeding
 from titlestd.catalog import CatalogError
 from titlestd.contracts import (
     NAME_MASK,
@@ -330,8 +329,10 @@ def test_a_barred_title_leaves_the_cap_to_the_others(mini_catalog: Catalog):
 def test_no_mix_of_leftovers_breaks_the_rule(mini_catalog: Catalog):
     # 200 made-up closes: whatever the leftovers and the cap, the employees on
     # a generic role stay at or under the cap, and no barred title is among them.
+    # The draws go through titlestd.seeding like every other (S04), on a stream
+    # of this test's own that no run uses.
     for case in range(200):
-        draw = random.Random(case)
+        draw = seeding.rng(case, "test: a mix of leftovers")
         leftovers = [
             _leftover(
                 draw.choice(["FIN", "SAL", "", "XXX"]),

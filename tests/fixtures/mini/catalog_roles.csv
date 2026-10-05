@@ -1,0 +1,15 @@
+role_id,family_code,role_name,short_name,definition,compliance_flag,is_generic
+SAL-01,SAL,Account Manager,Acct Mgr,Manages a portfolio of customer accounts and renews their contracts.,0,0
+SAL-02,SAL,Sales Representative,Sales Rep,Sells products to new customers and closes deals.,0,0
+SAL-03,SAL,Sales Operations Analyst,Sales Ops Analyst,"Maintains sales forecasts, territories and pipeline reports.",0,0
+SAL-04,SAL,Sales Engineer,Sales Eng,Explains the technical side of products during a sale and runs demonstrations.,0,0
+SAL-05,SAL,Business Development Representative,Biz Dev Rep,Finds and qualifies new sales leads by outreach.,0,0
+SAL-06,SAL,Customer Success Manager,Cust Success Mgr,Helps existing customers adopt products and stay satisfied after the sale.,0,0
+SAL-GEN,SAL,Sales,Sales,Generic role for the Sales family.,0,1
+FIN-01,FIN,Financial Analyst,Fin Analyst,"Builds budgets, forecasts and variance reports.",0,0
+FIN-02,FIN,Accountant,Accountant,Keeps the general ledger and prepares monthly accounts.,0,0
+FIN-03,FIN,Payroll Specialist,Payroll Spec,Runs payroll and resolves pay queries.,0,0
+FIN-04,FIN,Internal Auditor,Int Auditor,Tests financial controls and reports findings to the audit committee.,1,0
+FIN-05,FIN,Accounts Payable Clerk,AP Clerk,Processes supplier invoices and payments.,0,0
+FIN-06,FIN,Treasury Analyst,Treasury Analyst,"Manages cash positions, bank accounts and short-term funding.",0,0
+FIN-GEN,FIN,Finance,Finance,Generic role for the Finance family.,0,1

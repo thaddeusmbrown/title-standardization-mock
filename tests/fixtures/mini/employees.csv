@@ -1,0 +1,23 @@
+employee_id,job_title,job_family_code,department,grade,job_description
+E001,ACCT MGR II,SAL,Enterprise Sales,8,Manages a portfolio of enterprise accounts and renews their contracts.
+E002,ACCT MGR II,SAL,Enterprise Sales,8,Manages a portfolio of enterprise accounts and renews their contracts.
+E003,ACCT MGR II,SAL,Inside Sales,8,Looks after mid-size customer accounts.
+E004,Senior Account Manager,SAL,Enterprise Sales,7,Owns the largest customer accounts and negotiates renewals. Reports to Oswin Thistlewood.
+E005,Senior Account Manager,SAL,Enterprise Sales,7,Owns the largest customer accounts and negotiates renewals. Reports to Oswin Thistlewood.
+E006,Sr. Acct Mgr - NYC,SAL,Enterprise Sales,7,
+E007,Sales Rep,SAL,Inside Sales,2,Sells products to new customers by phone and closes deals.
+E008,Sales Rep,SAL,Inside Sales,5,
+E009,sales representative REQ-10442,SAL,Field Sales,4,Visits prospects and sells products in an assigned territory.
+E010,Sales Ops Analyst,SAL,Sales Operations,5,"Maintains the sales forecast, territories and pipeline reports. Questions to maren.ashgrove@example.com."
+E011,Cust Success Mgr (Tavi Quillfeather),SAL,Customer Success,6,Helps existing customers adopt products after the sale.
+E012,BDR,SAL,Inside Sales,,
+E013,Sales Engineer #20311,SAL,Solutions,6,Explains the technical side of products and runs demonstrations during a sale.
+E014,Fin Analyst,FIN,Corporate Finance,4,Builds budgets and forecasts and explains variances.
+E015,Fin Analyst,FIN,Corporate Finance,6,Builds budgets and forecasts and explains variances.
+E016,Senior Financial Analyst,FIN,Corporate Finance,8,Leads the annual budget and the quarterly forecast.
+E017,AP Clerk,FIN,Accounting,2,Processes supplier invoices and payments.
+E018,Internal Auditor,FIN,Internal Audit,9,Tests financial controls and reports findings to the audit committee.
+E019,Payroll Spec,FIN,Accounting,3,
+E020,Treasury Analyst,FIN ,Treasury,10,Manages cash positions and bank accounts.
+E021,Staff Accountant,,Accounting,5,Keeps the general ledger and prepares monthly accounts.
+E022,Special Projects,FIN,Corporate Finance,,Works on assignments set by the leadership team.

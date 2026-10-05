@@ -461,10 +461,14 @@ def test_a_one_word_wording_always_has_a_description(data, rows):
         assert len(words) >= 2, row.key
 
 
-def test_names_and_emails_in_descriptions_come_from_the_reference_lists(data):
-    names = [d for d in {e.job_description for e in data.employees} if "Reports to " in d]
-    emails = [d for d in {e.job_description for e in data.employees} if "@" in d]
-    assert len(names) == mockdata.NAMES_IN_DESCRIPTIONS
+def test_names_and_emails_in_descriptions_come_from_the_reference_lists(data, rows):
+    held = {e.employee_id: e.job_description for e in data.employees}
+    names, emails = [], []
+    for row in rows:
+        texts = {held[employee_id] for employee_id in row.employee_ids}
+        names += sorted(text for text in texts if "Reports to " in text)
+        emails += sorted(text for text in texts if "@" in text)
+    assert len(names) == mockdata.NAMES_IN_DESCRIPTIONS  # one row each
     assert len(emails) == mockdata.EMAILS_IN_DESCRIPTIONS
     for description in names:
         given, surname = description.rstrip(".").split("Reports to ")[1].split()

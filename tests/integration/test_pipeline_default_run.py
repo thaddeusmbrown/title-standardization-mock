@@ -50,6 +50,9 @@ from titlestd.contracts import (
 )
 from titlestd.settings import Settings
 
+# Every test here makes or reads a whole run on the mock data (S14).
+pytestmark = pytest.mark.e2e
+
 # What the default run prints, frozen once the run shape was final (Q23).
 EXPECTED_OUTPUT = Path("tests") / "fixtures" / "expected" / "default_run.txt"
 ROW_NAMES = [row.value for row in TableRow]

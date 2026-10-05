@@ -496,6 +496,29 @@ def test_the_setting_releases_a_stopped_path_as_provisional(wrong):
     assert not [d for d in decisions if d.row is TableRow.LEGACY]
 
 
+@pytest.mark.parametrize("wrong", STOPPED_COUNTS)
+def test_the_setting_releases_only_the_titles_of_a_stopped_path_that_nobody_read(wrong):
+    # Q21: the 60 take the SME's label with status Approved whatever becomes of
+    # the rest, so the setting changes nothing about them.
+    machine, labels, result = _audited_path(200, wrong)
+    kept = audit.path_decisions(result, machine, labels, Settings())
+    released = audit.path_decisions(result, machine, labels, Settings(release_stopped_paths=True))
+    audited = [d for d in released if d.key in labels]
+    assert len(audited) == 60
+    for decision in audited:
+        assert decision.row is TableRow.MODELS_AGREE
+        assert decision.source is DecisionSource.PERSON
+        assert decision.status is Status.APPROVED
+        assert decision.role_id == labels[decision.key].role_id
+        assert decision.decided_by == SME and decision.simulated is True
+        assert decision.error_rate is None
+    # Where the SME and the machine differ, it is the SME's role that goes out.
+    assert sum(d.role_id != machine[d.key] for d in audited) == wrong
+    assert audited == [d for d in kept if d.key in labels]
+    assert {d.row for d in released if d.key not in labels} == {TableRow.MODELS_AGREE}
+    assert {d.row for d in kept if d.key not in labels} == {TableRow.LEGACY}
+
+
 @pytest.mark.parametrize(("size", "wrong"), [(200, 0), (200, 7), (60, 0), (60, 30), (12, 12)])
 def test_the_release_setting_changes_nothing_on_a_path_that_is_not_stopped(size, wrong):
     kept, _ = _decide(size, wrong)
@@ -601,6 +624,30 @@ def test_a_title_marked_no_suitable_role_stays_on_its_legacy_title(size):
         legacy_reason=ExceptionReason.NO_SUITABLE_ROLE,
     )
     assert sum(d.row is TableRow.LEGACY for d in decisions) == 1
+
+
+@pytest.mark.parametrize("wrong", STOPPED_COUNTS)
+def test_the_release_setting_does_not_release_a_title_marked_no_suitable_role(wrong):
+    # The setting releases the titles of a stopped path that nobody read, on
+    # the machine's role. A title an SME read and found no role for is not one
+    # of them: it waits for the catalog owner all the same (Q03).
+    machine, labels, _ = _audited_path(200, wrong)
+    marked = sorted(labels)[-1]
+    labels[marked] = _no_suitable_role(marked)
+    result = audit.audit_path(MachinePath.MODELS_AGREE, machine, labels)
+    assert result.outcome is AuditOutcome.STOPPED
+    kept = audit.path_decisions(result, machine, labels, Settings())
+    released = audit.path_decisions(result, machine, labels, Settings(release_stopped_paths=True))
+    _check_every_decision_is_whole(released)
+    (decision,) = [d for d in released if d.key == marked]
+    assert decision == Decision(
+        marked,
+        TableRow.LEGACY,
+        DecisionSource.NONE,
+        legacy_reason=ExceptionReason.NO_SUITABLE_ROLE,
+    )
+    assert [d.key for d in released if d.row is TableRow.LEGACY] == [marked]
+    assert [d for d in released if d.key in labels] == [d for d in kept if d.key in labels]
 
 
 # --- The result must be the audit of the path (Q23) --------------------------------------

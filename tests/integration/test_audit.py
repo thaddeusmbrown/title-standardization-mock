@@ -322,11 +322,22 @@ def test_the_release_setting_of_a_settings_file_releases_the_stopped_path(
         assert decision.status is Status.PROVISIONAL
         assert decision.error_rate == 1.0
         assert decision.role_id == machine[decision.key]
-    # Without the flag the same audit leaves them on their legacy titles.
+    # The setting releases the titles nobody read. The 60 an SME labeled take
+    # the SME's role with status Approved, here never the machine's (Q21).
+    for key in audited.sample:
+        decision = audited.of(key)
+        assert decision.row is TableRow.MODELS_AGREE
+        assert decision.source is DecisionSource.PERSON
+        assert decision.status is Status.APPROVED
+        assert decision.role_id == audited.labels[key].role_id != machine[key]
+        assert decision.error_rate is None
+    # Without the flag the same audit leaves the rest on their legacy titles
+    # and decides the labeled titles the same way.
     kept = load_settings(config, {"release_stopped_paths": False})
     held = run_audit(MachinePath.MODELS_AGREE, long_tail.rows, machine, simulated, kept)
     assert held.result == audited.result
     assert {decision.row for decision in held.rest} == {TableRow.LEGACY}
+    assert [held.of(key) for key in held.sample] == [audited.of(key) for key in audited.sample]
 
 
 def test_two_paths_are_audited_apart_and_every_title_gets_one_decision(mini_inputs, long_tail):

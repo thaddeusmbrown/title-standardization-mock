@@ -260,7 +260,7 @@ def test_the_module_imports_the_two_libraries_only_inside_a_function():
         for node in ast.walk(tree)
         if isinstance(node, ast.FunctionDef) and imported(ast.walk(node))
     }
-    assert lazy == {"build_embedder": {"model2vec"}, "_model_folder": {"huggingface_hub"}}
+    assert lazy == {"build_embedder": {"model2vec", "huggingface_hub"}}
 
 
 # --- A missing extra (Q30, Q38, S09) ----------------------------------------------
@@ -290,6 +290,42 @@ def test_a_missing_extra_fetches_nothing_and_nothing_stands_in(library, no_libra
     with pytest.raises(TitlestdError, match="model2vec"):
         build_embedder(LOCAL)
     assert library.looked == [] and library.fetched == [] and library.loaded == []
+
+
+def test_a_hub_library_that_cannot_be_imported_is_a_missing_extra_too(library, monkeypatch):
+    # The embedding library is there, the one the files are fetched with is
+    # not. That is a library of the extra that cannot be imported (S09), not a
+    # failed download: the message of a failed load would blame the network.
+    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    with pytest.raises(TitlestdError) as raised:
+        build_embedder(LOCAL)
+    message = str(raised.value)
+    cause = raised.value.__cause__
+    assert isinstance(cause, ImportError) and "huggingface_hub" in str(cause)
+    assert message == (
+        f"embedder = local needs the huggingface_hub library, which cannot be imported ({cause}). "
+        'It comes with the optional extra "local"; run the program with that extra, '
+        f"for example: {run_with_extra('local')} run --embedder local"
+    )
+    assert library.looked == [] and library.fetched == [] and library.loaded == []
+
+
+def test_a_hub_library_without_what_is_needed_of_it_is_a_missing_extra_too(library, monkeypatch):
+    # The name can be imported and the function cannot: still an import that failed.
+    monkeypatch.delattr(sys.modules["huggingface_hub"], "try_to_load_from_cache")
+    with pytest.raises(TitlestdError) as raised:
+        build_embedder(LOCAL)
+    assert isinstance(raised.value.__cause__, ImportError)
+    assert str(raised.value).startswith("embedder = local needs the huggingface_hub library,")
+    assert str(raised.value).endswith(f"{run_with_extra('local')} run --embedder local")
+    assert library.fetched == [] and library.loaded == []
+
+
+def test_with_neither_library_the_message_names_the_one_the_extra_declares(no_library, monkeypatch):
+    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
+    with pytest.raises(TitlestdError) as raised:
+        build_embedder(LOCAL)
+    assert str(raised.value).startswith("embedder = local needs the model2vec library,")
 
 
 # --- A failed load (Q30) ----------------------------------------------------------
@@ -356,13 +392,6 @@ def test_a_model_folder_that_cannot_be_read_stops_the_same_way(library, monkeypa
 
     monkeypatch.setattr(sys.modules["model2vec"].StaticModel, "from_pretrained", broken)
     assert "(ValueError: Could not find expected model files)" in expect_failed_load(error)
-
-
-def test_a_hub_library_that_cannot_be_imported_is_a_failed_load(library, monkeypatch):
-    monkeypatch.setitem(sys.modules, "huggingface_hub", None)
-    with pytest.raises(TitlestdError, match="could not load the model") as raised:
-        build_embedder(LOCAL)
-    assert isinstance(raised.value.__cause__, ImportError)
 
 
 def test_an_interrupted_download_is_not_reported_as_a_failed_one(library, monkeypatch):

@@ -5,10 +5,11 @@ Governed by: docs/design.md 2.5 (lazy import; the default run installs
 nothing); docs/build-decisions.md Q30 (library, model and revision), Q32 (how
 it is tested), Q38 with S09 (the message for a missing extra).
 
-The library is model2vec, from the optional extra "local", imported only
-inside build_embedder. No PyTorch anywhere. The weights download on first use
-into the user's Hugging Face cache, never into the repository. A missing extra
-or a failed download stops with a clear message and never falls back to the
+The library is model2vec, from the optional extra "local". It and the hub
+library the model's files are fetched with are imported only inside
+build_embedder. No PyTorch anywhere. The weights download on first use into
+the user's Hugging Face cache, never into the repository. A missing extra or
+a failed download stops with a clear message and never falls back to the
 offline embedder. For a missing extra the message holds
 contracts.run_with_extra(EXTRA), the one command text of S09.
 
@@ -28,6 +29,13 @@ Decided here, where Q30 leaves the detail open:
   request before it looks in the cache, and preparing it can contact the
   hub by itself (huggingface_hub 1.33 fetches a list for its user agent,
   about once a day), even for a file it then finds in the cache.
+- A missing extra is either library that cannot be imported. The module
+  imports two, both only inside build_embedder: model2vec, which the extra
+  names, and then huggingface_hub, which the extra does not name and which
+  comes with it (model2vec's tokenizer library needs it, and uv.lock pins
+  it). S09 speaks of a provider whose library cannot be imported, so for
+  either one the message names the library and holds the command of S09.
+  model2vec is looked for first: without the extra, nothing else is.
 - No credential. The model is public, so the files are asked for without a
   token (token=False): a Hugging Face token kept on the machine is never
   sent, and the program's only secret stays ANTHROPIC_API_KEY (2.5). While
@@ -65,7 +73,7 @@ Decided here, where Q30 leaves the detail open:
 from __future__ import annotations
 
 import math
-from collections.abc import Iterable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -105,22 +113,31 @@ def _unit(row: Iterable[Any]) -> Vector:
     return {index: weight / norm for index, weight in enumerate(weights)}
 
 
-def _model_folder() -> Path:
+def _model_folder(in_cache: Callable[..., Any], download: Callable[..., str]) -> Path:
     """The folder of MODEL_REVISION in the Hugging Face cache, filled on first use.
 
-    A file that is in the cache is taken from it, and the download call is
-    never reached for it: that call can contact the hub even for a cached file.
+    in_cache and download are the hub library's try_to_load_from_cache and
+    hf_hub_download. A file that is in the cache is taken from it, and the
+    download call is never reached for it: that call can contact the hub even
+    for a cached file.
     """
-    from huggingface_hub import hf_hub_download, try_to_load_from_cache
-
     files = []
     for name in MODEL_FILES:
         # A path when the file is in the cache; otherwise None or a marker.
-        found = try_to_load_from_cache(MODEL_NAME, name, revision=MODEL_REVISION)
+        found = in_cache(MODEL_NAME, name, revision=MODEL_REVISION)
         if not isinstance(found, str):
-            found = hf_hub_download(MODEL_NAME, name, revision=MODEL_REVISION, token=False)
+            found = download(MODEL_NAME, name, revision=MODEL_REVISION, token=False)
         files.append(found)
     return Path(files[0]).parent
+
+
+def _missing_extra(library: str, error: ImportError) -> TitlestdError:
+    """What stops the run when a library of the extra cannot be imported (S09)."""
+    return TitlestdError(
+        f"embedder = local needs the {library} library, which cannot be imported ({error}). "
+        f'It comes with the optional extra "{EXTRA}"; run the program with that extra, '
+        f"for example: {run_with_extra(EXTRA)} run --embedder local"
+    )
 
 
 def build_embedder(settings: Settings) -> Embedder:
@@ -129,13 +146,13 @@ def build_embedder(settings: Settings) -> Embedder:
     try:
         from model2vec import StaticModel
     except ImportError as error:
-        raise TitlestdError(
-            f"embedder = local needs the model2vec library, which cannot be imported ({error}). "
-            f'It comes with the optional extra "{EXTRA}"; run the program with that extra, '
-            f"for example: {run_with_extra(EXTRA)} run --embedder local"
-        ) from error
+        raise _missing_extra("model2vec", error) from error
     try:
-        model = StaticModel.from_pretrained(_model_folder())
+        from huggingface_hub import hf_hub_download, try_to_load_from_cache
+    except ImportError as error:
+        raise _missing_extra("huggingface_hub", error) from error
+    try:
+        model = StaticModel.from_pretrained(_model_folder(try_to_load_from_cache, hf_hub_download))
     except Exception as error:
         raise TitlestdError(
             f"embedder = local could not load the model {MODEL_NAME} at revision "

@@ -32,16 +32,37 @@ Decided here, where the record leaves the detail open:
 - A generic family role is refused with ValueError, by number_roles and again
   by render_roles: a list that holds one is a fault in the calling code, and
   render_roles is the last thing a role passes before a model reads it.
+- A number names a role only when it is a whole number (an int, and not a
+  bool) carried by a role in the list. A role with no number is never the
+  answer to anything, None included.
+- The quote check measures the quote after case-folding and collapsing white
+  space: its characters, and its words as the pieces between spaces. White
+  space is whatever str.split() takes for it. A word character is one the re
+  module's \\w matches (a letter of any script, a digit or the underscore),
+  the same as in titlestd.standin. A quote starts and ends on a word boundary
+  when neither end falls between two word characters, so "count" is not a
+  quote from "account", while a quote may begin or end with punctuation that
+  stands in the record. Any place in the block where the quote stands so is
+  enough.
 """
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Sequence
 
 from titlestd import seeding
-from titlestd.contracts import CatalogRole, NumberedRole, Record, TitleKey
+from titlestd.contracts import (
+    QUOTE_MAX_WORDS,
+    QUOTE_MIN_CHARS,
+    CatalogRole,
+    NumberedRole,
+    Record,
+    TitleKey,
+)
 
-_NOT_BUILT = "titlestd.fallback is built by feat/llm-fallback-rules"
+# Matches where a quote may start or end: anywhere but between two word characters.
+_WORD_BOUNDARY = r"(?:(?<!\w)|(?!\w))"
 
 
 def render_record(record: Record) -> str:
@@ -86,7 +107,9 @@ def render_roles(roles: Sequence[NumberedRole]) -> str:
 def role_for_number(number: int | None, roles: Sequence[NumberedRole]) -> CatalogRole | None:
     """The number-to-role mapping. None when the number names no shown role;
     the rules then fail the catalog check (Q15)."""
-    raise NotImplementedError(_NOT_BUILT)
+    if isinstance(number, bool) or not isinstance(number, int):
+        return None
+    return next((shown.role for shown in roles if shown.number == number), None)
 
 
 def quote_in_record(quote: str, record_block: str) -> bool:
@@ -97,7 +120,17 @@ def quote_in_record(quote: str, record_block: str) -> bool:
     at least contracts.QUOTE_MIN_CHARS characters including a letter, and at
     most contracts.QUOTE_MAX_WORDS words. An empty quote fails.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    quote, block = _folded(quote), _folded(record_block)
+    if len(quote) < QUOTE_MIN_CHARS or not any(character.isalpha() for character in quote):
+        return False
+    if len(quote.split(" ")) > QUOTE_MAX_WORDS:
+        return False
+    return re.search(_WORD_BOUNDARY + re.escape(quote) + _WORD_BOUNDARY, block) is not None
+
+
+def _folded(text: str) -> str:
+    """Case-folded, with every run of white space as one space and none at the ends."""
+    return " ".join(text.casefold().split())
 
 
 def _refuse_generic(role: CatalogRole) -> None:

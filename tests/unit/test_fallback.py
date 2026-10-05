@@ -1,11 +1,12 @@
-"""The shared code around choose: the record block and the numbered roles.
+"""The shared code around choose: record block, numbered roles, mapping, quote check.
 
-docs/design.md 1.6 step 4 and 2.5; docs/build-decisions.md Q18 (the seeded
-shuffle), S16 (what a model is shown).
+docs/design.md 1.6 step 4, 1.7 and 2.5; docs/build-decisions.md Q15 (the quote
+check), Q18 (the seeded shuffle), S16 (what a model is shown).
 
-One test of section 2.7 starts here. "No model is ever shown a generic family
-role" rests on the two functions that make a numbered list: neither numbers
-nor renders one.
+Two tests of section 2.7 start here. "A quote that is not in the record sends
+the title to a person" rests on quote_in_record, and "no model is ever shown a
+generic family role" on the two functions that make a numbered list: neither
+numbers nor renders one.
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from titlestd import fallback, seeding
 from titlestd.contracts import (
     EMAIL_MASK,
     NAME_MASK,
+    QUOTE_MAX_WORDS,
+    QUOTE_MIN_CHARS,
     CatalogRole,
     NumberedRole,
     Record,
@@ -85,6 +88,9 @@ def test_an_empty_field_leaves_its_label_alone_on_the_line():
     bare = Record("bdr", "SAL", "", "")
     block = fallback.render_record(bare)
     assert block == "Title: bdr\nFamily: SAL\nDepartment:\nDescription:"
+    # Nothing is written in place of what is missing, so nothing can be quoted from it.
+    for invented in ("none", "empty", "n/a", "not given"):
+        assert not fallback.quote_in_record(invented, block)
 
 
 def test_the_block_depends_on_the_record_alone():
@@ -255,3 +261,279 @@ def test_a_generic_family_role_is_never_rendered(number):
 def test_what_number_roles_returns_can_be_rendered():
     lines = fallback.render_roles(fallback.number_roles(TEN, KEY, SEED)).split("\n")
     assert [line.partition(". ")[0] for line in lines] == [str(n) for n in range(1, 11)]
+
+
+# --- The number-to-role mapping (2.5, Q15) ----------------------------------------------------
+
+# A list as the agent's is: numbers that are not positions, and a role with none.
+SHOWN = (
+    NumberedRole(2, TEN[0]),
+    NumberedRole(None, TEN[1]),
+    NumberedRole(1, TEN[2]),
+    NumberedRole(5, TEN[3]),
+)
+
+
+def test_a_number_names_the_role_shown_under_it():
+    numbered = fallback.number_roles(TEN, KEY, SEED)
+    for shown in numbered:
+        assert fallback.role_for_number(shown.number, numbered) is shown.role
+    assert fallback.role_for_number(2, SHOWN) is TEN[0]
+    assert fallback.role_for_number(1, SHOWN) is TEN[2]
+    assert fallback.role_for_number(5, SHOWN) is TEN[3]
+
+
+@pytest.mark.parametrize("number", [0, 11, 12, -1, 100, 10**9])
+def test_a_number_out_of_range_names_no_role(number: int):
+    # Q15: the rules then fail the catalog check and the title goes to a person.
+    assert fallback.role_for_number(number, fallback.number_roles(TEN, KEY, SEED)) is None
+
+
+@pytest.mark.parametrize("number", [3, 4, 0, 6])
+def test_a_number_that_no_shown_role_carries_names_no_role(number: int):
+    assert fallback.role_for_number(number, SHOWN) is None
+
+
+def test_a_role_with_no_number_cannot_be_named():
+    # Not by None either: an answer with no number must not become the first
+    # role that happens to carry none.
+    assert fallback.role_for_number(None, SHOWN) is None
+    assert fallback.role_for_number(None, [NumberedRole(None, TEN[0])]) is None
+    named = {fallback.role_for_number(number, SHOWN) for number in range(-3, 12)}
+    assert TEN[1] not in named
+
+
+@pytest.mark.parametrize("number", [True, False, 1.0, 2.5, "1", "one", b"1", [1], (1,)])
+def test_only_a_whole_number_names_a_role(number):
+    # True == 1 and 1.0 == 1 in Python; neither is a number a model was offered.
+    assert fallback.role_for_number(number, SHOWN) is None
+
+
+def test_no_number_names_a_role_of_an_empty_list():
+    assert all(fallback.role_for_number(number, ()) is None for number in (None, 0, 1, 10))
+
+
+# --- The quote check (1.7, Q15) ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "senior account manager",  # the whole title
+        "account manager",  # a run of its words
+        "Owns the largest customer accounts",  # a run of description words
+        "negotiates renewals. Reports to [NAME].",  # with its punctuation and the mask
+        "[NAME]",
+        "Enterprise Sales",  # the department is part of the record
+        "SAL",  # exactly three characters
+    ],
+)
+def test_a_quote_copied_from_the_record_passes(quote: str):
+    assert fallback.quote_in_record(quote, BLOCK)
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "SENIOR ACCOUNT MANAGER",
+        "senior Account manager",
+        "owns THE largest CUSTOMER accounts",
+        "reports to [name]",
+    ],
+)
+def test_case_is_folded_on_both_sides(quote: str):
+    assert fallback.quote_in_record(quote, BLOCK)
+    assert fallback.quote_in_record(quote.swapcase(), BLOCK.upper())
+
+
+def test_case_is_folded_not_only_lowered():
+    block = fallback.render_record(Record("leiter straße", "SAL", "", ""))
+    assert fallback.quote_in_record("LEITER STRASSE", block)
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "  senior account manager  ",
+        "senior   account\tmanager",
+        "senior\naccount\r\nmanager",
+        "senior\N{NO-BREAK SPACE}account manager",  # a no-break space
+    ],
+)
+def test_white_space_is_collapsed_in_the_quote(quote: str):
+    assert fallback.quote_in_record(quote, BLOCK)
+
+
+def test_white_space_is_collapsed_in_the_record_too():
+    spaced = Record(
+        "senior  account manager", "SAL", "", "Owns the\n largest\tcustomer   accounts."
+    )
+    block = fallback.render_record(spaced)
+    assert fallback.quote_in_record("senior account manager", block)
+    assert fallback.quote_in_record("the largest customer accounts", block)
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "regional sales director",  # words the record does not hold
+        "manages a portfolio of accounts",
+        "account senior manager",  # its words, in another order
+        "senior manager",  # its words, with one left out
+        "Owns the largest accounts",
+        "Owns the largest customer account",  # one letter short of a word
+        "negotiates renewal",
+        "negotiates renewals and reports to [NAME]",  # a paraphrase
+        "senior account manager.",  # punctuation the record does not have there
+        "senior-account-manager",
+        "senioraccountmanager",
+        "Reports to Oswin Thistlewood",  # the name the mask stands for
+    ],
+)
+def test_a_quote_that_is_not_word_for_word_in_the_record_fails(quote: str):
+    # 2.7: this is what sends the title to a person.
+    assert not fallback.quote_in_record(quote, BLOCK)
+
+
+@pytest.mark.parametrize(
+    ("quote", "holds"),
+    [
+        ("count", "account"),  # starts inside a word
+        ("account", "accounts"),  # ends inside a word
+        ("ccoun", "account"),  # both
+        ("nager", "manager"),
+        ("senior acc", "senior account"),
+        ("ior account manager", "senior account manager"),
+        ("sum", "résumé"),  # a letter of another script is a letter
+        ("cost", "cost_centre"),  # the underscore is a word character
+        ("level", "level2"),  # and so is a digit
+        ("2nd", "x2nd"),
+    ],
+)
+def test_a_quote_must_start_and_end_on_a_word_boundary(quote: str, holds: str):
+    block = fallback.render_record(Record(f"the {holds} desk", "SAL", "", ""))
+    assert quote in block  # it is there, letter for letter
+    assert not fallback.quote_in_record(quote, block)
+    # The word it was cut from is a quote from the same record.
+    assert fallback.quote_in_record(holds, block)
+
+
+def test_one_place_where_the_quote_stands_as_words_is_enough():
+    # "count" is first met inside "account", then as a word of its own.
+    block = fallback.render_record(Record("account count clerk", "FIN", "", ""))
+    assert fallback.quote_in_record("count", block)
+    assert fallback.quote_in_record("count clerk", block)
+    assert not fallback.quote_in_record("ccount", block)
+
+
+@pytest.mark.parametrize(
+    "quote",
+    [
+        "renewals.",  # ends with the record's full stop
+        ". Reports to",  # starts with it
+        "(EMEA)",
+        "end",  # a hyphen ends a word
+        "end-to-end",
+        "to-end sales",
+        "R&D",
+        "[EMAIL]",
+        "questions to [EMAIL];",
+    ],
+)
+def test_punctuation_that_stands_in_the_record_may_begin_or_end_a_quote(quote: str):
+    record = Record(
+        "end-to-end sales lead (EMEA)",
+        "SAL",
+        "R&D",
+        f"Negotiates renewals. Reports to {NAME_MASK}; questions to {EMAIL_MASK}; more.",
+    )
+    assert fallback.quote_in_record(quote, fallback.render_record(record))
+
+
+@pytest.mark.parametrize("quote", ["", " ", "\n\t ", "a", "ii", "  ii  ", "i\n", "to"])
+def test_an_empty_or_too_short_quote_fails(quote: str):
+    # "ii" and "to" do stand in this record; they are under three characters.
+    block = fallback.render_record(Record("account manager ii", "SAL", "", "Reports to a lead."))
+    assert len(" ".join(quote.split())) < QUOTE_MIN_CHARS
+    assert not fallback.quote_in_record(quote, block)
+
+
+@pytest.mark.parametrize("quote", ["123", "2 3", "#20311", "--- 12", "(42)"])
+def test_a_quote_without_a_letter_fails(quote: str):
+    block = fallback.render_record(Record("analyst 123", "FIN", "2 3", "Ref #20311 --- 12 (42)."))
+    assert " ".join(quote.split()) in block  # it is there, word for word
+    assert not fallback.quote_in_record(quote, block)
+
+
+def test_three_characters_with_a_letter_are_enough():
+    block = fallback.render_record(Record("bdr", "SAL", "IT", "Grade a 1 role, tier b2."))
+    for quote in ("bdr", "a 1", "b2."):
+        assert len(quote) == QUOTE_MIN_CHARS
+        assert fallback.quote_in_record(quote, block)
+
+
+def test_a_quote_of_more_than_twenty_five_words_fails():
+    words = [f"word{n}" for n in range(40)]
+    block = fallback.render_record(Record("analyst", "FIN", "", " ".join(words)))
+    at_the_limit = " ".join(words[5 : 5 + QUOTE_MAX_WORDS])
+    assert len(at_the_limit.split()) == QUOTE_MAX_WORDS == 25
+    assert fallback.quote_in_record(at_the_limit, block)
+    assert fallback.quote_in_record("  ".join(words[5 : 5 + QUOTE_MAX_WORDS]) + "\n", block)
+    assert not fallback.quote_in_record(" ".join(words[5 : 6 + QUOTE_MAX_WORDS]), block)
+    assert not fallback.quote_in_record(" ".join(words), block)
+
+
+def test_the_quote_is_checked_against_the_block_as_rendered():
+    # Q15: the same string serves the prompt and the check, so its labels and
+    # line breaks belong to it. A quote may therefore run across two fields.
+    assert fallback.quote_in_record("Family: SAL", BLOCK)
+    assert fallback.quote_in_record("senior account manager Family: SAL", BLOCK)
+    # What the block does not hold fails, however near the record it is.
+    assert not fallback.quote_in_record("senior account manager SAL", BLOCK)
+    assert not fallback.quote_in_record("job title: senior account manager", BLOCK)
+
+
+def test_the_check_reads_nothing_but_the_quote_and_the_block():
+    other = fallback.render_record(Record("sales engineer", "SAL", "Solutions", ""))
+    assert fallback.quote_in_record("sales engineer", other)
+    assert not fallback.quote_in_record("sales engineer", BLOCK)
+    assert not fallback.quote_in_record("senior account manager", other)
+    assert not fallback.quote_in_record("senior account manager", "")
+
+
+def stands_as_words(quote: str, block: str) -> bool:
+    """The word-boundary rule spelled out place by place, without the re module."""
+
+    def in_a_word(character: str) -> bool:
+        return character.isalnum() or character == "_"
+
+    for start in range(len(block) - len(quote) + 1):
+        end = start + len(quote)
+        if block[start:end] != quote:
+            continue
+        cuts_a_word_before = start > 0 and in_a_word(block[start - 1]) and in_a_word(quote[0])
+        cuts_a_word_after = end < len(block) and in_a_word(quote[-1]) and in_a_word(block[end])
+        if not cuts_a_word_before and not cuts_a_word_after:
+            return True
+    return False
+
+
+def test_every_slice_of_the_block_is_judged_by_the_word_boundary_rule():
+    # Every piece of the block of 3 to 40 characters, wherever it starts and
+    # ends: it passes exactly when it cuts no word in two.
+    block = " ".join(BLOCK.casefold().split())
+    slices = {
+        block[start:end]
+        for start in range(len(block))
+        for end in range(start + QUOTE_MIN_CHARS, min(len(block), start + 40) + 1)
+    }
+    slices = {
+        piece
+        for piece in slices
+        if piece == piece.strip() and any(character.isalpha() for character in piece)
+    }
+    passed = {piece for piece in slices if fallback.quote_in_record(piece, BLOCK)}
+    assert passed == {piece for piece in slices if stands_as_words(piece, block)}
+    assert len(passed) > 100 and len(slices - passed) > 1000
+    assert {"account", "account manager", "sal", "[name]"} <= passed
+    assert {"ccount", "account manage", "enior account manager", "sale"} <= slices - passed

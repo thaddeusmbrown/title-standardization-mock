@@ -14,7 +14,8 @@ How to read it:
 - **Diagram rules not to copy**, **Arithmetic checked** and **Library facts** are reference
   notes.
 - **How the build is cut** says which branch builds what, which files it owns and which tests
-  it must deliver.
+  it owns: the eight of section 2.7 and every test or deliverable that an entry decides. It
+  also says what crosses a branch boundary and what the README must say.
 
 Section numbers such as 1.8 or 2.4 refer to `docs/design.md`. "The mini data set" is the small
 hand-written data set in `tests/fixtures/mini`.
@@ -97,12 +98,12 @@ the recording step only. A dedicated key with a spend limit of about USD 20, rev
 recording, is the suggested way to supply it. First a smoke run on about 10 titles, costing
 cents, proves the adapter; then one full recording is made at the very end on frozen data and
 prompts (default data and seed, `embedder = offline`, `llm_model = claude-haiku-4-5`),
-committed, and replayed with zero misses in the final gate. The request cap is the setting `request_cap`, default 3,000: a full
-run is estimated at 1,000 to 1,500 requests, and a cap of 1,500 would abort a legitimate run
-after the money is spent. At most two full live runs are made. The key is never written to
-`.env` or any file in the repository and never echoed; a test scans tracked files and
-recordings for `sk-ant-`. One documented command, `python3 -m titlestd record`, lets the
-owner record again later.
+committed, and replayed with zero misses in the final gate. The request cap is the setting
+`request_cap`, default 3,000: a full run is estimated at 1,000 to 1,500 requests, and a cap of
+1,500 would abort a legitimate run after the money is spent. At most two full live runs are
+made. The key is never written to `.env` or any file in the repository and never echoed; a
+test scans tracked files and recordings for `sk-ant-`. One documented command,
+`python3 -m titlestd record`, lets the owner record again later.
 
 **Basis.** 2.1: "Show the whole idea in under a minute, offline, on made-up data." 2.5: the
 `llm` values and the empty default of `llm_model`; "The only secret is `ANTHROPIC_API_KEY`,
@@ -720,10 +721,10 @@ path the 60 are released as Approved and the rest stay on legacy titles unless t
 setting is on. Table: the path row counts the titles released through the path, audited and
 unaudited together, shows audited and wrong, and its status cell shows the path outcome; the
 unaudited titles of a stopped path that the setting did not release are counted in the legacy
-row instead (Q16). The footer's coverage by status counts the 60 under Approved. A golden-set title must not reach the look-up table or the examples through the
-audit: golden titles stay in the audit sampling frame (Q07), an audited golden title takes its
-label and status Approved for release like any other, and the learning guard of Q07 refuses to
-record it.
+row instead (Q16). The footer's coverage by status counts the 60 under Approved. A golden-set
+title must not reach the look-up table or the examples through the audit: golden titles stay
+in the audit sampling frame (Q07), an audited golden title takes its label and status Approved
+for release like any other, and the learning guard of Q07 refuses to record it.
 
 **Basis.** 1.6 step 10: "Titles a person approved or labeled join the look-up table and the ML
 model's examples." 1.2: "Look-up table | Titles a person has already decided, each mapped to a
@@ -792,13 +793,17 @@ required to exceed 60; if it holds 60 or fewer it is fully labeled as 2.4 provid
 README says so. The bar is reached by shaping the generator only (its difficulty knobs are
 generator settings), never by tuning stand-ins or thresholds against the truth and never by
 aiming at a status. At most three tuning rounds, then ship what the seed yields and state the
-shape in the README and the final report. The three outcomes, the 60-or-fewer case and the
-stopped-path release setting are covered by unit tests of the audit function on constructed
-counts (0 to 2, 3 to 12, 13 or more wrong of 60). The integration test asserts invariants
-(rows partition all titles and employees, shares sum to 100%, the status follows from the
-audited and wrong counts, the bar above) and that two runs in separate processes give
-byte-identical output. The printed table is frozen as a committed expected-output file only in
-the final merge. The three compliance-flagged roles sit in three different families.
+shape in the README and the final report. The bar can first be measured when the pipeline
+exists, so the rounds are made in stage 4 by the branch that builds it ("Work that crosses a
+branch boundary"). The three outcomes, the 60-or-fewer case and the stopped-path release
+setting are covered by unit tests of the audit function on constructed counts (0 to 2, 3 to
+12, 13 or more wrong of 60). The integration test asserts invariants (rows partition all
+titles and employees, shares sum to 100%, the status follows from the audited and wrong
+counts, the bar above) and that two runs in separate processes give byte-identical output.
+The printed table is frozen as a committed expected-output file only once the shape is final,
+that is after the last tuning round and not before (the file, its test and its owner: "Work
+that crosses a branch boundary"). The three compliance-flagged roles sit in three different
+families.
 
 **Basis.** 2.2: "the random audit and its three outcomes". 2.4: the stand-ins and the README
 statement; "The seed look-up exists so that the look-up step has hits to show"; the small-path
@@ -1192,10 +1197,11 @@ generated at run time, or whether "under a minute" is a tested limit.
 `generate-data` and `record`. `pyproject.toml` with no runtime dependencies and two optional
 extras, `live` = `anthropic>=1.11,<2` and `local` = `model2vec>=0.9,<0.10`; pytest and ruff
 are dev-only, fetched by uv. A missing extra gives an error containing the exact install
-command, whose text S09 fixes. `requires-python` is `>=3.12` with no upper bound; the merge gate runs on 3.12
-(`.python-version`), and the suite also runs on 3.13 and 3.14 (`make check-all`, S14).
-Exact-output comparison only on 3.12. Settings are one immutable dataclass with defaults, overridden by an optional TOML file
-given with `--config` and then by command-line flags generated from its fields (`--embedder`,
+command, whose text S09 fixes. `requires-python` is `>=3.12` with no upper bound; the merge
+gate runs on 3.12 (`.python-version`), and the suite also runs on 3.13 and 3.14, with
+`make check-all` (S14). Exact-output comparison only on 3.12 (the frozen table of Q23).
+Settings are one immutable dataclass with defaults, overridden by an optional TOML file given
+with `--config` and then by command-line flags generated from its fields (`--embedder`,
 `--llm`, `--llm-model`, `--seed`, `--recording-dir` and the rest). There are no
 environment-variable settings, so the environment carries only `ANTHROPIC_API_KEY`. Inputs are
 committed CSV in `data/`. Outputs and state go to `out/`: `load.csv`, `reverse.csv`,
@@ -1721,16 +1727,19 @@ merged.
 
 1. **Edit only the files you own.** The table below names them. Tests go in new files named
    after the module, `tests/unit/test_<module>*.py` and `tests/integration/test_<module>*.py`.
-   The same file name may exist in both folders.
+   The same file name may exist in both folders. Rule 9 and "Work that crosses a branch
+   boundary" below name the only exceptions.
 2. **The shared files are frozen** once the scaffold is merged: `pyproject.toml`, `uv.lock`,
-   `Makefile`, `.gitignore`, the CI workflow, `titlestd/contracts.py`, `settings.py`,
-   `seeding.py`, `datafiles.py`, `reference.py`, `cli.py`, `tests/conftest.py`, the mini data
-   set and the scaffold's own tests. If a change to one cannot be avoided, make it in a commit
-   of its own and say so in the merge message, because another branch may be reading the same
-   file.
+   `Makefile`, `.gitignore`, the CI workflow, this record, `titlestd/contracts.py`,
+   `settings.py`, `seeding.py`, `datafiles.py`, `reference.py`, `cli.py`, `tests/conftest.py`,
+   the mini data set and the scaffold's own tests. If a change to one cannot be avoided, make
+   it in a commit of its own and say so in the merge message, because another branch may be
+   reading the same file.
 3. **Do not re-decide.** Where an entry above settles a point, build it as written and cite
-   the entry. Where nothing settles it, decide in the spirit of the design and report the
-   decision.
+   the entry. Where nothing settles it, decide in the spirit of the design, write the decision
+   into the docstring of the module it concerns and report it for the merge message. New
+   decisions are not added to this record: it is one of the frozen files, and branches built
+   at the same time would all be editing it.
 4. **A branch in a stage cannot call a module built in the same stage.** Each stub's docstring
    says which modules it must not call and what to use instead.
 5. **Keep each module's docstring header**: its owner branch, and the design sections and
@@ -1744,6 +1753,14 @@ merged.
 8. **Hygiene** (2.8, Q28): nothing from outside the repository folder; no real company, client
    or person in code, data, docs, branch names or commit messages; no secrets, keys or `.env`
    files; invented emails use `example.com`.
+9. **A defect in a module merged in an earlier stage is fixed by the branch that finds it.**
+   The owner branch is finished by then, so nobody else will. Fix it in a commit of its own,
+   with a test that fails without the fix, and report the module and the defect for the merge
+   message. Change only what the defect needs: the module's interface and docstring header
+   stay. A module of a branch in your own stage is never edited, because its owner is changing
+   it at the same moment: work around it and report it. This is how a stage 3, 4 or 5 branch
+   deals with a fault it finds in earlier work, and stage 5 is the first place where the
+   pipeline, live mode and replay run together.
 
 The mini data set and its hand-written title rows (`MINI_ROWS` in `tests/conftest.py`) let
 stage 1 and stage 2 branches test before the generated mock data and the prepare step exist.
@@ -1764,21 +1781,82 @@ The prepare step must reproduce those rows exactly.
 
 ### The stage plan
 
-| Stage | Branch | What it delivers | Files it owns | Depends on | Section 2.7 tests it owns |
+The last column lists every test a branch owns: the tests of section 2.7 by their number
+above, then the tests and other deliverables that an entry decides, with the entry. A test an
+entry asks for and no branch owned would be dropped in an unattended build, so each has one
+owner here.
+
+| Stage | Branch | What it delivers | Files it owns | Depends on | Tests it owns |
 |---|---|---|---|---|---|
-| 0 | `chore/scaffold-contracts` | This record; tooling and `make check`; settings; seeding; shared types and the three model interfaces; readers and writers for the data files; the command line; a stub for every component; the mini data set | `pyproject.toml`, `uv.lock`, `.python-version`, `Makefile`, `.gitignore`, `.github/workflows/ci.yml`, `docs/build-decisions.md`; `titlestd/__init__.py`, `__main__.py`, `cli.py`, `contracts.py`, `settings.py`, `seeding.py`, `datafiles.py`, `reference.py`; the truth-file functions in `people.py`; `tests/conftest.py`, `tests/fixtures/mini/` and the tests for all of these | none | None of the eight. It owns the structural tests of S15, including the structural half of Q22. |
-| 1 | `feat/catalog-naming` | Catalog access; grade to level; the naming rule with and without a level word; `is_catalog_title` | `titlestd/catalog.py` | scaffold | T1 (the guard function), T5 (`model_visible_roles`). Also the worked example of 1.3 (Q36). |
-| 1 | `feat/prepare` | Cleaning, masking, grouping to title rows, the record of each row | `titlestd/prepare.py` | scaffold | None. It must reproduce `MINI_ROWS`. |
-| 1 | `feat/model-switch-offline` | The switch; the offline embedder; the stand-in LLM and agent | `titlestd/switch.py`, `offline_embedder.py`, `standin.py` | scaffold | None. It owns behavioural test (a) of Q22. |
-| 1 | `feat/simulated-people` | Wave 1 approvals, blind labels and review-queue decisions simulated from the truth | `titlestd/people.py` (all but the truth-file functions) | scaffold | None |
-| 2 | `feat/mock-data` | The seeded generator and its committed output | `titlestd/mockdata.py`, `data/` | prepare, catalog-naming | None. It owns the data tests of Q09, Q24 and Q35. |
-| 2 | `feat/lookup-ml-match` | The look-up table and the examples with the golden-set guard; the nearest-neighbour match; ML-alone eligibility | `titlestd/lookup.py`, `matcher.py` | catalog-naming, prepare, model-switch-offline | T6 (the guard), T5 (never embedded, never on a shortlist) |
-| 2 | `feat/llm-fallback-rules` | The record block, the seeded shuffle and numbering, the number-to-role mapping, the quote check; the rules of 1.7 | `titlestd/fallback.py`, `rules.py` | catalog-naming, prepare, model-switch-offline | T2, T3 (the rule), T5 (never in a numbered list) |
-| 2 | `feat/golden-audit-status` | The golden-set draw and scoring; the audit sample, its limits and three outcomes; the statuses of an audited path | `titlestd/golden.py`, `audit.py` | simulated-people | None. T6 needs the look-up, built beside it, so it is tested there and end to end. |
-| 2 | `feat/close-release-files` | The generic role under the cap; the load, reverse, exceptions and review-queue files; `apply_reverse` | `titlestd/close.py`, `release.py` | catalog-naming | T1 (the writer refuses), T7, T8 |
-| 2 | `feat/local-embedder` | `embedder = local` behind the `local` extra | `titlestd/local_embedder.py` | model-switch-offline | None |
-| 3 | `feat/agent` | The agent loop, the two searches, the numbering, the case | `titlestd/agent.py` | lookup-ml-match, llm-fallback-rules, model-switch-offline | T4, T5 (never in a search result), T3 (an injected reviewer that returns a flagged role) |
-| 4 | `feat/pipeline-report-cli` | The run: set-up, Wave 1, Wave 2, the close, learning between waves; the table and footer; the state file | `titlestd/pipeline.py`, `report.py`, `store.py` | every branch of stages 1 to 3 | All eight, end to end: T1, T3, T5, T6, T7 and T8 on the run's files and state, T2 and T4 with an injected misbehaving model. Also behavioural test (b) of Q22 and the run shape of Q23. |
-| 4 | `feat/live-replay` | `llm = anthropic`, `llm = replay`, the recorder and its key | `titlestd/live.py`, `replay.py`, `recording.py` | model-switch-offline, llm-fallback-rules, agent | None. It owns tiers (b) and (c) of Q32, at the level of `choose` and the agent loop over the mini data set; the round trip of a whole run waits for stage 5, because the pipeline is built beside it. |
-| 5 | `feat/recordings-replay-e2e` | The smoke run, the one live recording, the committed recordings and the replay run in the gate | `recordings/`, the tests marked `replay` | pipeline-report-cli, live-replay | None of its own: the replay run must pass the same invariants as the default run. |
-| 5 | `docs/readme-hygiene` | The README with the statements the design requires; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None |
+| 0 | `chore/scaffold-contracts` | This record; tooling and `make check`; settings; seeding; shared types and the three model interfaces; readers and writers for the data files; the command line; a stub for every component; the mini data set | `pyproject.toml`, `uv.lock`, `.python-version`, `Makefile`, `.gitignore`, `.github/workflows/ci.yml`, `docs/build-decisions.md`; `titlestd/__init__.py`, `__main__.py`, `cli.py`, `contracts.py`, `settings.py`, `seeding.py`, `datafiles.py`, `reference.py`; the truth-file functions in `people.py`; `tests/conftest.py`, `tests/fixtures/mini/` and the tests for all of these | none | None of the eight. The structural tests of S15, including the structural half of Q22 and the import guard; the gate environment (S14); the seams (S09). |
+| 1 | `feat/catalog-naming` | Catalog access; grade to level; the naming rule with and without a level word; `is_catalog_title` | `titlestd/catalog.py` | scaffold | T1 (the guard function), T5 (`model_visible_roles`). The worked example of 1.3 (Q36). |
+| 1 | `feat/prepare` | Cleaning, masking, grouping to title rows, the record of each row | `titlestd/prepare.py` | scaffold | None of the eight. It reproduces `MINI_ROWS`; the records do not depend on the order of the employees file (Q11). |
+| 1 | `feat/model-switch-offline` | The switch; the offline embedder; the stand-in LLM and agent | `titlestd/switch.py`, `offline_embedder.py`, `standin.py` | scaffold | None of the eight. Behavioural test (a) of Q22. |
+| 1 | `feat/simulated-people` | Wave 1 approvals, blind labels and review-queue decisions simulated from the truth | `titlestd/people.py` (all but the truth-file functions) | scaffold | None of the eight. One label per title whatever the order of calls (Q27); "could not decide" only on review-queue decisions (Q01); "no suitable role" only without a truth row (Q03); family codes matched after trimming (S05). |
+| 2 | `feat/mock-data` | The seeded generator and its committed output | `titlestd/mockdata.py`, `data/` | prepare, catalog-naming | None of the eight. The data tests of Q09, Q24 and Q35; byte-for-byte regeneration (Q06); every title has a truth row (Q03); the reference lists share no word with the data (Q14); the three flagged roles sit in three families (Q23). Not the run shape of Q23: see below. |
+| 2 | `feat/lookup-ml-match` | The look-up table and the examples with the golden-set guard; the nearest-neighbour match; ML-alone eligibility | `titlestd/lookup.py`, `matcher.py` | catalog-naming, prepare, model-switch-offline | T6 (the guard), T5 (never embedded, never on a shortlist). ML-alone eligibility (Q04); a title with a person's name joins the look-up and never the examples (Q14); a decision on a title with no usable family joins under its key (Q26). |
+| 2 | `feat/llm-fallback-rules` | The record block, the seeded shuffle and numbering, the number-to-role mapping, the quote check; the rules of 1.7 | `titlestd/fallback.py`, `rules.py` | catalog-naming, prepare, model-switch-offline | T2, T3 (the rule), T5 (never in a numbered list). The failed quote and the out-of-range number, with an injected answer (Q15, Q17). |
+| 2 | `feat/golden-audit-status` | The golden-set draw and scoring; the audit sample, its limits and three outcomes; the statuses of an audited path | `titlestd/golden.py`, `audit.py` | simulated-people | None of the eight: T6 needs the look-up, built beside it, so it is tested there and end to end. The three outcomes, the path of 60 or fewer and the stopped-path release setting, on constructed counts (Q23); the frame of the golden set (Q08, Q14, Q26). |
+| 2 | `feat/close-release-files` | The generic role under the cap; the load, reverse, exceptions and review-queue files; `apply_reverse` | `titlestd/close.py`, `release.py` | catalog-naming | T1 (the writer refuses), T7, T8. The file checks of Q05; "no suitable role" is never generic and never counts against the cap (Q03); a leftover with no usable family stays on its legacy title (Q26). |
+| 2 | `feat/local-embedder` | `embedder = local` behind the `local` extra | `titlestd/local_embedder.py` | model-switch-offline | None of the eight. The lazy import with a stub, and the message for a missing extra (Q30, S09); one smoke test marked `local_model` (Q30). |
+| 3 | `feat/agent` | The agent loop, the two searches, the numbering, the case | `titlestd/agent.py` | lookup-ml-match, llm-fallback-rules, model-switch-offline | T4, T5 (never in a search result), T3 (an injected reviewer that returns a flagged role). The cap, not-shown, out-of-family and zero-search tests on the shared loop with a scripted backend (Q20). |
+| 4 | `feat/pipeline-report-cli` | The run: set-up, Wave 1, Wave 2, the close, learning between waves; the table and footer; the state file; the tuning of the run shape and the frozen table (below) | `titlestd/pipeline.py`, `report.py`, `store.py`, `tests/fixtures/expected/`; for the tuning only, the difficulty constants in `titlestd/mockdata.py` and `data/` | every branch of stages 1 to 3 | All eight, end to end: T1, T3, T5, T6, T7 and T8 on the run's files and state, T2 and T4 with an injected misbehaving model. Behavioural test (b) of Q22. The run shape of Q23 and its invariants (Q05, Q16); two runs in separate processes give the same bytes (Q06, Q23); the frozen table (Q23, Q38); one run at a high `undecided_rate` (Q01); the default run under the import guard (Q32 a); the 60-second limit (Q38); spies showing no model is called for a title with a person's name or no usable family (Q14, Q26); a seed hit on the Wave 1 list (Q13); the ML-alone route switched on (Q04). |
+| 4 | `feat/live-replay` | `llm = anthropic`, `llm = replay`, the recorder and its key | `titlestd/live.py`, `replay.py`, `recording.py` | model-switch-offline, llm-fallback-rules, agent | None of the eight. Tiers (b) and (c) of Q32 at the level of `choose` and the agent loop over the mini data set; the start-up errors of Q31; the failures of Q39 with a fake client; the message for a missing extra (S09). |
+| 5 | `feat/recordings-replay-e2e` | The round trip of a whole run with a scripted client, first; then the smoke run, the one live recording, the committed recordings and the replay run in the gate | `recordings/`, `tests/integration/test_recordings*.py` | pipeline-report-cli, live-replay | None of the eight of its own: the replay run passes the same invariants as the default run. The round trip of a whole run (Q32 b); the replay run under the import guard (Q32 a); the committed recording replays with zero misses, marked `replay` (Q02, Q32); no recording holds a key-shaped string (Q29). |
+| 5 | `docs/readme-hygiene` | The README; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None of the eight. Mock emails use `example.com`; no tracked file holds a key-shaped string and no `.env` file is tracked (Q02, Q28). The README statements listed below. |
+
+### Work that crosses a branch boundary
+
+**The run shape (Q23).** The bar of Q23 is reached by shaping the generator, but it can first
+be measured when the pipeline exists, two stages after the generator is merged. So the two
+halves have two owners. In stage 2, `feat/mock-data` is done when its data tests pass and its
+difficulty knobs are named constants at the top of `titlestd/mockdata.py`. In stage 4,
+`feat/pipeline-report-cli` measures the default run against the bar. If the run misses it,
+that branch changes those constants, regenerates `data/` with the `generate-data` command and
+commits the two together in a commit of its own: one tuning round. There are at most three
+rounds (Q23). It changes nothing else of the generator, the data tests of
+`feat/mock-data` must still pass, and the default seed, the stand-ins and every threshold stay
+as they are. If the bar is still missed after the third round, the branch ships what the seed
+yields: its test asserts the part of the bar that holds, and the part that does not is stated
+in that test, in the docstring of `titlestd/pipeline.py` and for the merge message, so that
+the README can say it. Nothing in stage 4 collides with this: `feat/live-replay` tests on the
+mini data set and does not read `data/`.
+
+**The frozen table (Q23, Q38).** `tests/fixtures/expected/default_run.txt` holds the text the
+default run prints. `feat/pipeline-report-cli` writes it from a real run on Python 3.12, never
+by hand, as its last commit, after any tuning round, together with an integration test that
+compares the output of the default run with it byte for byte and is skipped unless the
+interpreter is Python 3.12. Q23 freezes the table only once the shape is final, and that is
+the moment. Whoever later changes what the default run prints, for example with a fix under
+rule 9, regenerates the file in the same commit.
+
+**The round trip of a whole run (Q32 b).** `feat/live-replay` tests recording and replay at
+the level of `choose` and the agent loop, because the pipeline is built beside it. The whole
+run is the first deliverable of `feat/recordings-replay-e2e`, before the smoke run and before
+any money is spent: on the mini data set, live mode with a scripted client under the model ID
+`test-double` runs through the pipeline and the real recorder into a temporary folder; replay
+then gives the same decisions and files, apart from the answer label; one changed input gives
+a miss, a non-zero exit and no output files. It uses the seams of S09 and commits no
+recording.
+
+**The runs under the import guard (Q32 a).** Both use `IMPORT_GUARD` of `tests/conftest.py`
+(S15): the default run in `feat/pipeline-report-cli`, the replay run in
+`feat/recordings-replay-e2e`, which is the first branch that has a committed recording.
+
+### What the README must say
+
+`docs/readme-hygiene` writes the README. These statements are required, and the README says
+each in its own words:
+
+| Source | Statement |
+|---|---|
+| 2.4 | Offline accuracy shows the flow, not model quality. |
+| 2.4 | At 60 titles per path the audit has little power, so provisional is the usual result in the mock. |
+| Q01 | The "could not decide" rate of simulated reviewers is a simulation device. |
+| Q14 | The invented name list stands in for a real name masker. |
+| Q18 | Changing the seed, the data or the embedder invalidates a recording. |
+| Q23 | The shape of the default run, and that a machine path of 60 titles or fewer is labeled in full and gets no status. |
+| Q30 | How `embedder = local` gets its model, and the result of the `local_model` smoke test if it failed or timed out. |
+| Q37 | The three-SME agreement exercise of set-up is left out. |
+| Q02, Q39 | The `record` command; the key comes only from the environment, exported in the shell or passed from a file outside version control with `uv run --env-file`. |
+| S09 | The command that runs the program with an optional extra. |

@@ -900,6 +900,46 @@ def test_at_a_high_undecided_rate_the_generic_role_stops_at_its_cap(run_with, da
     assert {entry.row.key for entry in result.queue} == {e.row.key for e in default.queue}
 
 
+@pytest.mark.parametrize(
+    "changes",
+    [{"undecided_rate": 0.8}, {"sme_error_rate": 0.3, "release_stopped_paths": False}],
+    ids=["leftovers past the cap", "a stopped path"],
+)
+def test_an_employee_with_no_grade_who_stays_on_a_legacy_title_is_listed_once(
+    run_with, data, changes
+):
+    # Q05: the second count under the table is of the employees with no grade
+    # who received a new title. In the default run every one of them does, so
+    # the count is checked here, where some stay on a legacy title.
+    settings, result = run_with(**changes)
+    load = datafiles.read_table(settings.out_dir / release.LOAD_FILE, release.LOAD_COLUMNS)
+    exceptions = datafiles.read_table(
+        settings.out_dir / release.EXCEPTIONS_FILE, release.EXCEPTIONS_COLUMNS
+    )
+    no_grade = {
+        employee.employee_id
+        for employee in data.employees
+        if level_for_grade(data.catalog, employee.grade) is None
+    }
+    given = {line["employee_id"] for line in exceptions if line["released"] == "1"}
+    kept = {line["employee_id"]: line["reason"] for line in exceptions if line["released"] == "0"}
+    left = no_grade & set(kept)
+    assert left, "the test needs an employee with no grade who stays on a legacy title"
+    # Such an employee has the released = 0 line only, with the reason the title stays.
+    assert given == no_grade - left
+    assert len(exceptions) == len(given) + len(kept)
+    assert "no grade" not in kept.values()
+    assert {line["employee_id"] for line in load if line["no_grade"] == "1"} == given
+    # The count is of those given a title, not of everyone with no grade.
+    counted = result.no_grade_employees
+    assert counted == len(given) < len(no_grade)
+    counts = printed_numbers(
+        report.render(result, settings),
+        r"Exceptions list: (\d+) employees left on a legacy title; (\d+) employees .*",
+    )
+    assert counts == [len(kept), len(given)]
+
+
 def test_the_in_process_run_is_the_default_run(run_with, default_run):
     # The runs below differ from the default run in one setting only.
     settings, result = run_with()

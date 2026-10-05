@@ -229,15 +229,35 @@ def test_a_run_starts_from_fresh_state_whatever_an_earlier_run_left(mini_setting
     assert (mini_settings.out_dir / release.LOAD_FILE).read_text(encoding="utf-8") != "stale"
 
 
+class FirstLook:
+    """The real embedder, which notes what the state file holds the first time
+    it is asked: the ML match of the first wave is the first model call of a run."""
+
+    TABLES = ("settings", "thresholds", "title_rows", "scorings", "human_decisions")
+
+    def __init__(self, embedder, settings: Settings) -> None:
+        self._embedder, self._settings = embedder, settings
+        self.seen: dict[str, list[tuple]] = {}
+
+    def embed(self, texts):
+        if not self.seen:
+            for table in self.TABLES:
+                self.seen[table] = rows_of(self._settings, f"SELECT * FROM {table}")
+        return self._embedder.embed(texts)
+
+
 def test_set_up_records_the_settings_and_thresholds_in_force(mini_settings):
-    # Q37: fixed and recorded before any scoring.
-    pipeline.run_pipeline(mini_settings)
-    saved = dict(rows_of(mini_settings, "SELECT name, value FROM settings"))
-    assert saved == {
+    # Q37: fixed and recorded before any scoring. The state is read when the
+    # first model is asked, and again when the run is over.
+    models = real_models(mini_settings)
+    first = FirstLook(models.embedder, mini_settings)
+    pipeline.run_pipeline(mini_settings, models=Models(first, models.llm))
+    assert first.seen["scorings"] == first.seen["human_decisions"] == []
+    assert dict(first.seen["settings"]) == {
         name: "" if value is None else str(int(value) if isinstance(value, bool) else value)
         for name, value in mini_settings.as_dict().items()
     }
-    assert dict(rows_of(mini_settings, "SELECT name, value FROM thresholds")) == {
+    assert dict(first.seen["thresholds"]) == {
         "audit_sample_size": "60",
         "audit_accuracy_bar": "0.9",
         "audit_confirm_limit": "2",
@@ -245,6 +265,11 @@ def test_set_up_records_the_settings_and_thresholds_in_force(mini_settings):
         "generic_cap_employees": "0",  # 2% of 22 employees, rounded down
         "release_stopped_paths": "0",
     }
+    assert len(first.seen["title_rows"]) == 15
+    # Nothing a run does later changes what set-up recorded.
+    for table in ("settings", "thresholds", "title_rows"):
+        assert rows_of(mini_settings, f"SELECT * FROM {table}") == first.seen[table], table
+    assert rows_of(mini_settings, "SELECT count(*) FROM scorings") != [(0,)]
     flagged = rows_of(
         mini_settings,
         "SELECT family_code, cleaned_title FROM title_rows WHERE on_wave1_list ORDER BY 1, 2",

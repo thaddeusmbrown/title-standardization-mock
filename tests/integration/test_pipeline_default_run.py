@@ -8,7 +8,8 @@ docs/design.md 2.7 are checked on those files and on the state file.
 
 A few more runs on the mock data, each made once and in this process, show
 what the default seed does not: a close with more leftovers than the cap holds
-(Q01) and the other two outcomes of an audit (2.4).
+(Q01), the other two outcomes of an audit (2.4) and a sampled audit of the
+agent-settled path (1.6 step 10).
 
 The tests above the last one state rules, not the numbers of the default run.
 The numbers are in tests/fixtures/expected/default_run.txt, which the run
@@ -19,6 +20,7 @@ file byte for byte (Q23, Q38).
 from __future__ import annotations
 
 import dataclasses
+import functools
 import re
 import shutil
 import sqlite3
@@ -43,6 +45,7 @@ from titlestd.contracts import (
     AUDIT_SAMPLE_SIZE,
     LOOKUP_DECIDED_BY,
     AuditOutcome,
+    DecisionSource,
     InputData,
     RunResult,
     TableRow,
@@ -754,7 +757,10 @@ def test_t6_golden_set_titles_never_enter_the_look_up_table_or_the_examples(defa
 
 
 def test_only_what_a_person_decided_is_learned(default_run):
-    # 1.6 step 10: a title the agent settled does not join until a person approves it.
+    # 1.6 step 10: nothing a machine path released without a person joins.
+    # Here that is the unaudited rest of the models-agree path; the
+    # agent-settled path of the default run is labeled in full, so a run in
+    # which it is sampled is tested further down.
     looked_up = default_run.keys("SELECT family_code, cleaned_title FROM lookup")
     by_person = default_run.keys(
         "SELECT family_code, cleaned_title FROM decisions WHERE source IN ('person', 'look-up')"
@@ -976,6 +982,43 @@ def test_a_path_that_misses_the_bar_is_released_as_provisional_with_its_error_ra
     assert by_status == {"Approved": 60, "Provisional": audited.path_size - 60}
     assert {line["status"] for line in released} == {"Approved", "Provisional"}
     assert not [line for line in load if line["status"] == "Confirmed"]
+
+
+def test_a_title_the_agent_settled_is_not_learned_until_a_person_approves_it(run_with):
+    # 1.6 step 10, on a sampled audit of the agent-settled path, which the
+    # default seed does not give (Q23). The stand-in LLM is set to find no
+    # match for any title, so every scored title is referred to the agent, and
+    # most of what the agent settles is released with no person reading it.
+    settings, result = run_with(standin_no_match_below=100)
+    audited, row = path_rows(result)["agent-settled"]
+    assert audited.path_size > AUDIT_SAMPLE_SIZE == audited.audited
+    unread = {each.key for each in row if each.source is DecisionSource.MACHINE}
+    assert len(unread) == audited.path_size - AUDIT_SAMPLE_SIZE, "the test needs a released path"
+    assert unread.isdisjoint(audited.audited_keys)
+    labeled = set(audited.audited_keys) - set(result.golden_keys)
+    for table in ("lookup", "examples"):
+        held = {
+            TitleKey(*key)
+            for key in read_state(
+                settings.out_dir, f"SELECT family_code, cleaned_title FROM {table}"
+            )
+        }
+        assert held.isdisjoint(unread), table
+        # The audited titles did join: an SME labeled them (Q21). Never a golden one (Q07).
+        assert labeled <= held and held.isdisjoint(result.golden_keys), table
+    # The unread titles went out on the agent's answer, the audited ones on the SME's label.
+    counted = check_who_decided(functools.partial(read_state, settings.out_dir))
+    assert counted["agent-settled", "machine"] == len(unread)
+    assert counted["agent-settled", "person"] == AUDIT_SAMPLE_SIZE
+    assert counted["models agree", "machine"] == counted["models agree", "person"] == 0
+    # In the load file they carry the path's status, and nobody's name (1.9).
+    load = datafiles.read_table(settings.out_dir / release.LOAD_FILE, release.LOAD_COLUMNS)
+    in_row = [line for line in load if line["path"] == "agent-settled"]
+    by_machine = {
+        (line["status"], line["decided_by"]) for line in in_row if line["simulated"] == "0"
+    }
+    assert by_machine == {(audited.outcome.value, "")}
+    assert {line["status"] for line in in_row} == {"Approved", audited.outcome.value}
 
 
 @pytest.mark.parametrize("release_stopped_paths", [False, True])

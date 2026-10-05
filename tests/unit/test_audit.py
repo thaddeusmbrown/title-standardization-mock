@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+import re
 from fractions import Fraction
 
 import pytest
@@ -369,6 +370,26 @@ def test_the_labels_must_be_those_of_the_whole_sample(size, labeled, message):
     labels = {key: _label(key, MACHINE_ROLE) for key in keys[:labeled]}
     with pytest.raises(ValueError, match=message):
         audit.audit_path(MachinePath.MODELS_AGREE, machine, labels)
+
+
+def test_a_label_filed_under_another_title_is_refused():
+    # A label is a person's decision on one title, and says which. Handed in
+    # for another title, it would be released as that title's role (Q21).
+    machine, labels, _ = _audited_path(200, 0)
+    first, second = sorted(labels)[:2]
+    labels[first] = _label(second, MACHINE_ROLE)
+    message = (
+        f"the label handed in for {tuple(first)!r} is a decision on another title: "
+        f"{tuple(second)!r}"
+    )
+    with pytest.raises(ValueError, match=re.escape(message)):
+        audit.audit_path(MachinePath.MODELS_AGREE, machine, labels)
+    # In a path labeled in full, too.
+    small, small_labels, _ = _audited_path(3, 0)
+    first, second, _ = sorted(small_labels)
+    small_labels[first], small_labels[second] = small_labels[second], small_labels[first]
+    with pytest.raises(ValueError, match="is a decision on another title"):
+        audit.audit_path(MachinePath.AGENT_SETTLED, small, small_labels)
 
 
 def test_a_blind_label_that_could_not_decide_is_refused():

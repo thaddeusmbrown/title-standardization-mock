@@ -177,6 +177,12 @@ def test_the_description_query_is_its_first_words_as_written():
     spaced = Record("bdr", "SAL", "Inside Sales", "Finds  and qualifies\nnew leads, by outreach.")
     turn = make().next_turn(transcript(spaced, (), catalog(), approved()))
     assert turn == SearchRequest(SearchTool.CATALOG, "Finds and qualifies new leads, by outreach.")
+    # A word of the twelve is what stands between whitespace: "end-to-end" is one.
+    words = ["end-to-end", "co-ordinator,", *(f"word{n}" for n in range(3, 16))]
+    hyphened = Record("bdr", "SAL", "Inside Sales", " ".join(words))
+    turn = make().next_turn(transcript(hyphened, (), catalog(), approved()))
+    assert turn == SearchRequest(SearchTool.CATALOG, " ".join(words[:12]))
+    assert turn.query.endswith("word11 word12")
 
 
 def test_without_a_description_there_is_no_third_search():

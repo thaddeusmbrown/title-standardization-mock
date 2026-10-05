@@ -61,6 +61,10 @@ Decided here, where Q17 and Q19 leave the detail open:
   fault injected here.
 - Only roles that carry a number are candidates, for the LLM and the agent.
   With none, the LLM answers "no match" and the agent escalates.
+- The agent's third search asks with the first 12 words of the description
+  as written: the pieces between whitespace, with their punctuation, joined
+  by single spaces. That is not the word of the first point: a query is
+  text for the search to read, so "end-to-end" is one word of the twelve.
 - The agent's bonus is one point, once per role, for a role that any hit of
   an approved-title search maps to. With a single candidate there is no
   runner-up to beat. Its turn depends only on the transcript: how many
@@ -145,7 +149,8 @@ STOP_WORDS = frozenset(
 )
 # A level written as a number, as in "ACCT MGR II" or "Analyst 2".
 LEVEL_NUMERALS = frozenset({"1", "2", "3", "4", "5", "i", "ii", "iii", "iv", "v"})
-# Q19: the third search asks with the first words of the description.
+# Q19: the third search asks with the first words of the description, split at
+# whitespace.
 DESCRIPTION_QUERY_WORDS = 12
 # Q19: worth one shared word.
 APPROVED_TITLE_BONUS = 1

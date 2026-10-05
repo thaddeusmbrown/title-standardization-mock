@@ -616,6 +616,32 @@ def test_what_people_decide_is_learned_after_the_wave_it_was_decided_in(mini_set
     assert {TitleKey(*row[:2]) for row in examples} == set().union(*joined.values()) - {NAMED}
 
 
+def test_each_scoring_of_the_golden_set_meets_the_examples_that_joined_before_it(mini_settings):
+    # Q08: scored in Wave 1 before the Wave 1 approvals join, in Wave 2 on the
+    # answers of Wave 2, and at the close after the queue decisions join.
+    pipeline.run_pipeline(mini_settings)
+    joined = dict(rows_of(mini_settings, "SELECT cleaned_title, joined_at FROM examples"))
+    approved, audited, queued = "senior account manager", "treasury analyst", "special projects"
+    assert [joined[title] for title in (approved, audited, queued)] == ["Wave 1", "Wave 2", "close"]
+    # The approved titles that scored best for a role of the shortlist of one golden title.
+    met = {
+        stage: {
+            text
+            for (text,) in rows_of(
+                mini_settings,
+                "SELECT matched_text FROM ml_shortlist "
+                "WHERE stage = ? AND family_code = ? AND cleaned_title = ?",
+                stage,
+                *GOLDEN[0],
+            )
+        }.intersection(joined)
+        for stage in ("Wave 1", "Wave 2", "close")
+    }
+    assert met["Wave 1"] <= {title for title, stage in joined.items() if stage == "set-up"}
+    assert approved in met["Wave 2"] and not {audited, queued} & met["Wave 2"]
+    assert {approved, audited, queued} <= met["close"]
+
+
 # --- the eight rules of 2.7 that need a model handed in ------------------------------------
 
 

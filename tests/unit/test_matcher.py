@@ -10,6 +10,7 @@ m and n different words that share k have cosine k / sqrt(m * n).
 
 from __future__ import annotations
 
+import itertools
 import math
 import re
 from collections import Counter
@@ -145,13 +146,22 @@ def test_cosine_is_the_dot_product_over_the_shared_buckets():
 
 
 def test_cosine_sums_exactly_so_the_order_of_a_vectors_items_cannot_change_it():
-    # Ten products of 0.1 are exactly 1.0; adding them one by one gives 0.9999999999999999.
+    # Summed exactly, ten products of 0.1 round to 1.0. A plain running total
+    # (total += product) gives 0.9999999999999999.
     tenths, ones = dict.fromkeys(range(10), 0.1), dict.fromkeys(range(10), 1.0)
     assert cosine(tenths, ones) == cosine(ones, tenths) == 1.0
-    # Added in this order a running sum loses the 1.0 altogether.
+    # Added in this order a plain running total loses the 1.0 altogether.
     lossy, flat = {0: 1e16, 1: 1.0, 2: -1e16}, {0: 1.0, 1: 1.0, 2: 1.0}
     backwards = dict(reversed(list(lossy.items())))
     assert cosine(lossy, flat) == cosine(flat, lossy) == cosine(backwards, flat) == 1.0
+    # The built-in sum is compensated since Python 3.12 and gets both of those
+    # right, so they do not tell it from math.fsum. These five do, in every
+    # order. Their exact sum is 99990000000011000 less 1e-16, a hair under the
+    # midpoint of the neighbouring floats ...10992 and ...11008, so it rounds
+    # down. sum() loses the 1e-16 and rounds the tie up.
+    for values in itertools.permutations((1000.0, -1e13, 1e4, -1e-16, 1e17)):
+        halfway = dict(enumerate(values))
+        assert cosine(halfway, dict.fromkeys(halfway, 1.0)) == 99990000000010992.0
 
 
 def test_a_dense_vector_is_the_mapping_of_every_index():

@@ -126,7 +126,7 @@ def render(result: RunResult, settings: Settings) -> str:
         f"Wave 1 list, {len(result.queue)} in the review queue. "
         f"Blind labels besides: {audited_titles} in the audits, "
         f"{len(result.golden_keys)} on the golden set.",
-        "Golden set, right by the SME's label:",
+        "Golden-set accuracy, by the SME's labels:",
     ]
     for score in result.golden_scores:
         text.append(
@@ -136,7 +136,7 @@ def render(result: RunResult, settings: Settings) -> str:
     text += [
         f"Exceptions list: {employees[TableRow.LEGACY]} employees left on a legacy title; "
         f"{result.no_grade_employees} employees with no grade given a title with no level word.",
-        f"Model answers: {_sources(result.answer_labels)}. Embedder: {settings.embedder}.",
+        f"LLM and agent answers: {_sources(result.answer_labels)}. Embedder: {settings.embedder}.",
         "People were simulated from the truth file: every decision a person made in this "
         "run is a simulated one.",
     ]

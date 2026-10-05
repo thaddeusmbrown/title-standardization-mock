@@ -172,7 +172,7 @@ def test_it_prints_one_table_and_writes_the_files_under_out(default_run, repo_ro
     assert set(printed_table(default_run.stdout)) == {*ROW_NAMES, "total"}
     for name in (*pipeline.OUTPUT_FILES, store.STATE_FILE):
         assert (repo_root / "out" / name).is_file(), name
-    assert "Model answers: stand-in. Embedder: offline." in lines
+    assert "LLM and agent answers: stand-in. Embedder: offline." in lines
     assert any(line.startswith("People were simulated") for line in lines)
 
 

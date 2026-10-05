@@ -298,7 +298,7 @@ def test_a_title_on_the_wave_1_list_and_in_the_queue_is_sent_to_a_person_once():
 
 def test_the_golden_set_is_shown_for_each_stage_with_the_titles_given_no_role():
     lines = report.render(a_result(), SETTINGS).splitlines()
-    start = lines.index("Golden set, right by the SME's label:")
+    start = lines.index("Golden-set accuracy, by the SME's labels:")
     assert lines[start + 1 : start + 4] == [
         "  Wave 1: ML first choice 1/2, LLM pick 2/2 (0 with no role named)",
         "  Wave 2: ML first choice 2/2, LLM pick 1/2 (1 with no role named)",
@@ -337,7 +337,8 @@ def test_the_two_counts_of_the_exceptions_list_are_printed():
 def test_one_line_says_where_the_answers_came_from_and_names_the_embedder(labels, shown):
     settings = Settings(embedder="local")
     text = report.render(a_result(answer_labels=labels), settings)
-    assert line_starting(text, "Model answers") == f"Model answers: {shown}. Embedder: local."
+    line = line_starting(text, "LLM and agent answers")
+    assert line == f"LLM and agent answers: {shown}. Embedder: local."
 
 
 def test_the_footer_says_people_were_simulated():

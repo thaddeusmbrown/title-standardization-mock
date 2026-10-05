@@ -864,6 +864,67 @@ def test_t6_the_run_stops_if_a_golden_title_is_learned(mini_settings, monkeypatc
     assert not (mini_settings.out_dir / release.LOAD_FILE).exists()
 
 
+class FlaggedOnce:
+    """The stand-in's answers for one golden-set title, which the LLM is asked
+    about three times (Q08): in the golden-set pass of Wave 1, in Wave 2 and in
+    the golden-set pass of the close. In Wave 2 the quote is not in the
+    record, so the title goes to the review queue for a reason that has
+    nothing to do with compliance. In the stage the test names, the pick is
+    the compliance-flagged role."""
+
+    def __init__(self, chooser, title: str, flagged_role: str, stage: str | None) -> None:
+        self._chooser, self._title, self._role, self._stage = chooser, title, flagged_role, stage
+        self._stages = iter(("Wave 1", "Wave 2", "close"))
+
+    def choose(self, record, roles):
+        answer = self._chooser.choose(record, roles)
+        if record.cleaned_title != self._title:
+            return answer
+        stage = next(self._stages)
+        if stage == self._stage:
+            (number,) = [shown.number for shown in roles if shown.role.role_id == self._role]
+            return dataclasses.replace(answer, answer=ChooseKind.ROLE, number=number)
+        if stage == "Wave 2":
+            return dataclasses.replace(answer, quote="words the record does not hold")
+        return answer
+
+
+@pytest.mark.parametrize("flagged_in", [None, "Wave 1", "close"])
+def test_t7_a_leftover_the_compliance_check_ever_fired_on_takes_no_generic_role(
+    mini_settings, mini_catalog, flagged_in
+):
+    # Q25: eligible only if the check "never fired on any proposal or on the ML
+    # top three". A golden-set title is scored three times, against other
+    # examples each time, and the check counts wherever it fired.
+    (flagged,) = [role.role_id for role in mini_catalog.roles if role.compliance_flag]
+    title = GOLDEN[0]
+    settings = dataclasses.replace(mini_settings, undecided_rate=1.0, generic_cap_share=1.0)
+    models = real_models(settings)
+    chooser = FlaggedOnce(models.llm.chooser, title.cleaned_title, flagged, flagged_in)
+    llm = dataclasses.replace(models.llm, chooser=chooser)
+    result = pipeline.run_pipeline(settings, models=Models(models.embedder, llm))
+
+    scored = dict(
+        rows_of(
+            settings,
+            "SELECT stage, reasons FROM scorings WHERE family_code = ? AND cleaned_title = ?",
+            *title,
+        )
+    )
+    fired_in = {stage for stage, reasons in scored.items() if "compliance-flagged role" in reasons}
+    assert set(scored) == {"Wave 1", "Wave 2", "close"}
+    assert fired_in == ({flagged_in} if flagged_in else set())
+    # In Wave 2 nothing about the title touched a flagged role, and nobody decided it.
+    line = queue_file(settings)[title]
+    assert (line["reasons"], line["decision"]) == ("quote not in record", "could not decide")
+    decision = decision_of(result, title)
+    if flagged_in is None:
+        assert (decision.row, decision.role_id) == (TableRow.GENERIC, "FIN-GEN")
+    else:
+        assert (decision.row, decision.role_id) == (TableRow.LEGACY, None)
+        assert decision.legacy_reason.value == "undecided widely held or flagged title"
+
+
 # --- the ML-alone route (Q04) ---------------------------------------------------------
 
 

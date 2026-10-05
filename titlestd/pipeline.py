@@ -26,8 +26,9 @@ Order of a run:
           agent only recommends. Then the approvals are learned.
   Wave 2  the long tail is scored for release; the agent's answer stands; both
           machine paths are audited; everything else goes to the review queue.
-  close   people clear the queue; leftovers take a generic family role under
-          the cap; the files are written and the table printed.
+  close   people clear the queue; the golden set is scored once more;
+          leftovers take a generic family role under the cap; the files are
+          written and the table printed.
 
 Titles are processed sorted by key. This module and titlestd.mockdata are the
 only ones that may import titlestd.people; a model call is handed only its
@@ -85,6 +86,18 @@ Decided here, where the record is silent:
   role is nothing to learn. After each of the three the run checks that no
   golden-set title is in the look-up table or the examples, and stops with
   an error if one is (Q08: "asserted after every stage").
+- Which scorings bar a leftover from a generic role. Q25 makes a leftover
+  eligible only if the compliance check of 1.7 "never fired on any proposal
+  or on the ML top three", and contracts.Leftover says "at any point". So
+  the check counts in every scoring of the title during the run. For most
+  titles that is the Wave 2 scoring. A golden-set title is scored twice
+  more, in the golden-set passes of Wave 1 and of the close (Q08), against
+  other examples, and the check counts there as well: the fail-safe reading.
+  It is the one way in which being in the golden set can change what a title
+  is released with (Q07): such a leftover stays on its legacy title where
+  another would take a generic role. The leftovers are therefore closed
+  after the golden-set pass of the close. The review-queue file gives the
+  reasons of Wave 2 as before; the state file has those of every scoring.
 - The number of employees with no grade who received a new title is counted
   with titlestd.catalog.level_for_grade, as the release writer reads a grade.
 - The state records the occasions of people's decisions as OCCASION_WAVE1,
@@ -312,6 +325,8 @@ class _Run:
         self.queue: dict[TitleKey, tuple[tuple[Reason, ...], _Scored | None]] = {}
         self.queue_decisions: dict[TitleKey, HumanDecision] = {}
         self.leftovers: list[Leftover] = []
+        # Titles on which the compliance check of 1.7 fired, in any scoring (Q25).
+        self.flagged: set[TitleKey] = set()
 
     def result(self) -> RunResult:
         self.set_up()
@@ -436,25 +451,27 @@ class _Run:
         decided = [self.people.queue_decision(self.by_key[key]) for key in waiting]
         store.save_people(self.connection, OCCASION_QUEUE, decided)
         for decision in decided:
-            key = decision.key
-            self.queue_decisions[key] = decision
+            self.queue_decisions[decision.key] = decision
             if decision.answer is HumanAnswer.ROLE:
-                self.decisions[key] = _approved(decision, TableRow.REVIEW_QUEUE)
-                continue
-            reasons, _ = self.queue[key]
-            self.leftovers.append(
-                Leftover(
-                    self.by_key[key],
-                    compliance_fired=Reason.COMPLIANCE_FLAG in reasons,
-                    no_suitable_role=decision.answer is HumanAnswer.NO_SUITABLE_ROLE,
-                )
+                self.decisions[decision.key] = _approved(decision, TableRow.REVIEW_QUEUE)
+        # The golden set is scored once more, after the queue decisions joined (Q08).
+        self._learn(Stage.CLOSE, decided)
+        golden_pass = self._score(Stage.CLOSE, self.golden_rows, with_agent=False)
+        # Only now are the leftovers closed: the compliance check bars a title
+        # from a generic role wherever in the run it fired, this pass included (Q25).
+        self.leftovers += [
+            Leftover(
+                self.by_key[decision.key],
+                compliance_fired=decision.key in self.flagged,
+                no_suitable_role=decision.answer is HumanAnswer.NO_SUITABLE_ROLE,
             )
+            for decision in decided
+            if decision.answer is not HumanAnswer.ROLE
+        ]
         for decision in close.close_leftovers(
             self.leftovers, len(self.data.employees), self.catalog, self.settings
         ):
             self.decisions[decision.key] = decision
-        self._learn(Stage.CLOSE, decided)
-        golden_pass = self._score(Stage.CLOSE, self.golden_rows, with_agent=False)
         return self._golden_score(Stage.CLOSE, golden_pass)
 
     # --- shared steps -------------------------------------------------------------
@@ -495,6 +512,8 @@ class _Run:
                     each = dataclasses.replace(each, review=review, review_outcome=review_outcome)
             scored[row.key] = each
             self.labels.update(each.labels)
+            if Reason.COMPLIANCE_FLAG in each.reasons:
+                self.flagged.add(row.key)
             store.save_scoring(
                 self.connection,
                 stage,

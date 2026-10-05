@@ -59,6 +59,11 @@ ROW_NAMES = [row.value for row in TableRow]
 PATH_ROWS = ("models agree", "agent-settled")
 # The occasions on which an HR SME decides, as the state file names them.
 SME_ASKED = (pipeline.OCCASION_WAVE1, pipeline.OCCASION_GOLDEN, pipeline.OCCASION_AUDIT)
+# The titles on which the compliance check of 1.7 fired, in any scoring of a run.
+COMPLIANCE_FIRED = (
+    "SELECT DISTINCT family_code, cleaned_title FROM scorings "
+    "WHERE reasons LIKE '%compliance-flagged role%'"
+)
 
 # After the import guard: the run command exactly as "python3 -m titlestd run"
 # makes it, then what the guard saw, on standard error.
@@ -102,15 +107,20 @@ class Run:
         return {TitleKey(line["job_family_code"], line["cleaned_title"]): line for line in lines}
 
     def state(self, query: str, *arguments: object) -> list[tuple]:
-        connection = sqlite3.connect(self.folder / store.STATE_FILE)
-        try:
-            return list(connection.execute(query, arguments))
-        finally:
-            connection.close()
+        return read_state(self.folder, query, *arguments)
 
     def keys(self, query: str, *arguments: object) -> set[TitleKey]:
         """The titles a query of the state file selects, by family code and cleaned title."""
         return {TitleKey(*row) for row in self.state(query, *arguments)}
+
+
+def read_state(folder: Path, query: str, *arguments: object) -> list[tuple]:
+    """What a query selects in the state file a run left in a folder."""
+    connection = sqlite3.connect(Path(folder) / store.STATE_FILE)
+    try:
+        return list(connection.execute(query, arguments))
+    finally:
+        connection.close()
 
 
 def run_by_default(bare_python, import_guard: str, repo_root: Path, keep: Path) -> Run:
@@ -660,8 +670,10 @@ def test_only_what_a_person_decided_is_learned(default_run):
     assert len(named) == 5 and examples == looked_up - named
 
 
-def check_the_generic_role(run_queue, decisions, title_rows, data, settings) -> int:
-    """T7 on one run; returns the number of employees given a generic role."""
+def check_the_generic_role(run_queue, decisions, fired, title_rows, data, settings) -> int:
+    """T7 on one run; returns the number of employees given a generic role.
+
+    fired holds the titles that COMPLIANCE_FIRED selects in the run's state."""
     catalog = data.catalog
     cap = generic_cap(len(data.employees), settings)
     generic = {key: role for key, (row, role) in decisions.items() if row == "generic family role"}
@@ -675,7 +687,8 @@ def check_the_generic_role(run_queue, decisions, title_rows, data, settings) -> 
         assert key not in wave1  # never a Wave 1 title
         line = run_queue[key]
         assert line["decision"] == "could not decide"  # a title nobody could decide (1.8)
-        assert "compliance-flagged role" not in line["reasons"]  # never a flagged title
+        # Never a flagged title: the check fired in no scoring of it, at any stage (Q25).
+        assert "compliance-flagged role" not in line["reasons"] and key not in fired
         assert title_rows[key].model_eligible  # a model scored it, and it has a family
         assert role_id == generic_role(catalog, key.family_code).role_id
     return held
@@ -690,7 +703,9 @@ def test_t7_the_generic_role_is_never_past_its_cap_or_on_a_barred_title(
             "SELECT family_code, cleaned_title, table_row, role_id FROM decisions"
         )
     }
-    check_the_generic_role(default_run.queue, decisions, title_rows, data, Settings())
+    fired = default_run.keys(COMPLIANCE_FIRED)
+    assert len(fired) > 10
+    check_the_generic_role(default_run.queue, decisions, fired, title_rows, data, Settings())
     statuses = default_run.state(
         "SELECT DISTINCT source, status, decided_by, simulated, error_rate FROM decisions "
         "WHERE table_row = 'generic family role'"
@@ -749,7 +764,8 @@ def test_at_a_high_undecided_rate_the_generic_role_stops_at_its_cap(run_with, da
         )
     }
     decisions = {each.key: (each.row.value, each.role_id) for each in result.decisions}
-    held = check_the_generic_role(queue, decisions, title_rows, data, settings)
+    fired = {TitleKey(*row) for row in read_state(settings.out_dir, COMPLIANCE_FIRED)}
+    held = check_the_generic_role(queue, decisions, fired, title_rows, data, settings)
     cap = generic_cap(len(data.employees), settings)
     size = headcounts(result)
     legacy = {each.key: each.legacy_reason.value for each in result.decisions if each.legacy_reason}
@@ -765,7 +781,8 @@ def test_at_a_high_undecided_rate_the_generic_role_stops_at_its_cap(run_with, da
     for key, reason in legacy.items():
         line = queue[key]
         assert line["decision"] == "could not decide" and line["outcome"] == "left on legacy title"
-        flagged = "compliance-flagged role" in line["reasons"]
+        flagged = key in fired  # in Wave 2 or, for a golden-set title, in a pass of its own
+        assert flagged or "compliance-flagged role" not in line["reasons"]
         unscored = not title_rows[key].model_eligible
         assert (reason == "undecided widely held or flagged title") == flagged
         assert (reason == "undecided title with a person's name or no usable family") == (

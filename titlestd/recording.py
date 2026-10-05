@@ -55,14 +55,33 @@ Decided here, where the record leaves the detail open:
   It is told in the manifest to explain a miss; the key is what decides.
 - A stored turn mirrors the contract types: {"answer", "number", "quote",
   "detail"} for an answer, {"tool", "query"} for a search request.
+- A recording's folder is named after the model, so a model string that is
+  not one plain folder name (it holds a path separator, or is "." or "..")
+  is refused when the recording is opened, before any request.
+- A live run writes into the sibling folder <embedder>.partial, each entry
+  as it is made, so the answers of a run that stops are kept there. The
+  folder is made, and one left by an earlier run removed, when the first
+  answer is recorded: a run that fails on its first request writes
+  nothing. finish sorts the two files, writes the manifest and only then
+  puts the folder in the place of the previous recording.
+- The manifest is flat: model, the settings that can shape a prompt (all
+  but llm, llm_model, the three folders, request_cap and the stand-in's two
+  thresholds), data_fingerprint, prompt_version, key_version, then started
+  and ended (UTC, to the second), requests and complete. The folders are
+  left out so a manifest never holds a path of the machine it was made on.
+- A recording is read whole and checked before any work: a line that is no
+  entry, a key held twice, or a count that differs from the manifest's is
+  refused, naming the file and the line.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import unicodedata
 from collections.abc import Mapping, Sequence
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -78,6 +97,7 @@ from titlestd.contracts import (
     ReviewKind,
     SearchRequest,
     SearchTool,
+    TitlestdError,
 )
 from titlestd.settings import Settings
 
@@ -89,6 +109,12 @@ REVIEW_FILE = "review.jsonl"
 MANIFEST_FILE = "manifest.json"
 
 STEP_FILES = {STEP_CHOOSE: CHOOSE_FILE, STEP_REVIEW: REVIEW_FILE}
+# Added to the name of a recording's folder: where a live run writes until it ends.
+PARTIAL_SUFFIX = ".partial"
+
+
+class RecordingError(TitlestdError):
+    """A recording is missing, not complete or damaged, or cannot be named."""
 
 
 # --- The requests (Q15, Q20, Q31, S16) ----------------------------------------
@@ -334,9 +360,32 @@ def review_turn(turn: Mapping[str, Any], source: str) -> SearchRequest | ReviewA
     )
 
 
+def _check_entry(entry: Any, step: str) -> None:
+    """Raise KeyError, TypeError or ValueError unless this is an entry of the step's file."""
+    if entry["step"] != step:
+        raise ValueError(f"its step is {entry['step']!r}")
+    turn = entry["turn"]
+    if step == STEP_REVIEW and "tool" in turn:
+        SearchTool(turn["tool"])
+        fields, texts = {"tool", "query"}, [turn["query"]]
+    else:
+        (ChooseKind if step == STEP_CHOOSE else ReviewKind)(turn["answer"])
+        fields, texts = {"answer", "number", "quote", "detail"}, [turn["quote"], turn["detail"]]
+        number = turn["number"]
+        if number is not None and (isinstance(number, bool) or not isinstance(number, int)):
+            raise TypeError("its number is no whole number")
+    if set(turn) != fields or not all(
+        isinstance(text, str) for text in (entry["key"], entry["date"], *texts)
+    ):
+        raise TypeError("its fields are not those of a recorded turn")
+
+
 # --- The files (Q29) ----------------------------------------------------------
 
-_NOT_BUILT = "titlestd.recording is built by feat/live-replay"
+
+def utc_now() -> datetime:
+    """The time of a model request, in UTC (Q40). A test replaces it."""
+    return datetime.now(UTC)
 
 
 def recording_folder(settings: Settings, model: str) -> Path:
@@ -347,16 +396,229 @@ def recording_folder(settings: Settings, model: str) -> Path:
     when it is not, replay first finds the model as Q31 says (see
     titlestd.replay).
     """
-    raise NotImplementedError(_NOT_BUILT)
+    if not model or model in (".", "..") or Path(model).name != model or "\\" in model:
+        raise RecordingError(
+            f"the model {model!r} cannot name the folder of a recording under "
+            f"{settings.recording_dir}: it must be one plain folder name"
+        )
+    return settings.recording_dir / model / settings.embedder
+
+
+def recorded_models(settings: Settings) -> list[str]:
+    """The models that have a recording folder for the embedder in force, sorted (Q31)."""
+    if not settings.recording_dir.is_dir():
+        return []
+    return sorted(
+        folder.name
+        for folder in settings.recording_dir.iterdir()
+        if (folder / settings.embedder).is_dir()
+    )
+
+
+# What a manifest says beside the settings (Q29), and what of it is about one
+# run and not about what its prompts were made from.
+_RUN_FACTS = ("started", "ended", "requests", "complete")
+_MANIFEST_FIELDS = (
+    "model",
+    "embedder",
+    "seed",
+    "data_fingerprint",
+    "prompt_version",
+    "key_version",
+    *_RUN_FACTS,
+)
+# Settings a manifest does not hold: the model is told as "model", the folders
+# say where and not what, and the others shape no prompt of a hosted model.
+_NOT_IN_A_MANIFEST = (
+    "llm",
+    "llm_model",
+    "data_dir",
+    "out_dir",
+    "recording_dir",
+    "request_cap",
+    "standin_min_title_words",
+    "standin_no_match_below",
+)
+
+
+def describe_run(settings: Settings, model: str, data_fingerprint: str) -> dict[str, Any]:
+    """What a manifest tells of the run its prompts came from (Q18, Q29)."""
+    kept = {
+        name: value for name, value in settings.as_dict().items() if name not in _NOT_IN_A_MANIFEST
+    }
+    return {
+        "model": model,
+        **kept,
+        "data_fingerprint": data_fingerprint,
+        "prompt_version": PROMPT_VERSION,
+        "key_version": KEY_VERSION,
+    }
+
+
+def manifest_differences(manifest: Mapping[str, Any], current: Mapping[str, Any]) -> list[str]:
+    """How a recording's manifest differs from describe_run of the settings in
+    force, one line per difference. It explains a miss; it refuses nothing (Q29)."""
+    differences = []
+    for name in dict.fromkeys([*manifest, *current]):
+        was, now = (repr(told[name]) if name in told else "nothing" for told in (manifest, current))
+        if name not in _RUN_FACTS and was != now:
+            differences.append(f"{name}: recorded {was}, now {now}")
+    return differences
 
 
 def write_manifest(folder: Path, manifest: Mapping[str, Any]) -> None:
     """Write manifest.json: model, embedder, seed, data fingerprint, prompt and
     key version, UTC start and end, request count, complete flag (Q29)."""
-    raise NotImplementedError(_NOT_BUILT)
+    text = json.dumps(dict(manifest), indent=2, ensure_ascii=False) + "\n"
+    with (Path(folder) / MANIFEST_FILE).open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
 
 
 def read_manifest(folder: Path) -> dict[str, Any]:
     """Read manifest.json. Raises TitlestdError when the recording is missing
     or not complete."""
-    raise NotImplementedError(_NOT_BUILT)
+    path = Path(folder) / MANIFEST_FILE
+    try:
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        raise RecordingError(
+            f"there is no recording in {folder}: it has no {MANIFEST_FILE}, which a live run "
+            "writes last, when it has completed. Recordings are made with the record command."
+        ) from None
+    except (OSError, ValueError) as error:
+        raise RecordingError(f"the manifest {path} cannot be read: {error}") from None
+    if not isinstance(manifest, dict) or manifest.get("complete") is not True:
+        raise RecordingError(f"the recording in {folder} is not complete, says {path}")
+    missing = [name for name in _MANIFEST_FIELDS if name not in manifest]
+    if missing:
+        raise RecordingError(f"the manifest {path} does not say: {', '.join(missing)}")
+    return manifest
+
+
+def read_entries(folder: Path, manifest: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every entry of a complete recording, by key, checked before any is used."""
+    entries: dict[str, dict[str, Any]] = {}
+    for step, name in STEP_FILES.items():
+        path = Path(folder) / name
+        try:
+            with path.open(encoding="utf-8") as handle:
+                lines = list(handle)
+        except (OSError, ValueError) as error:
+            raise RecordingError(f"the recording file {path} cannot be read: {error}") from None
+        for number, line in enumerate(lines, start=1):
+            where = f"{path}, line {number}"
+            try:
+                entry = json.loads(line)
+                _check_entry(entry, step)
+            except (KeyError, TypeError, ValueError) as error:
+                raise RecordingError(f"{where} is no entry of a recording: {error}") from None
+            if entry["key"] in entries:
+                raise RecordingError(f"{where} holds a key the recording already has")
+            entries[entry["key"]] = entry
+    if len(entries) != manifest["requests"]:
+        raise RecordingError(
+            f"the recording in {folder} holds {len(entries)} entries and its manifest counts "
+            f"{manifest['requests']}"
+        )
+    return entries
+
+
+class Recorder:
+    """The recording of one live run (Q29).
+
+    Every entry is written as it is made, into a folder beside the recording's
+    own, so a run that stops keeps the answers it has. finish sorts the files,
+    writes the manifest last and only then replaces the previous recording.
+    """
+
+    def __init__(self, settings: Settings, model: str, data_fingerprint: str) -> None:
+        self.folder = recording_folder(settings, model)
+        self.partial_folder = self.folder.with_name(self.folder.name + PARTIAL_SUFFIX)
+        self._model = model
+        self._run = describe_run(settings, model, data_fingerprint)
+        self._started = utc_now()
+        self._entries: dict[str, dict[str, Any]] = {}
+        self._opened = False
+
+    @property
+    def requests(self) -> int:
+        """How many model requests this run has recorded."""
+        return len(self._entries)
+
+    def turn(self, key: str) -> dict[str, Any] | None:
+        """The turn this run has recorded under the key, or None."""
+        entry = self._entries.get(key)
+        return entry["turn"] if entry else None
+
+    def record(
+        self,
+        key: str,
+        step: str,
+        record: Record,
+        turn: Mapping[str, Any],
+        *,
+        reported_model: str,
+        stop_reason: str | None,
+        input_tokens: int,
+        output_tokens: int,
+    ) -> None:
+        """Keep one model request's answer: in memory and, at once, on disk."""
+        if key in self._entries:
+            raise ValueError(f"the key {key} is already recorded: one answer per key")
+        entry = {
+            "key": key,
+            "key_version": KEY_VERSION,
+            "step": step,
+            "family_code": record.family_code,
+            "cleaned_title": record.cleaned_title,
+            "model": self._model,
+            "reported_model": reported_model,
+            "date": utc_now().strftime("%Y-%m-%d"),
+            "turn": dict(turn),
+            "stop_reason": stop_reason,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+        }
+        _check_entry(entry, step)
+        self._open()
+        with (self.partial_folder / STEP_FILES[step]).open(
+            "a", encoding="utf-8", newline="\n"
+        ) as handle:
+            handle.write(_line(entry))
+        self._entries[key] = entry
+
+    def finish(self) -> None:
+        """Complete the recording and put it in the place of the previous one."""
+        self._open()
+        for step, name in STEP_FILES.items():
+            keys = sorted(key for key, entry in self._entries.items() if entry["step"] == step)
+            with (self.partial_folder / name).open("w", encoding="utf-8", newline="\n") as handle:
+                handle.writelines(_line(self._entries[key]) for key in keys)
+        manifest = {
+            **self._run,
+            "started": _second(self._started),
+            "ended": _second(utc_now()),
+            "requests": self.requests,
+            "complete": True,
+        }
+        write_manifest(self.partial_folder, manifest)
+        if self.folder.exists():
+            shutil.rmtree(self.folder)
+        self.partial_folder.replace(self.folder)
+        self._opened = False
+
+    def _open(self) -> None:
+        """Make the folder this run writes into, fresh, when it is first needed."""
+        if not self._opened:
+            if self.partial_folder.exists():
+                shutil.rmtree(self.partial_folder)
+            self.partial_folder.mkdir(parents=True)
+            self._opened = True
+
+
+def _line(entry: Mapping[str, Any]) -> str:
+    return json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+def _second(moment: datetime) -> str:
+    return moment.strftime("%Y-%m-%dT%H:%M:%SZ")

@@ -52,11 +52,47 @@ def test_a_token_shorter_than_an_ngram_size_has_none_of_that_size():
     assert list(ngrams("ii")) == ["<ii", "ii>", "<ii>"]
 
 
+# The features below are written out, never taken from ngrams() itself, so that
+# a change of the tokeniser cannot move both sides of a comparison at once.
+SR = ["<sr", "sr>", "<sr>"]
+MGR = ["<mg", "mgr", "gr>", "<mgr", "mgr>", "<mgr>"]
+
+
 def test_text_is_case_folded_and_split_on_everything_but_letters_and_digits():
-    assert list(ngrams("Sr. Mgr")) == list(ngrams("sr")) + list(ngrams("mgr"))
-    assert list(ngrams("ACCT-MGR/2")) == [*ngrams("acct"), *ngrams("mgr"), *ngrams("2")]
+    assert list(ngrams("Sr. Mgr")) == SR + MGR
+    assert list(ngrams("SR-MGR/2")) == [*SR, *MGR, "<2>"]
     # No n-gram spans two tokens: each token is wrapped on its own.
     assert not any(" " in feature for feature in ngrams("account manager"))
+
+
+def test_a_token_is_a_run_of_the_letters_a_to_z_and_the_digits():
+    # Q12: [a-z0-9]+ after case folding, and nothing wider.
+    assert list(ngrams("2")) == ["<2>"]  # a digit is a token
+    assert list(ngrams("a1")) == ["<a1", "a1>", "<a1>"]  # and joins letters in one
+    assert list(ngrams("a_b")) == ["<a>", "<b>"]  # the underscore splits
+    assert list(ngrams("é")) == []  # so does a letter outside a to z, here e acute
+    assert list(ngrams("café")) == ["<ca", "caf", "af>", "<caf", "caf>", "<caf>"]
+    assert list(ngrams("srémgr")) == SR + MGR
+
+
+def test_case_is_folded_as_casefold_does_it():
+    # The sharp s folds to "ss". Lower-casing leaves it, and it would then
+    # split the token like any letter outside a to z.
+    assert list(ngrams("ß")) == ["<ss", "ss>", "<ss>"]
+    assert list(ngrams("Maße")) == [
+        "<ma",
+        "mas",
+        "ass",
+        "sse",
+        "se>",
+        "<mas",
+        "mass",
+        "asse",
+        "sse>",
+        "<mass",
+        "masse",
+        "asse>",
+    ]
 
 
 def test_a_repeated_token_repeats_its_features():
@@ -141,6 +177,18 @@ def test_a_text_with_no_token_gives_the_empty_vector():
 
 def test_case_and_punctuation_do_not_change_the_vector():
     assert embed("Sr. Acct Mgr - NYC") == embed("sr acct mgr nyc")
+
+
+def test_a_digit_is_part_of_the_vector():
+    # "Analyst 2" and "Analyst 3" are different texts to the embedder.
+    assert embed("2") == {bucket("<2>", DIM): 1.0}
+    assert embed("analyst 2") != embed("analyst 3")
+    assert embed("analyst 2") != embed("analyst")
+
+
+def test_a_letter_outside_a_to_z_is_not_part_of_the_vector():
+    assert embed("café") == embed("caf")
+    assert embed("cost_centre") == embed("cost centre")
 
 
 # --- embed(texts) -------------------------------------------------------------

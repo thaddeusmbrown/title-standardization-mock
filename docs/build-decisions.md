@@ -76,8 +76,8 @@ Undecided titles are the leftovers the close works on (order and cap in Q25). Se
 to 0 turns the mechanism off. The rate is not tuned to force an outcome: the default run needs
 only a non-empty generic row for the fixed seed; cap overflow and the two bars are proven by
 the unit tests for the cap (2.7) plus one integration run at a high rate (for example 0.5).
-The README says this is a simulation device. "No suitable role" is never the source of
-leftovers.
+The rate is a simulation device. That is recorded here and not in the README, which owner
+decision 10 keeps short. "No suitable role" is never the source of leftovers.
 
 **Basis.** 1.8: "At the close, a title nobody could decide takes its family's generic role,
 marked provisional and capped at 2% of employees." 1.10: "People clear the queue; leftovers
@@ -477,8 +477,8 @@ first, then names. A row whose title held a name is keyed on the masked cleaned 
 family, goes straight to the review queue with reason "person's name", and `embed`, `choose`
 and `review` are never called for it (test with spies). It is out of the golden-set frame. A
 person's decision on it joins the look-up under the masked key but never the ML examples,
-because joining the examples means embedding it. The README says the list stands in for a real
-name masker.
+because joining the examples means embedding it. The list stands in for a real name masker
+(1.11). That is recorded here and not in the README, which owner decision 10 keeps short.
 
 **Basis.** 1.4: "Names are masked before any text reaches a model. A title that contains a
 person's name goes to a person and to no model." 1.6 step 1: "Clean each title (lower-case,
@@ -798,7 +798,9 @@ required to exceed 60; if it holds 60 or fewer it is fully labeled as 2.4 provid
 README says so. The bar is reached by shaping the generator only (its difficulty knobs are
 generator settings), never by tuning stand-ins or thresholds against the truth and never by
 aiming at a status. At most three tuning rounds, then ship what the seed yields and state the
-shape in the README and the final report. The bar can first be measured when the pipeline
+shape in the final report. Of the shape, the README shows the table of the default run and
+says what the audit gave each path; the rest is recorded in the docstring of
+`titlestd/pipeline.py` (owner decision 10). The bar can first be measured when the pipeline
 exists, so the rounds are made in stage 4 by the branch that builds it ("Work that crosses a
 branch boundary"). The three outcomes, the 60-or-fewer case and the stopped-path release
 setting are covered by unit tests of the audit function on constructed counts (0 to 2, 3 to
@@ -993,8 +995,9 @@ download stops with a clear message (for a missing extra, the command of S09) an
 back to `offline`. Unit tests cover the
 switch and the lazy import with a stub. One smoke test, marked `local_model` and excluded from
 the merge gate, may install the extra and embed a few titles once during the build, time-boxed
-to 15 minutes; if it fails or times out, that is noted in the README and the build moves on.
-sentence-transformers and PyTorch are not installed anywhere.
+to 15 minutes; if it fails or times out, the build moves on. The README carries no note on the
+result of that test: owner decision 10 keeps it short. sentence-transformers and PyTorch are
+not installed anywhere.
 
 **Basis.** 2.5: "`local` (a small local embedding model)" and "Import the SDK and the
 embedding library lazily, so the default run installs nothing." 1.5: "The embedding model is
@@ -1176,10 +1179,10 @@ each other" (1.9). 2.2 lists this exercise neither in nor out of the mock. "The 
 is out, but 1.10 describes that as "a small pilot timed", a different thing. The footer has no
 agreement figure.
 
-**Decision.** The three-SME exercise is left out, and the README says so in one line. Set-up
-in the mock is the Set-up row of 1.10 without the pilot: load and validate the catalog and
-data files, fix and record the thresholds and settings in force before any scoring, and draw
-the golden set (seeded, from long-tail titles).
+**Decision.** The three-SME exercise is left out. That is recorded here and not in the README,
+which owner decision 10 keeps short. Set-up in the mock is the Set-up row of 1.10 without the
+pilot: load and validate the catalog and data files, fix and record the thresholds and
+settings in force before any scoring, and draw the golden set (seeded, from long-tail titles).
 
 **Basis.** 2.2: the "In the mock" list names no agreement exercise, and "Not in the mock: a
 review application (people are simulated), a real HR system, cloud deployment, sign-in, the
@@ -1865,9 +1868,10 @@ commands as the program takes them:
 | Q02, Q39 | The `record` command; the key comes only from the environment, exported in the shell or passed from a file outside version control with `uv run --env-file`. |
 | S14 | The check command. |
 
-Everything else that an entry above asks of the README is left out of it and stays recorded in
-that entry: that the "could not decide" rate of simulated reviewers is a simulation device
+Everything else that an entry above asked of the README is left out of it and stays recorded
+in that entry: that the "could not decide" rate of simulated reviewers is a simulation device
 (Q01), that the invented name list stands in for a real name masker (Q14), the full rule on
-what invalidates a recording (Q18), the rest of the shape of the default run (Q23), the result
-of the `local_model` smoke test (Q30) and that the three-SME agreement exercise of set-up is
-left out (Q37). Where one of those entries says "the README says", owner decision 10 decides.
+what invalidates a recording (Q18), the rest of the shape of the default run (Q23), a note on
+the result of the `local_model` smoke test (Q30) and that the three-SME agreement exercise of
+set-up is left out (Q37). Q01, Q14, Q23, Q30 and Q37 each say that the README does not hold
+their point, with a pointer to owner decision 10.

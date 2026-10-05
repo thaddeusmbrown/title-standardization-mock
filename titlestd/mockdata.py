@@ -17,12 +17,12 @@ constants at the top of this module, never settings of a run. Names, locations
 and requisition patterns come from titlestd.reference; every email uses
 reference.EMAIL_DOMAIN. All randomness goes through titlestd.seeding.
 
-The run shape of Q23 cannot be measured in stage 2, where the matcher, the
-rules, the agent and the pipeline do not exist yet. This branch is done when
-its data tests pass (Q03, Q06, Q09, Q14, Q23 for the flagged roles, Q24, Q35)
-and the knobs are exposed. feat/pipeline-report-cli measures the shape in
-stage 4 and may then change those constants and regenerate data/, in at most
-three rounds ("How the build is cut" in docs/build-decisions.md).
+The data tests of this module cover Q03, Q06, Q09, Q14, Q23 for the flagged
+roles, Q24 and Q35. The run shape of Q23 is a property of a whole run, so it
+is measured on the default run, by the tests of titlestd.pipeline. The knobs
+are what a tuning round changes when that run misses the bar of Q23, with
+data/ regenerated, in at most three rounds ("How the build is cut" in
+docs/build-decisions.md). The bar held, so no round was made.
 
 It writes six files with titlestd.datafiles and the truth file with
 titlestd.people.write_truth; apart from the pipeline it is the only module
@@ -110,8 +110,8 @@ from titlestd.contracts import (
 from titlestd.settings import Settings
 
 # --- Difficulty knobs (Q23) -----------------------------------------------------
-# feat/pipeline-report-cli may change these three, and nothing else here, when
-# it tunes the run shape in stage 4; it then regenerates data/ with
+# These three, and nothing else here, are what a tuning round of the run shape
+# may change. Whoever changes one regenerates data/ with
 # "python3 -m titlestd generate-data" and commits the two together.
 
 # How a title row words its role, beyond the three rows every role has under

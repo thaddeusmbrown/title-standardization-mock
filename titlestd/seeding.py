@@ -9,7 +9,7 @@ Rules for the whole package, checked by tests/unit/test_seeding.py:
 - nothing calls the built-in hash(), whose value changes between processes;
 - nothing lets the iteration order of a set reach an output: sort first.
 
-The stream names are fixed here so two branches cannot pick the same one.
+The stream names are fixed here so that no two uses can pick the same one.
 """
 
 from __future__ import annotations

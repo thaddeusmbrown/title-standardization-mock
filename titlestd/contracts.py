@@ -1,14 +1,13 @@
 """Shared types: the plain data every component exchanges.
 
-This file is the contract between the branches of the build. It holds data
+This file is the contract between the modules of the package. It holds data
 classes, enumerations, the three interfaces behind the model switch and a few
 fixed numbers. It has no logic beyond small derived properties and imports
 nothing from the rest of the package. A type that crosses a module boundary is
 defined here; a type only one module uses stays in that module.
 
-Changing it after the scaffold branch is merged affects every branch, so later
-branches read it and do not edit it. Section numbers refer to docs/design.md,
-Q numbers to docs/build-decisions.md.
+Every module reads it, so a change here reaches all of them. Section numbers
+refer to docs/design.md, Q numbers to docs/build-decisions.md.
 """
 
 from __future__ import annotations

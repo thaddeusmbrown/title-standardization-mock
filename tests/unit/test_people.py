@@ -1,8 +1,8 @@
-"""Simulated people: one label per title, from the truth.
+"""Simulated people: one label per title, and when a person does not name a role.
 
 docs/design.md 2.4 and docs/build-decisions.md Q27 (the label and its error
-rate), Q03 ("no suitable role") and S05 (family codes are compared after
-trimming).
+rate), Q01 ("could not decide"), Q03 ("no suitable role") and S05 (family
+codes are compared after trimming).
 """
 
 from __future__ import annotations
@@ -23,8 +23,10 @@ from titlestd.datafiles import DataError
 from titlestd.people import SimulatedPeople, TruthRow
 from titlestd.settings import Settings
 
-# The occasions on which an SME is asked about a title.
-OCCASIONS = ("wave1_approval", "blind_label")
+# The occasions on which a person is asked about a title: an SME on the first
+# two, the reviewer on the third.
+OCCASIONS = ("wave1_approval", "blind_label", "queue_decision")
+SME_OCCASIONS = ("wave1_approval", "blind_label")
 
 # The true role of every title row of the mini data set, written out by hand
 # from tests/fixtures/mini so that the tests do not repeat the code's own join.
@@ -85,19 +87,35 @@ def test_the_hand_written_truth_covers_the_mini_rows(mini_rows):
 def test_every_decision_is_simulated_and_names_who_was_asked(mini_catalog, mini_truth, mini_rows):
     simulated = _people(mini_truth, mini_catalog)
     for row in mini_rows:
-        for occasion in OCCASIONS:
+        for occasion in SME_OCCASIONS:
             decision = getattr(simulated, occasion)(row)
             assert decision.key == row.key
             assert decision.simulated is True
             assert decision.decided_by in people.PERSONA_SMES
+        decision = simulated.queue_decision(row)
+        assert decision.key == row.key
+        assert decision.simulated is True
+        assert decision.decided_by == people.PERSONA_REVIEWER
 
 
 def test_with_no_error_every_label_is_the_true_role(mini_catalog, mini_truth, mini_rows):
-    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.0)
+    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.0, undecided_rate=0.0)
     for occasion in OCCASIONS:
         decisions = [getattr(simulated, occasion)(row) for row in mini_rows]
         assert all(decision.answer is HumanAnswer.ROLE for decision in decisions)
         assert {d.key: d.role_id for d in decisions} == MINI_TRUE_ROLES
+
+
+def test_a_role_is_named_exactly_when_the_answer_is_a_role(mini_catalog, mini_truth, mini_rows):
+    truth = [row for row in mini_truth if row.job_title != "BDR"]
+    simulated = _people(truth, mini_catalog, sme_error_rate=0.5, undecided_rate=0.5)
+    answers = set()
+    for row in mini_rows:
+        for occasion in OCCASIONS:
+            decision = getattr(simulated, occasion)(row)
+            answers.add(decision.answer)
+            assert (decision.role_id is not None) == (decision.answer is HumanAnswer.ROLE)
+    assert answers == set(HumanAnswer)  # all three kinds were seen
 
 
 # --- One label per title (Q27) --------------------------------------------------
@@ -105,7 +123,7 @@ def test_with_no_error_every_label_is_the_true_role(mini_catalog, mini_truth, mi
 
 def test_a_title_gets_the_same_label_on_every_occasion(mini_catalog, mini_truth, mini_rows):
     # Half the labels are wrong, so a second draw for another occasion would show.
-    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5)
+    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5, undecided_rate=0.0)
     wrong = 0
     for row in mini_rows:
         roles = {getattr(simulated, occasion)(row).role_id for occasion in OCCASIONS}
@@ -118,7 +136,7 @@ def test_a_title_gets_the_same_label_on_every_occasion(mini_catalog, mini_truth,
 
 def test_a_title_gets_one_label_whatever_the_order_of_calls(mini_catalog, mini_truth, mini_rows):
     def answers(calls):
-        simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5)
+        simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5, undecided_rate=0.5)
         given = {}
         for occasion, row in calls:
             decision = getattr(simulated, occasion)(row)
@@ -155,7 +173,7 @@ def test_a_label_depends_on_the_key_and_not_on_the_rest_of_the_row(mini_catalog)
         family_usable=False,
     )
     for rate in (0.0, 1.0):
-        simulated = _people(truth, mini_catalog, sme_error_rate=rate)
+        simulated = _people(truth, mini_catalog, sme_error_rate=rate, undecided_rate=0.5)
         for occasion in OCCASIONS:
             assert getattr(simulated, occasion)(plain) == getattr(simulated, occasion)(other)
 
@@ -184,7 +202,7 @@ def test_another_seed_gives_other_labels(mini_catalog):
 def test_the_draws_are_pinned_on_every_supported_python(mini_catalog, mini_truth, mini_rows):
     # Simulated decisions feed the examples and so the later prompts (Q18): a
     # change here, or between Python versions, would invalidate a recording.
-    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5)
+    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.5, undecided_rate=0.5)
     labels = [simulated.blind_label(row) for row in mini_rows]
     assert [(d.role_id, d.decided_by.split()[1]) for d in labels] == [
         ("FIN-02", "3"),
@@ -202,6 +220,20 @@ def test_the_draws_are_pinned_on_every_supported_python(mini_catalog, mini_truth
         ("SAL-03", "1"),
         ("SAL-04", "3"),
         ("SAL-03", "2"),
+    ]
+    undecided = [
+        row.key.cleaned_title
+        for row in mini_rows
+        if simulated.queue_decision(row).answer is HumanAnswer.UNDECIDED
+    ]
+    assert undecided == [
+        "financial analyst",
+        "payroll specialist",
+        "treasury analyst",
+        "account manager ii",
+        "sales engineer",
+        "sales operations analyst",
+        "senior account manager",
     ]
 
 
@@ -231,7 +263,7 @@ def test_a_title_falls_to_the_same_sme_on_every_occasion(mini_catalog):
 def test_a_wrong_label_is_another_real_role_of_the_true_roles_family(
     mini_catalog, mini_truth, mini_rows
 ):
-    simulated = _people(mini_truth, mini_catalog, sme_error_rate=1.0)
+    simulated = _people(mini_truth, mini_catalog, sme_error_rate=1.0, undecided_rate=0.0)
     family_of = _family_of(mini_catalog)
     generic = {role.role_id for role in mini_catalog.roles if role.is_generic}
     for row in mini_rows:
@@ -298,7 +330,7 @@ def test_in_a_family_with_one_role_the_label_is_the_true_role():
     )
     row = _row("ONE", "only role")
     truth = [TruthRow("ONLY ROLE", "ONE", "ONE-01")]
-    simulated = _people(truth, catalog, sme_error_rate=1.0)
+    simulated = _people(truth, catalog, sme_error_rate=1.0, undecided_rate=0.0)
     for occasion in OCCASIONS:
         decision = getattr(simulated, occasion)(row)
         assert (decision.answer, decision.role_id) == (HumanAnswer.ROLE, "ONE-01")
@@ -320,12 +352,77 @@ def test_people_are_not_built_on_a_truth_that_does_not_fit_the_catalog(
         _people([TruthRow("BDR", "SAL", true_role_id)], mini_catalog)
 
 
+# --- "Could not decide" (Q01) ---------------------------------------------------
+
+
+def test_could_not_decide_comes_only_from_review_queue_decisions(
+    mini_catalog, mini_truth, mini_rows
+):
+    simulated = _people(mini_truth, mini_catalog, undecided_rate=1.0)
+    for row in mini_rows:
+        for occasion in SME_OCCASIONS:
+            assert getattr(simulated, occasion)(row).answer is HumanAnswer.ROLE
+        decision = simulated.queue_decision(row)
+        assert decision.answer is HumanAnswer.UNDECIDED
+        assert decision.role_id is None
+        assert decision.decided_by == people.PERSONA_REVIEWER
+
+
+def test_a_rate_of_zero_turns_could_not_decide_off(mini_catalog, mini_truth, mini_rows):
+    simulated = _people(mini_truth, mini_catalog, undecided_rate=0.0)
+    assert all(simulated.queue_decision(row).answer is HumanAnswer.ROLE for row in mini_rows)
+
+
+def test_could_not_decide_is_the_titles_own_draw_against_the_rate(
+    mini_catalog, mini_truth, mini_rows
+):
+    # tests/unit/test_seeding.py pins this title's draw on the undecided stream
+    # at 0.9463280335719298.
+    (row,) = [row for row in mini_rows if row.key == TitleKey("FIN", "special projects")]
+    below = _people(mini_truth, mini_catalog, undecided_rate=0.94)
+    above = _people(mini_truth, mini_catalog, undecided_rate=0.95)
+    assert below.queue_decision(row).answer is HumanAnswer.ROLE
+    assert above.queue_decision(row).answer is HumanAnswer.UNDECIDED
+
+    # S04: the undecided stream, keyed on the family code, then the cleaned title.
+    rows, truth = _many(400)
+    settings = Settings(undecided_rate=0.3)
+    simulated = SimulatedPeople(truth, mini_catalog, settings)
+    for row in rows:
+        draw = seeding.unit(settings.seed, seeding.STREAM_UNDECIDED, "SAL", row.key.cleaned_title)
+        undecided = simulated.queue_decision(row).answer is HumanAnswer.UNDECIDED
+        assert undecided == (draw < 0.3), row.key
+
+
+def test_the_undecided_share_is_about_the_setting(mini_catalog):
+    rows, truth = _many(3000)
+    simulated = _people(truth, mini_catalog)
+    undecided = sum(simulated.queue_decision(row).answer is HumanAnswer.UNDECIDED for row in rows)
+    assert Settings().undecided_rate == 0.10
+    assert 0.08 < undecided / len(rows) < 0.12
+
+
+def test_an_undecided_title_still_has_its_label_for_an_sme(mini_catalog):
+    # The reviewer could not decide it at the close; an SME who labels the same
+    # title in an audit still gives its one label.
+    rows, truth = _many(200)
+    simulated = _people(truth, mini_catalog, sme_error_rate=0.0, undecided_rate=0.5)
+    answers = [simulated.queue_decision(row).answer for row in rows]
+    assert set(answers) == {HumanAnswer.UNDECIDED, HumanAnswer.ROLE}
+    assert all(simulated.blind_label(row).role_id == "SAL-01" for row in rows)
+
+
 # --- "No suitable role" (Q03) ---------------------------------------------------
 
 
 @pytest.mark.parametrize(
     "rates",
-    [{}, {"sme_error_rate": 0.0}, {"sme_error_rate": 1.0}],
+    [
+        {},
+        {"sme_error_rate": 1.0, "undecided_rate": 0.0},
+        {"sme_error_rate": 0.0, "undecided_rate": 1.0},
+        {"sme_error_rate": 1.0, "undecided_rate": 1.0},
+    ],
 )
 def test_no_suitable_role_only_without_a_truth_row(mini_catalog, mini_truth, mini_rows, rates):
     missing = TitleKey("SAL", "bdr")
@@ -348,10 +445,21 @@ def test_the_persona_who_was_asked_marks_no_suitable_role(mini_catalog):
     # The catalog owner is whom the title then waits for, not who marks it.
     simulated = _people([], mini_catalog)
     row = _row("SAL", "chief of staff")
-    for occasion in OCCASIONS:
+    for occasion in SME_OCCASIONS:
         decision = getattr(simulated, occasion)(row)
         assert decision.answer is HumanAnswer.NO_SUITABLE_ROLE
         assert decision.decided_by in people.PERSONA_SMES and decision.simulated
+    decision = simulated.queue_decision(row)
+    assert decision.answer is HumanAnswer.NO_SUITABLE_ROLE
+    assert decision.decided_by == people.PERSONA_REVIEWER and decision.simulated
+
+
+def test_no_suitable_role_comes_before_could_not_decide(mini_catalog):
+    # Otherwise the title could become a leftover and take a generic role.
+    rows, truth = _many(50)
+    simulated = _people(truth[:25], mini_catalog, undecided_rate=1.0)
+    answers = [simulated.queue_decision(row).answer for row in rows]
+    assert answers == [HumanAnswer.UNDECIDED] * 25 + [HumanAnswer.NO_SUITABLE_ROLE] * 25
 
 
 def test_one_raw_title_with_a_truth_row_is_enough(mini_catalog):
@@ -381,7 +489,7 @@ def test_the_padded_code_of_the_mini_data_meets_its_truth(mini_catalog, mini_tru
     assert TruthRow("Treasury Analyst", "FIN ", "FIN-06") in mini_truth
     (row,) = [row for row in mini_rows if row.raw_titles == ("Treasury Analyst",)]
     assert row.key.family_code == "FIN"
-    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.0)
+    simulated = _people(mini_truth, mini_catalog, sme_error_rate=0.0, undecided_rate=0.0)
     for occasion in OCCASIONS:
         decision = getattr(simulated, occasion)(row)
         assert (decision.answer, decision.role_id) == (HumanAnswer.ROLE, "FIN-06")
@@ -400,7 +508,7 @@ def test_the_padded_code_of_the_mini_data_meets_its_truth(mini_catalog, mini_tru
 )
 def test_family_codes_are_compared_after_trimming(mini_catalog, recorded, in_key):
     truth = [TruthRow("Odd Job", recorded, "FIN-02")]
-    simulated = _people(truth, mini_catalog, sme_error_rate=0.0)
+    simulated = _people(truth, mini_catalog, sme_error_rate=0.0, undecided_rate=0.0)
     row = _row(in_key, "odd job", "Odd Job")
     for occasion in OCCASIONS:
         decision = getattr(simulated, occasion)(row)

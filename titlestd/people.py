@@ -1,8 +1,8 @@
 """Simulated people, and the only code that reads the truth file.
 
-Owner: feat/simulated-people (stage 1). The truth-file functions below are
-already built by the scaffold; the owner builds SimulatedPeople and
-load_people.
+Owner: feat/simulated-people (stage 1). The truth-file functions below were
+built by the scaffold; the owner built SimulatedPeople and load_people around
+them.
 Governed by: docs/design.md 1.8, 2.3 (the truth file), 2.4 ("People are
 simulated from the truth file, with a small seeded error rate, and every
 simulated decision is marked as simulated"); docs/build-decisions.md Q01 (could
@@ -28,10 +28,14 @@ one padded code to show it.
 Decided on this branch, where the record says nothing:
 - Which SME. A Wave 1 approval or a blind label names one of the three SMEs,
   picked by a keyed draw of the title on the sme_error stream. So a title
-  falls to the same SME on every occasion, like its label.
+  falls to the same SME on every occasion, like its label. A review-queue
+  decision is always the reviewer's.
 - A row's true role is the one its raw titles name. A raw title with no truth
   row is passed over, so a row is "no suitable role" only when none of its raw
   titles has one (Q03).
+- "No suitable role" comes before "could not decide". A review-queue title
+  with no truth row is always marked, whatever the undecided rate, so it can
+  never become a leftover that takes a generic role (Q01, Q03).
 - A wrong label needs another non-generic role in the true role's family.
   Where the family has none, the label is the true role.
 - The people check the truth against the catalog when they are built
@@ -48,8 +52,6 @@ from pathlib import Path
 from titlestd import datafiles, seeding
 from titlestd.contracts import Catalog, HumanAnswer, HumanDecision, TitleRow
 from titlestd.settings import Settings
-
-_NOT_BUILT = "titlestd.people is built by feat/simulated-people"
 
 TRUTH_FILE = "truth.csv"
 TRUTH_COLUMNS = ("job_title", "job_family_code", "true_role_id")
@@ -131,7 +133,7 @@ def truth_fingerprint(data_dir: Path) -> str:
     return datafiles.fingerprint_files([Path(data_dir) / TRUTH_FILE])
 
 
-# --- Simulated people (to build) ----------------------------------------------
+# --- Simulated people ---------------------------------------------------------
 
 
 class SimulatedPeople:
@@ -151,6 +153,7 @@ class SimulatedPeople:
         validate_truth(truth, catalog)
         self._seed = settings.seed
         self._error_rate = settings.sme_error_rate
+        self._undecided_rate = settings.undecided_rate
         # Every role a person may name, with its family: the generic ones are left out.
         self._family_of = {
             role.role_id: role.family_code for role in catalog.roles if not role.is_generic
@@ -175,10 +178,16 @@ class SimulatedPeople:
     def queue_decision(self, row: TitleRow) -> HumanDecision:
         """A reviewer's decision on a review-queue title at the close.
 
-        HumanAnswer.UNDECIDED when seeding.unit(seed, STREAM_UNDECIDED, *row.key)
-        is below settings.undecided_rate (Q01); otherwise the title's label.
+        HumanAnswer.NO_SUITABLE_ROLE for a title with no truth row, whatever
+        the rate (Q03). Otherwise HumanAnswer.UNDECIDED when
+        seeding.unit(seed, STREAM_UNDECIDED, *row.key) is below
+        settings.undecided_rate (Q01), and the title's label when it is not.
         """
-        raise NotImplementedError(_NOT_BUILT)
+        _, role_id = self._label(row)
+        draw = seeding.unit(self._seed, seeding.STREAM_UNDECIDED, *row.key)
+        if role_id is not None and draw < self._undecided_rate:
+            return HumanDecision(row.key, HumanAnswer.UNDECIDED, None, PERSONA_REVIEWER, True)
+        return _decision(row, role_id, PERSONA_REVIEWER)
 
     def _label(self, row: TitleRow) -> tuple[str, str | None]:
         """The SME a title falls to and the title's one label: a role, or None

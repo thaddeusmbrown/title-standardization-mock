@@ -1003,11 +1003,15 @@ whether any hosted model must work or only the example.
 **Decision.** No default. `llm = offline` ignores `llm_model`. `llm = anthropic` with
 `llm_model` unset is a start-up error that names `claude-haiku-4-5` as the example. `llm =
 replay` reads the model from the recording's manifest; if `llm_model` is also set and differs,
-that is a start-up error. Docs and tests use the alias `claude-haiku-4-5` exactly as written,
-with no date suffix. Any model string is passed through unchanged; to stay valid across
-current models the request sends no `temperature`, `top_p` or `top_k`, no thinking parameter,
-no effort parameter and no forced tool choice (tool choice auto with a strict tool, or
-structured output).
+that is a start-up error. The layout of Q29 has the model in the path, so the recording is
+found first: with `llm_model` set, replay opens `<recording_dir>/<llm_model>/<embedder>/`;
+with it unset, it uses the only folder `<recording_dir>/<model>/<embedder>` that exists for
+the embedder in force, and stops at start-up, listing the models found and naming
+`--llm-model`, if there is none or more than one. Docs and tests use the alias
+`claude-haiku-4-5` exactly as written, with no date suffix. Any model string is passed through
+unchanged; to stay valid across current models the request sends no `temperature`, `top_p` or
+`top_k`, no thinking parameter, no effort parameter and no forced tool choice (tool choice
+auto with a strict tool, or structured output).
 
 **Basis.** 2.5: "`llm_model` | a small hosted model, for example `claude-haiku-4-5` |" with an
 empty default, while `embedder` and `llm` both show `offline`; the key is read "only when `llm
@@ -1417,6 +1421,23 @@ installable distribution (`package = false`, no build system), so there is no `p
 of an extra. And `uv sync --extra <name>` only installs: the `python3 -m titlestd` of a bare
 run still cannot import the library, because it does not use `.venv`, and the exact sync
 removes the other extra.
+
+**Seams for tests.** Two functions take an optional argument through which a test hands in a
+double. They are declared in the stubs and a scaffold test pins them, so the two stage 4
+branches do not each invent a seam. The branches that fill the functions in keep these
+parameters and may add further optional ones.
+
+- `titlestd.pipeline.run_pipeline(settings, models=None)`. With `models` given the pipeline
+  uses them and does not call the switch. It serves the tests with an injected misbehaving
+  model (T2, T4), the spying providers (T5, Q14, Q26) and the round trip of a whole run
+  (Q32 b).
+- `titlestd.live.build_llm(settings, data_fingerprint, client=None)`. With `client` given the
+  key is not checked and the SDK is not imported. A scripted object serves tier (b) of Q32
+  where the SDK is not installed; a real SDK client on a mock transport serves tier (c).
+
+`titlestd.pipeline.data_fingerprint(data_dir)` returns the fingerprint described above, so a
+test that builds a provider itself gives it the value the pipeline would. The switch takes no
+double: `build_models` always builds the real providers for the settings in force.
 
 ### S10. An answer that is not usable
 

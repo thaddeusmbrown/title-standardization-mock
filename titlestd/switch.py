@@ -2,8 +2,9 @@
 
 Owner: feat/model-switch-offline (stage 1).
 Governed by: docs/design.md 2.5; docs/build-decisions.md Q30 and Q31 (no
-silent fall-back, a missing extra names its install command), Q32 (lazy
-imports), Q40 (answer labels).
+silent fall-back), Q32 (lazy imports), Q40 (answer labels), S09 (the provider
+table, and the command a provider prints when its extra is missing: the
+provider raises it with contracts.run_with_extra, the switch lets it through).
 
 build_models reads the two settings and returns the three calls. Each provider
 is one function in its own module, imported here only when its setting is

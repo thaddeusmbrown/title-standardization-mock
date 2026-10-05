@@ -126,9 +126,12 @@ class SimulatedPeople:
 
     Every decision has simulated = True and names a persona. A wrong decision,
     made at settings.sme_error_rate, is a different non-generic role in the
-    true role's family (Q27). A title with no truth row gets
-    HumanAnswer.NO_SUITABLE_ROLE from PERSONA_CATALOG_OWNER (Q03). A person
-    never returns a generic family role.
+    true role's family (Q27). For a title with no truth row the persona who
+    was asked, an SME or the reviewer, returns HumanAnswer.NO_SUITABLE_ROLE
+    (Q03). The catalog owner does not decide it: PERSONA_CATALOG_OWNER is whom
+    the title then waits for, which the review-queue file shows through the
+    reason Reason.NO_SUITABLE_ROLE. A person never returns a generic family
+    role.
     """
 
     def __init__(self, truth: Sequence[TruthRow], catalog: Catalog, settings: Settings) -> None:

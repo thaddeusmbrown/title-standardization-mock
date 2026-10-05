@@ -9,11 +9,18 @@ incomplete recording is refused before any work), Q31 (the model comes from
 the manifest), Q40 (the label's date and model).
 
 build_llm refuses a missing or incomplete recording before any work is done.
-The model is read from the recording's manifest; if settings.llm_model is also
-set and differs, that is an error at start-up. A miss stops the run at once
-with a non-zero exit and no output files; the message names the step and the
-title and prints the differences between the manifest and the settings in
-force. The manifest explains a miss; it is not a second validity rule.
+Which recording it opens (Q31): with settings.llm_model set, the folder of
+that model and the embedder in force. With it unset, the one folder
+<recording_dir>/<model>/<embedder in force> that exists; none, or more than
+one, is an error at start-up that lists the models found and names
+--llm-model. The model is then read from that recording's manifest; if
+settings.llm_model is set and differs from it, that is an error at start-up
+too.
+
+A miss stops the run at once with a non-zero exit and no output files; the
+message names the step and the title and prints the differences between the
+manifest and the settings in force. The manifest explains a miss; it is not a
+second validity rule.
 
 Replay never imports the SDK, never reads ANTHROPIC_API_KEY and never calls
 the network. This module must not import titlestd.people.

@@ -50,7 +50,13 @@ def request_key(step: str, model: str, request: Mapping[str, Any]) -> str:
 
 
 def recording_folder(settings: Settings, model: str) -> Path:
-    """The folder of the recording for a model and the embedder in force (Q29)."""
+    """The folder of the recording for a model and the embedder in force (Q29):
+    settings.recording_dir / model / settings.embedder.
+
+    Live mode passes settings.llm_model. Replay passes it too when it is set;
+    when it is not, replay first finds the model as Q31 says (see
+    titlestd.replay).
+    """
     raise NotImplementedError(_NOT_BUILT)
 
 

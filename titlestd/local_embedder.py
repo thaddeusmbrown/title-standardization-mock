@@ -3,13 +3,14 @@
 Owner: feat/local-embedder (stage 2).
 Governed by: docs/design.md 2.5 (lazy import; the default run installs
 nothing); docs/build-decisions.md Q30 (library, model and revision), Q32 (how
-it is tested).
+it is tested), Q38 with S09 (the message for a missing extra).
 
 The library is model2vec, from the optional extra "local", imported only
 inside build_embedder. No PyTorch anywhere. The weights download on first use
 into the user's Hugging Face cache, never into the repository. A missing extra
-or a failed download stops with a clear message that holds the exact install
-command, and never falls back to the offline embedder.
+or a failed download stops with a clear message and never falls back to the
+offline embedder. For a missing extra the message holds
+contracts.run_with_extra(EXTRA), the one command text of S09.
 
 Vectors are returned as contracts.Vector, L2-normalised, like every embedder.
 The smoke test is marked local_model and is never part of the merge gate.

@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import pkgutil
 
 import pytest
 
 import titlestd
+from titlestd import live, local_embedder, pipeline
 
 # Module -> the branch that fills it in ("scaffold" modules are complete).
 # docs/build-decisions.md, "How the build is cut", is the record of this table.
@@ -76,3 +78,46 @@ def test_every_module_in_the_package_imports_cleanly():
 
 def test_the_package_has_a_version():
     assert titlestd.__version__ == "0.1.0"
+
+
+REQUIRED = inspect.Parameter.empty
+
+
+def _keeps(function, declared: list[tuple[str, object]]) -> bool:
+    """True when the function still starts with the declared parameters and their
+    defaults (REQUIRED for none), and anything added after them is optional."""
+    parameters = [
+        (name, parameter.default)
+        for name, parameter in inspect.signature(function).parameters.items()
+    ]
+    added = parameters[len(declared) :]
+    return parameters[: len(declared)] == declared and all(
+        default is not REQUIRED for _, default in added
+    )
+
+
+def test_the_seams_for_tests_are_declared():
+    # S09: a test hands in its own models or its own client here. The owner
+    # branches fill these functions in and keep these parameters.
+    assert _keeps(pipeline.run_pipeline, [("settings", REQUIRED), ("models", None)])
+    assert _keeps(pipeline.data_fingerprint, [("data_dir", REQUIRED)])
+    assert _keeps(
+        live.build_llm,
+        [("settings", REQUIRED), ("data_fingerprint", REQUIRED), ("client", None)],
+    )
+
+
+def test_a_seam_check_refuses_a_changed_signature():
+    def renamed(settings, doubles=None): ...
+    def needs_more(settings, models=None, *, people): ...
+    def extended(settings, models=None, *, people=None): ...
+
+    declared = [("settings", REQUIRED), ("models", None)]
+    assert not _keeps(renamed, declared)
+    assert not _keeps(needs_more, declared)
+    assert _keeps(extended, declared)
+
+
+def test_each_optional_provider_names_its_extra(extra_modules):
+    assert live.EXTRA == "live" and local_embedder.EXTRA == "local"
+    assert {live.EXTRA, local_embedder.EXTRA} == set(extra_modules)

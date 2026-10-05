@@ -285,6 +285,26 @@ def test_an_example_counts_for_its_own_role_only():
     assert scores == {"T-02": pytest.approx(1.0), "T-01": 0.0, "T-03": 0.0}
 
 
+def test_every_approved_title_is_compared_not_only_the_first_in_key_order():
+    # 1.6 step 3: "every human-approved title". Of the baker's three approved
+    # titles the one that matches is the middle one in key order; the
+    # butcher's is the third of the four overall.
+    knowledge = Knowledge()
+    knowledge.learn(_row("FOOD", "aaa helper"), "T-02")
+    knowledge.learn(_row("FOOD", "boulanger"), "T-02")
+    knowledge.learn(_row("FOOD", "charcutier"), "T-03")
+    knowledge.learn(_row("FOOD", "zzz helper"), "T-02")
+    rows = [_row("SHOP", "boulanger"), _row("SHOP", "charcutier")]
+    results = Matcher(TRADES, WordEmbedder()).match(rows, knowledge)
+    for result, role_id, title in zip(
+        results.values(), ["T-02", "T-03"], ["boulanger", "charcutier"], strict=True
+    ):
+        assert result.first_choice == role_id
+        assert result.shortlist[0].score == pytest.approx(1.0)
+        assert result.shortlist[0].matched_text == title
+        assert result.margin == pytest.approx(1.0)
+
+
 def test_an_example_from_another_family_is_an_example_all_the_same():
     # The match is not filtered by family: the family rule is checked later (1.7).
     knowledge = Knowledge()

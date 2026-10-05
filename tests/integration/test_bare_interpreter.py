@@ -42,6 +42,19 @@ new = {name.partition(".")[0] for name in set(sys.modules) - before}
 print(sorted(new - set(sys.stdlib_module_names) - {"titlestd"}))
 """
 
+# Runs "python -m titlestd" on an interpreter that reports an older version of
+# itself, then says which modules of the package were imported by then.
+ON_AN_OLDER_PYTHON = """
+import collections, runpy, sys
+
+Version = collections.namedtuple("Version", "major minor micro releaselevel serial")
+sys.version_info = Version(3, 11, 9, "final", 0)
+try:
+    runpy.run_module("titlestd", run_name="__main__")
+finally:
+    print(sorted(name for name in sys.modules if name.startswith("titlestd.")))
+"""
+
 
 def test_help_works_with_nothing_installed(bare_cli):
     result = bare_cli("--help")
@@ -50,6 +63,16 @@ def test_help_works_with_nothing_installed(bare_cli):
     # Only the names: argparse lays the lines out by the width of the terminal.
     for command in ("run", "generate-data", "record"):
         assert re.search(rf"^ +{re.escape(command)}\b", result.stdout, re.MULTILINE), command
+
+
+def test_a_python_older_than_the_package_needs_is_told_so_in_one_line(bare_python):
+    # Left to itself the import of the package fails there with a traceback
+    # that does not say why: on Python 3.10, for one, the enum module has no
+    # StrEnum. The version is checked before anything else is imported.
+    result = bare_python(ON_AN_OLDER_PYTHON, "--help")
+    assert result.returncode == 1
+    assert result.stderr == "titlestd: Python 3.12 or later is needed; this is Python 3.11.\n"
+    assert result.stdout.strip() == "[]"  # no module of the package was imported
 
 
 def test_a_wrong_setting_is_reported_with_nothing_installed(bare_cli):

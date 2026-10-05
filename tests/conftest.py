@@ -33,8 +33,10 @@ from titlestd.settings import Settings
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MINI_DIR = REPO_ROOT / "tests" / "fixtures" / "mini"
 
+# The optional extras and the third-party modules each one brings (2.5, Q38).
+EXTRA_MODULES = {"live": ("anthropic", "httpx2"), "local": ("model2vec", "numpy")}
 # Third-party modules the default run must never import (2.5, Q32).
-OPTIONAL_MODULES = ("anthropic", "httpx2", "model2vec", "numpy")
+OPTIONAL_MODULES = tuple(module for modules in EXTRA_MODULES.values() for module in modules)
 
 
 def _row(
@@ -191,6 +193,12 @@ def repo_root() -> Path:
 def optional_modules() -> tuple[str, ...]:
     """The third-party modules the default run must never import."""
     return OPTIONAL_MODULES
+
+
+@pytest.fixture(scope="session")
+def extra_modules() -> dict[str, tuple[str, ...]]:
+    """Each optional extra of pyproject.toml and the modules it makes importable."""
+    return EXTRA_MODULES
 
 
 @pytest.fixture(scope="session")

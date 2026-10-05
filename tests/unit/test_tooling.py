@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+import importlib.util
+import os
 import tomllib
 from pathlib import Path
 
 import pytest
+
+# Set by the Makefile to the extras a test run was given; unset outside make.
+GATE_EXTRAS = "TITLESTD_GATE_EXTRAS"
 
 
 @pytest.fixture(scope="module")
@@ -19,11 +24,12 @@ def test_no_runtime_dependencies(pyproject):
     assert pyproject["project"]["requires-python"] == ">=3.12"
 
 
-def test_the_two_optional_extras(pyproject):
+def test_the_two_optional_extras(pyproject, extra_modules):
     assert pyproject["project"]["optional-dependencies"] == {
         "live": ["anthropic>=1.11,<2"],
         "local": ["model2vec>=0.9,<0.10"],
     }
+    assert set(extra_modules) == {"live", "local"}
 
 
 def test_the_dev_group_is_pytest_and_ruff(pyproject):
@@ -79,14 +85,45 @@ def test_gitignore_covers_secrets_outputs_and_tool_folders(repo_root: Path):
         assert entry in ignored, entry
 
 
-def test_make_check_is_lint_then_format_check_then_tests(repo_root: Path):
+def test_make_check_is_lint_then_format_check_then_the_suite_twice(repo_root: Path):
     makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
-    assert "\ncheck: lint format-check test\n" in makefile
+    assert "\ncheck: lint format-check test test-bare\n" in makefile
     assert "ruff check ." in makefile
     assert "ruff format --check ." in makefile
     assert 'pytest -m "not live and not local_model"' in makefile
-    for target in ("check", "lint", "format", "test", "run"):
+    for target in ("check", "check-all", "lint", "format", "test", "test-bare", "run"):
         assert f"\n{target}:" in makefile
+
+
+def test_the_gate_syncs_exactly_and_the_bare_run_installs_no_extra(repo_root: Path):
+    lines = (repo_root / "Makefile").read_text(encoding="utf-8").splitlines()
+    (uv_run,) = [line for line in lines if line.startswith("UV_RUN :=")]
+    (uv_bare,) = [line for line in lines if line.startswith("UV_BARE :=")]
+    assert "--exact" in uv_run and "--extra" in uv_run
+    assert "--isolated" in uv_bare and "--extra" not in uv_bare and "UV_FLAGS" not in uv_bare
+    assert "\nEXTRAS ?= live\n" in "\n".join(lines)
+
+
+def test_make_check_all_adds_the_other_supported_pythons(repo_root: Path):
+    makefile = (repo_root / "Makefile").read_text(encoding="utf-8")
+    assert "\ncheck-all: check\n" in makefile
+    assert "\nOTHER_PYTHONS ?= 3.13 3.14\n" in makefile
+
+
+@pytest.mark.skipif(GATE_EXTRAS not in os.environ, reason="not started by the Makefile")
+def test_the_environment_holds_exactly_the_extras_the_makefile_names(extra_modules):
+    # "make test" must really have the SDK, or its request-shape tests skip
+    # unseen; "make test-bare" must really lack it, or it proves nothing (Q32).
+    named = os.environ[GATE_EXTRAS].split()
+    assert set(named) <= set(extra_modules), named
+    expected = sorted(module for extra in named for module in extra_modules[extra])
+    importable = sorted(
+        module
+        for modules in extra_modules.values()
+        for module in modules
+        if importlib.util.find_spec(module) is not None
+    )
+    assert importable == expected
 
 
 def test_ci_runs_the_same_check_on_three_pythons(repo_root: Path):

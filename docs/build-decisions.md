@@ -1020,9 +1020,10 @@ unstated whether the suite must pass where the SDK is not installed.
 
 **Decision.** Four tiers.
 
-- (a) The core suite needs only the standard library and pytest; this is the merge gate. It
-  includes a subprocess test that runs the default mode and replay mode with an import blocker
-  on `anthropic`, `httpx2`, `model2vec` and `numpy` and expects success.
+- (a) The core suite needs only the standard library and pytest; this is the merge gate,
+  whose second run has no optional extra installed (S14). It includes a subprocess test that
+  runs the default mode and replay mode with an import blocker on `anthropic`, `httpx2`,
+  `model2vec` and `numpy` and expects success.
 - (b) Record-then-replay round trip: live mode with an injected scripted client under the
   model ID `test-double` writes through the real recorder into a temporary directory; replay
   gives identical outputs; changing one input gives a miss error, non-zero exit and no output
@@ -1180,8 +1181,8 @@ generated at run time, or whether "under a minute" is a tested limit.
 extras, `live` = `anthropic>=1.11,<2` and `local` = `model2vec>=0.9,<0.10`; pytest and ruff
 are dev-only, fetched by uv. A missing extra gives an error containing the exact install
 command. `requires-python` is `>=3.12` with no upper bound; the merge gate runs on 3.12
-(`.python-version`), and the suite also runs on 3.13 and 3.14. Exact-output comparison only on
-3.12. Settings are one immutable dataclass with defaults, overridden by an optional TOML file
+(`.python-version`), and the suite also runs on 3.13 and 3.14 (`make check-all`, S14).
+Exact-output comparison only on 3.12. Settings are one immutable dataclass with defaults, overridden by an optional TOML file
 given with `--config` and then by command-line flags generated from its fields (`--embedder`,
 `--llm`, `--llm-model`, `--seed`, `--recording-dir` and the rest). There are no
 environment-variable settings, so the environment carries only `ANTHROPIC_API_KEY`. Inputs are
@@ -1436,15 +1437,32 @@ repository): 15 title rows, about ten of which reach the model.
 ### S14. The check command
 
 `make check` is the merge gate: `ruff check`, `ruff format --check`, then pytest on everything
-except tests marked `live` or `local_model`. It runs in the uv environment pinned by
-`.python-version` (3.12) and `uv.lock`, with the `live` extra installed so that the
-request-shape tests of Q32 (c) run in the gate; `make check EXTRAS=` runs on the standard
-library plus pytest only. `UV_PYTHON=3.13 make check UV_FLAGS=--isolated` runs the gate on
-another interpreter without touching `.venv`. The gate leaves the working tree clean:
-everything it creates is ignored. Pytest collects only from `tests/`, and ruff and pytest
-ignore `.worktrees/`, `.claude/`, `.venv/` and `out/`. Markers: `integration` (set
-automatically on everything under `tests/integration`), `e2e`, `replay`, `live`,
-`local_model`.
+except tests marked `live` or `local_model`, twice.
+
+- The first run (`make test`) is in the uv environment pinned by `.python-version` (3.12) and
+  `uv.lock`, with the `live` extra installed, so that the request-shape tests of Q32 (c) run
+  in the gate.
+- The second run (`make test-bare`) is in a throwaway environment that holds the standard
+  library, pytest and ruff and no optional extra. It is what proves tier (a) of Q32, and that
+  the tests of tier (c) skip where the SDK is absent.
+
+The ruff calls and the first run sync `.venv` exactly (`--exact`), so it holds the extras
+named in `EXTRAS` and nothing an earlier command installed; plain `uv run` keeps whatever is
+already there. The Makefile passes the extras it installed to the tests in the variable
+`TITLESTD_GATE_EXTRAS`, which one tooling test compares with the optional libraries that can
+actually be imported; nothing in the package reads it. So `make test` fails if the SDK is
+missing and `make test-bare` fails if it is present.
+
+`make check-all` runs `make check` and then the suite on Python 3.13 and 3.14, each in a
+throwaway environment (Q38). During this build nothing else runs those two interpreters: the
+CI workflow only takes effect once the owner pushes, and the `python3` a reader runs the
+program with need not be 3.12. `UV_PYTHON=3.13 make check UV_FLAGS=--isolated` runs the whole
+gate on another interpreter without touching `.venv`.
+
+The gate leaves the working tree clean: everything it creates is ignored. Pytest collects only
+from `tests/`, and ruff and pytest ignore `.worktrees/`, `.claude/`, `.venv/` and `out/`.
+Markers: `integration` (set automatically on everything under `tests/integration`), `e2e`,
+`replay`, `live`, `local_model`.
 
 ### S15. Rules the tests enforce on the whole package
 
@@ -1652,7 +1670,9 @@ merged.
 6. **Randomness and order** go through `titlestd/seeding.py` (S04, S15). Sort before letting a
    set reach an output.
 7. **The gate is `make check`** (S14), on the branch and again on the merge result; merge
-   with `--no-ff`; nothing is pushed (Q34).
+   with `--no-ff`; nothing is pushed (Q34). A branch also passes `make check-all` before it is
+   merged, and main passes it after the last merge of each stage: that is where the suite runs
+   on Python 3.13 and 3.14 during this build (Q38).
 8. **Hygiene** (2.8, Q28): nothing from outside the repository folder; no real company, client
    or person in code, data, docs, branch names or commit messages; no secrets, keys or `.env`
    files; invented emails use `example.com`.

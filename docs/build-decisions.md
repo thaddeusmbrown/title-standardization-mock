@@ -997,9 +997,10 @@ download stops with a clear message (for a missing extra, the command of S09) an
 back to `offline`. Unit tests cover the
 switch and the lazy import with a stub. One smoke test, marked `local_model` and excluded from
 the merge gate, may install the extra and embed a few titles once during the build, time-boxed
-to 15 minutes; if it fails or times out, the build moves on. The README carries no note on the
-result of that test: owner decision 10 keeps it short. sentence-transformers and PyTorch are
-not installed anywhere.
+to 15 minutes; if it fails or times out, the build moves on. It passed during the build: about
+5 seconds with an empty cache, a download of about 30 MB included, and about 2 seconds on the
+cached model. The README carries no note on that result: owner decision 10 keeps it short.
+sentence-transformers and PyTorch are not installed anywhere.
 
 **Basis.** 2.5: "`local` (a small local embedding model)" and "Import the SDK and the
 embedding library lazily, so the default run installs nothing." 1.5: "The embedding model is
@@ -1882,10 +1883,11 @@ commands as the program takes them:
 | Q02, Q39 | The `record` command; the key comes only from the environment, exported in the shell or passed from a file outside version control with `uv run --env-file`. |
 | S14 | The check command. |
 
-Everything else that an entry above asked of the README is left out of it and stays recorded
-in that entry: that the "could not decide" rate of simulated reviewers is a simulation device
-(Q01), that the invented name list stands in for a real name masker (Q14), the full rule on
-what invalidates a recording (Q18), the rest of the shape of the default run (Q23), a note on
-the result of the `local_model` smoke test (Q30) and that the three-SME agreement exercise of
-set-up is left out (Q37). Q01, Q14, Q23, Q30 and Q37 each say that the README does not hold
-their point, with a pointer to owner decision 10.
+Everything else that an entry above asked of the README is left out of it: that the "could not
+decide" rate of simulated reviewers is a simulation device (Q01), that the invented name list
+stands in for a real name masker (Q14), the full rule on what invalidates a recording (Q18),
+the rest of the shape of the default run (Q23), the result of the `local_model` smoke test
+(Q30) and that the three-SME agreement exercise of set-up is left out (Q37). Each of those
+entries records its own point, except that the shape of the default run is in the docstring of
+`titlestd/pipeline.py`, as Q23 says. Q01, Q14, Q23, Q30 and Q37 each say that the README does
+not hold their point, with a pointer to owner decision 10.

@@ -6,7 +6,7 @@ fixed numbers. It has no logic beyond small derived properties and imports
 nothing from the rest of the package. A type that crosses a module boundary is
 defined here; a type only one module uses stays in that module.
 
-Every module reads it, so a change here reaches all of them. Section numbers
+Most modules read it, so a change here reaches nearly all of them. Section numbers
 refer to docs/design.md, Q numbers to docs/build-decisions.md.
 """
 

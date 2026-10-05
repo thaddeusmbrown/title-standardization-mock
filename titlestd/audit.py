@@ -36,10 +36,13 @@ Decided on this branch, where the record says nothing:
   the design states (0.90 is nine tenths, not the nearest binary float) and
   the binomial is summed in fractions, so a count never falls on the other
   side of a line through rounding.
-- The labels handed in must be the blind labels of the sample: one for every
-  title of a path of AUDIT_SAMPLE_SIZE or fewer, AUDIT_SAMPLE_SIZE of them
-  otherwise, each for a title of the path. Anything else is a ValueError, as
-  is a label "could not decide", which a blind label never is (Q01).
+- What audit_path checks of the labels handed in: there is one for every
+  title of a path of AUDIT_SAMPLE_SIZE or fewer and AUDIT_SAMPLE_SIZE of them
+  otherwise, each is for a title of the path, and none is "could not decide",
+  which a blind label never is (Q01). A failure is a ValueError. It is given
+  no seed, so it cannot tell whether the labeled titles of a larger path are
+  the ones draw_sample returns: any AUDIT_SAMPLE_SIZE titles of the path
+  pass. The caller labels exactly what draw_sample returns.
 - An audited title the SME marked "no suitable role" (Q03; only a title with
   no truth row) counts as wrong: the machine named a role and the SME says
   none suits. It is not released on the machine's role. It stays on its legacy
@@ -142,8 +145,10 @@ def audit_path(
     """Compare the labels with the machine's roles and decide the outcome.
 
     machine_roles holds every title of the path; labels holds the SME's blind
-    label for each title drawn by draw_sample. Raises ValueError when the
-    labels cannot be those of the path's sample.
+    label for each title drawn by draw_sample. Raises ValueError for labels
+    that could be those of no sample of the path: the wrong number of them,
+    one for a title outside the path, one "could not decide". It does not
+    know the seed, so it takes the labels of any sample of the right size.
     """
     _check_labels(machine_roles, labels)
     audited_keys = tuple(sorted(labels))
@@ -190,7 +195,7 @@ def path_decisions(
 def _check_labels(
     machine_roles: Mapping[TitleKey, str], labels: Mapping[TitleKey, HumanDecision]
 ) -> None:
-    """Refuse labels that cannot be the blind labels of the path's sample."""
+    """Refuse labels that could be the blind labels of no sample of the path."""
     outside = sorted(set(labels) - set(machine_roles))
     if outside:
         raise ValueError(f"a label for a title that is not in the path: {tuple(outside[0])!r}")

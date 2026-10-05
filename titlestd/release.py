@@ -33,12 +33,14 @@ Decided here, where the record is silent:
 - What else is refused. Decisions, title rows and employees that do not fit
   each other: a title row without exactly one decision, a decision for no
   title row, an employee in no title row or in two, a row naming an employee
-  the employees file does not hold. And a decision the files cannot state
-  truthfully: one left on its legacy title that has a role, a status or no
-  reason (the reason "no grade" belongs to an employee, never to a title);
-  one released without a role or a status, or with a reason; Approved with
-  nobody named (1.9); an error rate on anything but a Provisional title of a
-  machine path (Q05).
+  the employees file does not hold, an employee listed twice among the
+  employees (the reader of the employees file refuses that too; the writer
+  does not count on its caller having used it). And a decision the files
+  cannot state truthfully: one left on its legacy title that has a role, a
+  status or no reason (the reason "no grade" belongs to an employee, never to
+  a title); one released without a role or a status, or with a reason;
+  Approved with nobody named (1.9); an error rate on anything but a
+  Provisional title of a machine path (Q05).
 - The error rate is checked both ways. A Provisional decision whose source is
   the machine and which has no error rate is refused as well: 1.9 releases
   such a path "with its measured error rate", so a blank there would be a

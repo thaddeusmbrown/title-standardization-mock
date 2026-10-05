@@ -111,7 +111,8 @@ section 1.6 of the design as set-up, Wave 1, Wave 2 and the close:
 - **The model switch.** The three model calls (embed, choose, review) sit behind
   `titlestd/switch.py`, set with `--embedder`, `--llm` and `--llm-model`. A model only picks a
   catalog role by number; masking, numbering and the quote check stay in shared code.
-- **The settings.** Every setting has a default; `python3 -m titlestd run --help` lists them.
+- **The settings.** Every setting but `--llm-model` has a default; `python3 -m titlestd run --help`
+  lists them.
 - **The state file.** `titlestd/store.py` writes `out/state.sqlite` as the run proceeds. It is
   rebuilt on every run, so no run depends on an earlier one.
 - **The output files.** The four CSV files are written under `out/` only once every decision is

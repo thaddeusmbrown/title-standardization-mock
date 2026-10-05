@@ -287,6 +287,17 @@ def test_the_prompts_repeat_what_shared_code_holds():
         assert f'"{reason.value}" (' in review
 
 
+def test_the_llm_is_told_it_may_choose_a_role_of_any_family():
+    # 1.7: a role outside the recorded family is for the rules to catch and
+    # the agent to settle, so the LLM must not rule one out by itself. The
+    # agent is told the opposite: it may only pick a role of the family (1.4).
+    choose, review = (
+        " ".join(prompt.split()) for prompt in (recording.CHOOSE_SYSTEM, recording.REVIEW_SYSTEM)
+    )
+    assert "Any listed role may be chosen, whichever job family it belongs to." in choose
+    assert "You may only pick a role of the record's own job family." in review
+
+
 def test_the_prompts_are_plain_text_with_no_line_left_over():
     for prompt in (recording.CHOOSE_SYSTEM, recording.REVIEW_SYSTEM):
         assert prompt == prompt.strip() and "{" not in prompt and "\t" not in prompt
@@ -445,7 +456,7 @@ def test_a_request_must_be_plain_json():
 # The keys of two real requests under the example model. They move when a
 # prompt, a tool, a schema or a shared renderer is reworded, and every recording
 # made before is then a miss: raise PROMPT_VERSION with them, and record again.
-PINNED_CHOOSE_KEY = "4cce396be17e2d42d04a0a08a5fdbce4f0313661635c8fc5893e4413a46e623a"
+PINNED_CHOOSE_KEY = "d9f1a0c603c01c1902d8e8c84ebf00b3763577fc586fc13352a8ac39a120aa69"
 PINNED_REVIEW_KEY = "70db86097a8c62b54177ef6da71f1938decd31f35f53d3e4df81ee274490de42"
 
 

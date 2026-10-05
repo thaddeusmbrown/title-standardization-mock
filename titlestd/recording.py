@@ -137,8 +137,9 @@ The user message holds:
 - a numbered list of roles, each with its name, the code of its job family and a one-line
   definition.
 
-Decide which listed role is the same job as the record describes. The level of a job (junior,
-senior, lead, a numeral such as II) is set elsewhere from the pay grade: ignore it.
+Decide which listed role is the same job as the record describes. Any listed role may be chosen,
+whichever job family it belongs to. The level of a job (junior, senior, lead, a numeral such as
+II) is set elsewhere from the pay grade: ignore it.
 
 Answer with one JSON object:
 - "answer": "role" when one listed role fits the record; "no_match" when the record makes clear

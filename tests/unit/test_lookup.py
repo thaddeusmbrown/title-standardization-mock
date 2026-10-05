@@ -15,12 +15,21 @@ import pytest
 from titlestd import lookup
 from titlestd.contracts import (
     NAME_MASK,
+    Abbreviation,
     Example,
     Record,
+    SeedLookupRow,
     TitleKey,
     TitleRow,
 )
-from titlestd.lookup import Knowledge
+from titlestd.datafiles import DataError
+from titlestd.lookup import Knowledge, load_seed, seed_keys
+
+ABBREVIATIONS = (
+    Abbreviation("sr", "senior"),
+    Abbreviation("acct", "account"),
+    Abbreviation("mgr", "manager"),
+)
 
 
 def _row(
@@ -294,3 +303,118 @@ def test_a_name_in_a_title_with_no_usable_family_still_keeps_it_out_of_the_examp
     assert knowledge.learn(both, "FIN-02") is True
     assert knowledge.lookup(both.key) == "FIN-02"
     assert knowledge.examples() == ()
+
+
+# --- The seed look-up (Q09, Q13) ------------------------------------------------
+
+
+def test_seed_keys_are_cleaned_with_the_shared_prepare_function():
+    seed = (
+        SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-01"),
+        SeedLookupRow("Financial Analyst #20311", "FIN ", "FIN-01"),  # a padded code (S05)
+    )
+    assert seed_keys(seed, ABBREVIATIONS) == (
+        TitleKey("FIN", "financial analyst"),
+        TitleKey("SAL", "senior account manager"),
+    )
+
+
+def test_seed_keys_are_sorted_and_each_given_once():
+    seed = (
+        SeedLookupRow("Senior Account Manager", "SAL", "SAL-01"),
+        SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-01"),  # another spelling of the same
+        SeedLookupRow("Account Manager", "SAL", "SAL-01"),
+        SeedLookupRow("Account Manager", "FIN", "FIN-01"),
+    )
+    assert seed_keys(seed, ABBREVIATIONS) == (
+        TitleKey("FIN", "account manager"),
+        TitleKey("SAL", "account manager"),
+        TitleKey("SAL", "senior account manager"),
+    )
+    assert seed_keys((), ABBREVIATIONS) == ()
+
+
+def test_a_seed_row_with_a_blank_family_code_keeps_it_blank():
+    seed = (SeedLookupRow("Staff Accountant", "  ", "FIN-02"),)
+    assert seed_keys(seed, ABBREVIATIONS) == (TitleKey("", "staff accountant"),)
+
+
+def test_every_seed_row_is_a_look_up_entry_and_an_example_from_the_start():
+    knowledge = Knowledge()
+    seed = (
+        SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-01"),
+        SeedLookupRow("Financial Analyst", "FIN ", "FIN-01"),
+    )
+    load_seed(knowledge, seed, [MANAGER, SENIOR, ANALYST], ABBREVIATIONS)
+    assert knowledge.entries() == ((ANALYST.key, "FIN-01"), (SENIOR.key, "SAL-01"))
+    # The example is the title row's record, not something made from the seed file.
+    assert knowledge.examples() == (
+        Example(ANALYST.record, "FIN-01"),
+        Example(SENIOR.record, "SAL-01"),
+    )
+    assert knowledge.lookup(MANAGER.key) is None
+
+
+def test_loading_no_seed_rows_leaves_the_knowledge_empty():
+    knowledge = Knowledge()
+    load_seed(knowledge, (), [MANAGER], ABBREVIATIONS)
+    assert knowledge.entries() == ()
+
+
+def test_a_seeded_title_with_a_persons_name_joins_the_look_up_only():
+    knowledge = Knowledge()
+    seed = (SeedLookupRow("Customer Success Manager (Tavi Quillfeather)", "SAL", "SAL-06"),)
+    load_seed(knowledge, seed, [NAMED], ABBREVIATIONS)
+    assert knowledge.lookup(NAMED.key) == "SAL-06"
+    assert knowledge.examples() == ()
+
+
+def test_a_seeded_title_with_no_usable_family_joins_under_its_key():
+    knowledge = Knowledge()
+    load_seed(
+        knowledge, (SeedLookupRow("Staff Accountant", "", "FIN-02"),), [NO_FAMILY], ABBREVIATIONS
+    )
+    assert knowledge.lookup(TitleKey("", "staff accountant")) == "FIN-02"
+    assert knowledge.example_count("FIN-02") == 1
+
+
+def test_two_spellings_of_one_seeded_title_make_one_entry():
+    knowledge = Knowledge()
+    seed = (
+        SeedLookupRow("Senior Account Manager", "SAL", "SAL-01"),
+        SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-01"),
+    )
+    load_seed(knowledge, seed, [SENIOR], ABBREVIATIONS)
+    assert knowledge.entries() == ((SENIOR.key, "SAL-01"),)
+    assert knowledge.example_count("SAL-01") == 1
+
+
+def test_two_spellings_of_one_seeded_title_with_two_roles_are_refused():
+    seed = [
+        SeedLookupRow("Senior Account Manager", "SAL", "SAL-01"),
+        SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-06"),
+    ]
+    for order in (seed, seed[::-1]):
+        with pytest.raises(DataError, match=r"seed_lookup\.csv: title .* another spelling"):
+            load_seed(Knowledge(), order, [SENIOR], ABBREVIATIONS)
+
+
+def test_a_seed_row_that_no_employee_holds_is_refused():
+    seed = (SeedLookupRow("Sales Engineer", "SAL", "SAL-04"),)
+    with pytest.raises(DataError) as error:
+        load_seed(Knowledge(), seed, [MANAGER, SENIOR], ABBREVIATIONS)
+    assert "seed_lookup.csv: title 'Sales Engineer' in family 'SAL'" in str(error.value)
+    assert "'sales engineer'" in str(error.value)
+    # The same title in another family is another title (1.4).
+    with pytest.raises(DataError):
+        load_seed(Knowledge(), (SeedLookupRow("Account Manager", "FIN", "FIN-01"),), [MANAGER], ())
+
+
+def test_a_seed_row_in_the_golden_set_is_a_stop_not_a_silent_miss():
+    # The golden set is drawn from titles that miss the seed look-up (Q08). The
+    # guard still refuses the row; load_seed says so instead of dropping the hit.
+    knowledge = Knowledge(golden_keys=[SENIOR.key])
+    seed = (SeedLookupRow("Sr. Acct Mgr - NYC", "SAL", "SAL-01"),)
+    with pytest.raises(ValueError, match="golden set"):
+        load_seed(knowledge, seed, [SENIOR], ABBREVIATIONS)
+    assert knowledge.entries() == () and knowledge.examples() == ()

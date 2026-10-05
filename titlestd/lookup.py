@@ -38,15 +38,26 @@ Decided here, where the record is silent:
 - A decision on a title with no usable family code joins the look-up table
   under its key, blank or unknown code included, and the examples of the
   chosen role (Q26). From then on its record is embedded as an example.
+- seed_keys returns each key once, sorted.
+- load_seed stops on a seed file the rest of the data contradicts, with a
+  DataError naming the title: a seed row that cleans to no title row of the
+  employees file (Q09 has the data hold none, and an example needs the
+  row's record), or two seed rows that clean to one key and name different
+  roles (the result would otherwise depend on the order of the file).
+- load_seed raises ValueError when a seed row's key is in the golden set.
+  The guard refuses it like any other decision, and a seed title that
+  silently stopped being a look-up hit would be worse than a stop: the
+  golden set is drawn from titles that miss the seed look-up (Q08), so
+  this is a mistake of the caller, not of the data.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 
+from titlestd import prepare
 from titlestd.contracts import Abbreviation, Example, SeedLookupRow, TitleKey, TitleRow
-
-_NOT_BUILT = "titlestd.lookup is built by feat/lookup-ml-match"
+from titlestd.datafiles import SEED_LOOKUP_FILE, DataError
 
 
 class Knowledge:
@@ -95,7 +106,7 @@ def seed_keys(
 ) -> tuple[TitleKey, ...]:
     """The decision keys of the seed look-up rows, cleaned with the shared
     prepare function. The golden-set draw excludes them (Q08)."""
-    raise NotImplementedError(_NOT_BUILT)
+    return tuple(sorted({_seed_key(seed, abbreviations) for seed in seed_rows}))
 
 
 def load_seed(
@@ -105,4 +116,28 @@ def load_seed(
     abbreviations: Sequence[Abbreviation],
 ) -> None:
     """Learn every seed look-up row, as a look-up entry and as an example (Q13)."""
-    raise NotImplementedError(_NOT_BUILT)
+    by_key = {row.key: row for row in rows}
+    seeded: dict[TitleKey, str] = {}
+    for seed in seed_rows:
+        key = _seed_key(seed, abbreviations)
+        where = f"{SEED_LOOKUP_FILE}: title {seed.job_title!r} in family {seed.job_family_code!r}"
+        if key not in by_key:
+            raise DataError(
+                f"{where} cleans to {key.cleaned_title!r}, which no employee holds in that family"
+            )
+        known = seeded.setdefault(key, seed.role_id)
+        if known != seed.role_id:
+            raise DataError(
+                f"{where} names role {seed.role_id}, but another spelling of the same "
+                f"title names {known}"
+            )
+        if not knowledge.learn(by_key[key], seed.role_id):
+            raise ValueError(
+                f"{where} is in the golden set, which is drawn from titles that miss "
+                "the seed look-up (Q08)"
+            )
+
+
+def _seed_key(seed: SeedLookupRow, abbreviations: Sequence[Abbreviation]) -> TitleKey:
+    """The seed file holds the raw title and the family code as recorded (Q09)."""
+    return prepare.title_key(seed.job_title, seed.job_family_code, abbreviations)

@@ -385,6 +385,25 @@ def test_golden_titles_are_drawn_and_decided_like_any_other_title_of_the_path(
         assert audited.of(key).status is Status.CONFIRMED
 
 
+def test_a_sample_drawn_with_the_golden_titles_held_out_gives_no_decisions(mini_inputs, long_tail):
+    # Q07: golden titles stay in the sampling frame. A sample drawn from the
+    # rest of the path is not the path's sample, and nothing is released on it.
+    simulated, settings = long_tail.simulated(mini_inputs.catalog, sme_error_rate=0.0)
+    golden_keys = set(golden.draw_golden(long_tail.rows, (), (), settings))
+    machine = dict(long_tail.true_roles)
+    by_key = {row.key: row for row in long_tail.rows}
+    path = MachinePath.MODELS_AGREE
+    rest = [key for key in machine if key not in golden_keys]
+    sample = audit.draw_sample(path, rest, settings.seed)
+    assert len(rest) == 160 and len(sample) == 60
+    labels = {key: simulated.blind_label(by_key[key]) for key in sample}
+    # audit_path is given no seed, so it cannot tell.
+    result = audit.audit_path(path, machine, labels)
+    assert (result.audited_keys, result.outcome) == (sample, AuditOutcome.CONFIRMED)
+    with pytest.raises(ValueError, match="are not the sample that the seed 20260101 draws"):
+        audit.path_decisions(result, machine, labels, settings)
+
+
 # --- "No suitable role" from a real SME (Q03) --------------------------------------------
 
 

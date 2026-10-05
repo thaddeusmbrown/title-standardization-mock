@@ -694,3 +694,75 @@ def test_a_status_always_follows_from_the_audited_and_wrong_counts():
             audit.path_decisions(not_this_audit, machine, labels, Settings())
     assert len(audit.path_decisions(result, machine, labels, Settings())) == 200
     assert len(audit.path_decisions(other_result, other_machine, other_labels, Settings())) == 200
+
+
+# --- The audit must be that of the seeded sample (1.9, S04) ------------------------------
+
+NOT_THE_SAMPLE = "are not the sample that the seed {seed} draws from the path"
+
+
+def _audit_of(
+    path: MachinePath, machine: dict[TitleKey, str], labeled: tuple[TitleKey, ...]
+) -> tuple[dict[TitleKey, HumanDecision], AuditResult]:
+    """The audit of a path in which these titles were labeled, the machine right about each."""
+    labels = {key: _label(key, machine[key]) for key in labeled}
+    return labels, audit.audit_path(path, machine, labels)
+
+
+def test_decisions_are_given_only_on_the_audit_of_the_sample_the_seed_draws():
+    # 1.9: the audit labels a random sample of the path. audit_path is given
+    # no seed and takes any 60 titles of the path; path_decisions has the seed.
+    keys = _keys(200)
+    machine = dict.fromkeys(keys, MACHINE_ROLE)
+    path = MachinePath.MODELS_AGREE
+    first_sixty = tuple(keys[:60])
+    assert first_sixty != audit.draw_sample(path, keys, SEED)
+    labels, result = _audit_of(path, machine, first_sixty)
+    assert (result.audited_keys, result.outcome) == (first_sixty, AuditOutcome.CONFIRMED)
+    for release in (False, True):
+        settings = Settings(release_stopped_paths=release)
+        with pytest.raises(ValueError, match=NOT_THE_SAMPLE.format(seed=SEED)):
+            audit.path_decisions(result, machine, labels, settings)
+
+
+def test_a_sample_of_another_seed_or_of_the_other_path_gives_no_decisions():
+    # S04: the sample is the audit stream of the run's seed, keyed by the path.
+    keys = _keys(200)
+    machine = dict.fromkeys(keys, MACHINE_ROLE)
+    path = MachinePath.MODELS_AGREE
+    on_another_seed = audit.draw_sample(path, keys, SEED + 1)
+    labels, result = _audit_of(path, machine, on_another_seed)
+    with pytest.raises(ValueError, match=NOT_THE_SAMPLE.format(seed=SEED)):
+        audit.path_decisions(result, machine, labels, Settings())
+    # The same audit is the one a run on that seed would have made.
+    assert len(audit.path_decisions(result, machine, labels, Settings(seed=SEED + 1))) == 200
+
+    of_the_other_path = audit.draw_sample(MachinePath.AGENT_SETTLED, keys, SEED)
+    labels, result = _audit_of(path, machine, of_the_other_path)
+    with pytest.raises(ValueError, match="the audit of the path 'models agree' are not the sample"):
+        audit.path_decisions(result, machine, labels, Settings())
+    # Under its own path it is the sample.
+    labels, result = _audit_of(MachinePath.AGENT_SETTLED, machine, of_the_other_path)
+    assert len(audit.path_decisions(result, machine, labels, Settings())) == 200
+
+
+def test_a_sample_drawn_from_a_part_of_the_path_gives_no_decisions():
+    # 2.4: the sample is drawn from every title of the path. One drawn with
+    # some titles held out of the frame is another sample.
+    keys = _keys(200)
+    machine = dict.fromkeys(keys, MACHINE_ROLE)
+    path = MachinePath.MODELS_AGREE
+    from_a_part = audit.draw_sample(path, keys[40:], SEED)
+    assert from_a_part != audit.draw_sample(path, keys, SEED)
+    labels, result = _audit_of(path, machine, from_a_part)
+    with pytest.raises(ValueError, match=NOT_THE_SAMPLE.format(seed=SEED)):
+        audit.path_decisions(result, machine, labels, Settings())
+
+
+@pytest.mark.parametrize(("size", "wrong"), [(60, 5), (12, 0), (1, 1), (0, 0)])
+def test_the_seed_does_not_matter_to_a_path_labeled_in_full(size, wrong):
+    machine, labels, result = _audited_path(size, wrong)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    assert len(decisions) == size
+    for seed in (0, 1, SEED + 1):
+        assert audit.path_decisions(result, machine, labels, Settings(seed=seed)) == decisions

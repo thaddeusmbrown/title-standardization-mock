@@ -43,7 +43,8 @@ Decided on this branch, where the record says nothing:
   decide", which a blind label never is (Q01). A failure is a ValueError. It
   is given no seed, so it cannot tell whether the labeled titles of a larger
   path are the ones draw_sample returns: any AUDIT_SAMPLE_SIZE titles of the
-  path pass. The caller labels exactly what draw_sample returns.
+  path pass. The caller labels exactly what draw_sample returns for the seed
+  of the run; path_decisions refuses the audit of anything else (last point).
 - An audited title the SME marked "no suitable role" (Q03; only a title with
   no truth row) counts as wrong: the machine named a role and the SME says
   none suits. It is not released on the machine's role. It stays on its legacy
@@ -58,6 +59,14 @@ Decided on this branch, where the record says nothing:
 - path_decisions takes the audit result and checks that it is the audit of
   the titles and labels it is given, so a status always follows from the
   audited and wrong counts (Q23).
+- path_decisions is also given the settings, so it makes the check audit_path
+  cannot: the titles the audit labeled must be draw_sample(path, the titles
+  of the path, settings.seed). Otherwise it gives no decisions (ValueError):
+  for a sample drawn on another seed, on the other path's stream, or from a
+  part of the path, for example with the golden titles held out of the frame
+  (Q07). So nothing is released on an audit whose sample was not the seeded
+  random sample of the whole path (1.9, 2.4, S04). A path labeled in full has
+  one possible sample, so the seed does not matter to it.
 """
 
 from __future__ import annotations
@@ -178,12 +187,19 @@ def path_decisions(
     counted in the legacy row with ExceptionReason.STOPPED_PATH (Q16), and an
     audited title marked "no suitable role" with ExceptionReason.NO_SUITABLE_ROLE.
 
-    Raises ValueError when result is not the audit of these titles and labels.
+    Raises ValueError when result is not the audit of these titles and labels,
+    or when the titles it labeled are not the sample that settings.seed draws
+    from the path.
     """
     if result != audit_path(result.path, machine_roles, labels):
         raise ValueError(
             f"the audit result of the path {result.path.value!r} is not the audit of the "
             "titles and labels given with it"
+        )
+    if result.audited_keys != draw_sample(result.path, machine_roles, settings.seed):
+        raise ValueError(
+            f"the titles labeled in the audit of the path {result.path.value!r} are not the "
+            f"sample that the seed {settings.seed} draws from the path"
         )
     row = _PATH_ROW[result.path]
     return tuple(

@@ -89,6 +89,17 @@ Decided here, where the record is silent:
   with titlestd.catalog.level_for_grade, as the release writer reads a grade.
 - The state records the occasions of people's decisions as OCCASION_WAVE1,
   OCCASION_GOLDEN, OCCASION_AUDIT and OCCASION_QUEUE.
+- After the table and footer of titlestd.report the run command prints one
+  more line, naming the folder and the files it wrote.
+
+The run shape (Q23), measured on the default seed with the data as
+feat/mock-data committed it: the bar holds. All seven rows of the table hold
+titles, the last two through the leftover mechanism of Q01; the models-agree
+path holds more than 60 titles, so its audit is a sampled one, and it is not
+stopped (it is confirmed). The agent-settled path holds fewer than 60 titles
+and is labeled in full, which Q23 allows. So no tuning round was made: the
+difficulty constants of titlestd.mockdata and the files in data/ are as that
+branch left them.
 """
 
 from __future__ import annotations

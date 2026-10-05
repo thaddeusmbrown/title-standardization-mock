@@ -49,6 +49,11 @@ hand-written data set in `tests/fixtures/mini`.
    `claude-haiku-4-5` currently reports `claude-haiku-4-5-20251001`), as information only.
 9. **Python 3.12 or later.** The package is the directory `titlestd` at the repository root,
    run as `python3 -m titlestd run` from a fresh clone with nothing installed.
+10. **A short README.** The README is limited to what is needed to get the system running from
+    a clean start and a quick overview of the architecture and of the models and tools used.
+    An observation from the live run is kept as a note under `docs/`. This was decided during
+    stage 5, and it decides wherever an entry below asks more of the README ("What the README
+    must say").
 
 ---
 
@@ -1803,7 +1808,7 @@ owner here.
 | 4 | `feat/pipeline-report-cli` | The run: set-up, Wave 1, Wave 2, the close, learning between waves; the table and footer; the state file; the tuning of the run shape and the frozen table (below) | `titlestd/pipeline.py`, `report.py`, `store.py`, `tests/fixtures/expected/`; for the tuning only, the difficulty constants in `titlestd/mockdata.py` and `data/` | every branch of stages 1 to 3 | All eight, end to end: T1, T3, T5, T6, T7 and T8 on the run's files and state, T2 and T4 with an injected misbehaving model. Behavioural test (b) of Q22. The run shape of Q23 and its invariants (Q05, Q16); two runs in separate processes give the same bytes (Q06, Q23); the frozen table (Q23, Q38); one run at a high `undecided_rate` (Q01); the default run under the import guard (Q32 a); the 60-second limit (Q38); spies showing no model is called for a title with a person's name or no usable family (Q14, Q26); a seed hit on the Wave 1 list (Q13); the ML-alone route switched on (Q04). |
 | 4 | `feat/live-replay` | `llm = anthropic`, `llm = replay`, the recorder and its key | `titlestd/live.py`, `replay.py`, `recording.py` | model-switch-offline, llm-fallback-rules, agent | None of the eight. Tiers (b) and (c) of Q32 at the level of `choose` and the agent loop over the mini data set; the start-up errors of Q31; the failures of Q39 with a fake client; the message for a missing extra (S09). |
 | 5 | `feat/recordings-replay-e2e` | The round trip of a whole run with a scripted client, first; then the smoke run, the one live recording, the committed recordings and the replay run in the gate | `recordings/`, `tests/integration/test_recordings*.py` | pipeline-report-cli, live-replay | None of the eight of its own: the replay run passes the same invariants as the default run. The round trip of a whole run (Q32 b); the replay run under the import guard (Q32 a); the committed recording replays with zero misses, marked `replay` (Q02, Q32); no recording holds a key-shaped string (Q29). |
-| 5 | `docs/readme-hygiene` | The README; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None of the eight. Mock emails use `example.com`; no tracked file holds a key-shaped string and no `.env` file is tracked (Q02, Q28). The README statements listed below. |
+| 5 | `docs/readme-hygiene` | The README; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None of the eight. Mock emails use `example.com`; no tracked file holds a key-shaped string and no `.env` file is tracked (Q02, Q28). The README is held to the program and to "What the README must say" below: the two statements of 2.4 are in it; every command it gives is one the command line or the Makefile takes; the output it shows is the frozen table; the files and modules it names exist. No test asks any other statement of it (owner decision 10). |
 
 ### Work that crosses a branch boundary
 
@@ -1845,18 +1850,24 @@ recording.
 
 ### What the README must say
 
-`docs/readme-hygiene` writes the README. These statements are required, and the README says
-each in its own words:
+`docs/readme-hygiene` writes the README. Owner decision 10 limits it to getting the system
+running from a clean start and a quick overview of the architecture and of the models and
+tools used. These remain in it, the two statements of 2.4 in the README's own words and the
+commands as the program takes them:
 
-| Source | Statement |
+| Source | In the README |
 |---|---|
 | 2.4 | Offline accuracy shows the flow, not model quality. |
-| 2.4 | At 60 titles per path the audit has little power, so provisional is the usual result in the mock. |
-| Q01 | The "could not decide" rate of simulated reviewers is a simulation device. |
-| Q14 | The invented name list stands in for a real name masker. |
-| Q18 | Changing the seed, the data or the embedder invalidates a recording. |
-| Q23 | The shape of the default run, and that a machine path of 60 titles or fewer is labeled in full and gets no status. |
-| Q30 | How `embedder = local` gets its model, and the result of the `local_model` smoke test if it failed or timed out. |
-| Q37 | The three-SME agreement exercise of set-up is left out. |
+| 2.4 | At 60 titles per path the audit has little power, with what the default seed and a few other seeds gave the models-agree path, and that the agent-settled path is labeled in full. |
+| 2.6, Q38 | The command of the default run, what it prints and the files it writes. |
+| Q29, Q31 | The command that replays the committed recording, and one sentence on what a recording is valid for. |
+| Q30, S09 | The command that runs the program with an optional extra, and how `embedder = local` gets its model. |
 | Q02, Q39 | The `record` command; the key comes only from the environment, exported in the shell or passed from a file outside version control with `uv run --env-file`. |
-| S09 | The command that runs the program with an optional extra. |
+| S14 | The check command. |
+
+Everything else that an entry above asks of the README is left out of it and stays recorded in
+that entry: that the "could not decide" rate of simulated reviewers is a simulation device
+(Q01), that the invented name list stands in for a real name masker (Q14), the full rule on
+what invalidates a recording (Q18), the rest of the shape of the default run (Q23), the result
+of the `local_model` smoke test (Q30) and that the three-SME agreement exercise of set-up is
+left out (Q37). Where one of those entries says "the README says", owner decision 10 decides.

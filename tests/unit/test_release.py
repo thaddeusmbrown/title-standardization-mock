@@ -387,13 +387,15 @@ def test_the_error_rate_of_a_provisional_path_has_four_decimal_places(
     assert [row["error_rate"] for row in load] == [written]
 
 
-def test_the_error_rate_is_filled_only_on_provisional_rows_of_a_machine_path(out: Path):
+def test_the_error_rate_is_filled_on_the_provisional_rows_of_a_machine_path_and_no_other(
+    out: Path,
+):
     load = _read(out)[0]
     filled = [row["employee_id"] for row in load if row["error_rate"]]
     assert filled == ["D1", "D2"]
     for row in load:
-        if row["error_rate"]:
-            assert row["status"] == "Provisional" and row["path"] == "agent-settled"
+        on_a_path = row["path"] in ("models agree", "agent-settled")
+        assert bool(row["error_rate"]) is (row["status"] == "Provisional" and on_a_path)
     # A generic family role is Provisional too, and has no path to take a rate from.
     generic = next(row for row in load if row["employee_id"] == "E1")
     assert (generic["status"], generic["error_rate"]) == ("Provisional", "")
@@ -720,6 +722,15 @@ _PAYROLL_LEGACY = _on_legacy(PAYROLL, ExceptionReason.OVER_GENERIC_CAP)
                 error_rate=0.1,
             ),
             "has an error rate",
+        ),
+        # a Provisional title of a machine path, and no measured error rate (1.9)
+        (
+            _by_machine(ACCOUNT, TableRow.MODELS_AGREE, "SAL-01", Status.PROVISIONAL),
+            "has no error rate",
+        ),
+        (
+            _by_machine(ACCOUNT, TableRow.AGENT_SETTLED, "SAL-01", Status.PROVISIONAL),
+            "has no error rate",
         ),
         # left on its legacy title, and not as such a title must be
         (dataclasses.replace(_PAYROLL_LEGACY, role_id="FIN-03"), "has a role or a status"),

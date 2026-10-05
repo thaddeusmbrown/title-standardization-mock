@@ -39,6 +39,14 @@ Decided here, where the record is silent:
   one released without a role or a status, or with a reason; Approved with
   nobody named (1.9); an error rate on anything but a Provisional title of a
   machine path (Q05).
+- The error rate is checked both ways. A Provisional decision whose source is
+  the machine and which has no error rate is refused as well: 1.9 releases
+  such a path "with its measured error rate", so a blank there would be a
+  rate somebody forgot. Every such decision has one to carry, a stopped path
+  that a setting releases as Provisional included (2.4, Q21): a path that is
+  sampled has 60 audited titles, and a smaller one is labeled in full and
+  holds no Provisional title. A generic family role is Provisional with no
+  rate, because code assigned it and no path was audited for it.
 - "No grade" is no usable grade, as titlestd.catalog reads it: a missing
   grade, or one HR's table does not list. Either gives the title with no level
   word, a blank level, no_grade = 1 and a line on the exceptions list.
@@ -279,6 +287,10 @@ def _refuse_a_decision_the_files_cannot_state(decision: Decision) -> None:
         (
             decision.error_rate is not None and not by_a_path,
             "it has an error rate and is not a Provisional title of a machine path",
+        ),
+        (
+            by_a_path and decision.error_rate is None,
+            "it is a Provisional title of a machine path and has no error rate",
         ),
     )
     for found, what in faults:

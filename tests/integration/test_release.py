@@ -215,9 +215,10 @@ def _check_the_files(run: Run) -> None:
         assert line["simulated"] == ("1" if decision.source is DecisionSource.PERSON else "0")
         if line["path"] == TableRow.LOOKUP.value:
             assert (line["decided_by"], line["simulated"]) == (LOOKUP_DECIDED_BY, "0")
+        # The rate is on every Provisional row of a machine path and on no other (1.9, Q05).
+        on_a_path = line["path"] in ("models agree", "agent-settled")
+        assert bool(line["error_rate"]) is (line["status"] == "Provisional" and on_a_path)
         if line["error_rate"]:
-            assert line["status"] == "Provisional"
-            assert line["path"] in ("models agree", "agent-settled")
             assert line["error_rate"] == f"{decision.error_rate:.4f}"
         if line["path"] == TableRow.GENERIC.value:
             assert role.is_generic and line["status"] == "Provisional" and not line["error_rate"]

@@ -3,7 +3,7 @@
 Two tests of section 2.7 belong to this module. The writer refuses a role or a
 title that is not in the catalog, so none can reach the load file; and applying
 the reverse file to the load file restores every legacy title. Beside them, the
-file checks of Q05.
+file checks of Q05 and the review-queue file of Q16 and S12.
 """
 
 from __future__ import annotations
@@ -23,6 +23,10 @@ from titlestd.contracts import (
     DecisionSource,
     Employee,
     ExceptionReason,
+    HumanAnswer,
+    HumanDecision,
+    QueueEntry,
+    Reason,
     Record,
     StandardTitle,
     Status,
@@ -824,3 +828,174 @@ def test_apply_reverse_refuses_an_employee_listed_twice(out: Path):
     other = {"employee_id": "A1", "legacy_job_title": "Another Title"}
     with pytest.raises(ReleaseError, match=r"reverse\.csv: employee A1 is listed twice"):
         release.apply_reverse(load, [*reverse, other])
+
+
+# --- The review-queue file (Q16, S12, Q40) ------------------------------------------
+
+
+def _human(row: TitleRow, answer: HumanAnswer, role_id: str | None = None) -> HumanDecision:
+    return HumanDecision(row.key, answer, role_id, REVIEWER, True)
+
+
+QUEUE = (
+    QueueEntry(
+        row=TREASURY,
+        reasons=(Reason.MODELS_DISAGREE, Reason.AGENT_ESCALATED),
+        ml_first_choice="FIN-01",
+        llm_pick="FIN-06",
+        agent_recommendation=None,
+        answer_source="stand-in",
+        decision=_human(TREASURY, HumanAnswer.ROLE, "FIN-06"),
+        outcome=TableRow.REVIEW_QUEUE,
+    ),
+    QueueEntry(
+        row=PROJECTS,
+        reasons=(Reason.NO_MATCH, Reason.AGENT_ESCALATED),
+        ml_first_choice="FIN-01",
+        llm_pick=None,
+        agent_recommendation=None,
+        answer_source="recorded 2026-10-04, claude-haiku-4-5",
+        decision=_human(PROJECTS, HumanAnswer.UNDECIDED),
+        outcome=TableRow.GENERIC,
+    ),
+    QueueEntry(
+        row=STAFF,
+        reasons=(Reason.NO_USABLE_FAMILY,),
+        ml_first_choice=None,
+        llm_pick=None,
+        agent_recommendation=None,
+        answer_source="",
+        decision=_human(STAFF, HumanAnswer.NO_SUITABLE_ROLE),
+        outcome=TableRow.LEGACY,
+    ),
+    QueueEntry(
+        row=ANALYST,
+        reasons=(Reason.COMPLIANCE_FLAG, Reason.MODELS_DISAGREE),
+        ml_first_choice="FIN-04",
+        llm_pick="FIN-01",
+        agent_recommendation="FIN-01",
+        answer_source="live",
+        decision=None,
+        outcome=TableRow.LEGACY,
+    ),
+)
+
+# The review-queue file of that queue, in three parts: why each title is there,
+# what the models said, and what the person decided.
+QUEUE_WHY = """
+staff accountant,,1,no usable family code; no suitable role, waiting for catalog owner
+financial analyst,FIN,2,compliance-flagged role; models disagree
+special projects,FIN,1,no match; agent escalated
+treasury analyst,FIN,1,models disagree; agent escalated
+"""
+QUEUE_MODELS = """
+staff accountant,,,,
+financial analyst,FIN-04,FIN-01,FIN-01,live
+special projects,FIN-01,,,recorded 2026-10-04, claude-haiku-4-5
+treasury analyst,FIN-01,FIN-06,,stand-in
+"""
+QUEUE_PEOPLE = """
+staff accountant,no suitable role,Reviewer (simulated),1,left on legacy title
+financial analyst,,,0,left on legacy title
+special projects,could not decide,Reviewer (simulated),1,generic family role
+treasury analyst,FIN-06,Reviewer (simulated),1,review queue
+"""
+
+
+def test_the_review_queue_file_has_one_row_per_title_sorted_by_key(tmp_path: Path):
+    release.write_review_queue(tmp_path / "out", QUEUE)
+    assert [path.name for path in (tmp_path / "out").iterdir()] == ["review_queue.csv"]
+    written = tmp_path / "out" / "review_queue.csv"
+    rows = datafiles.read_table(written, release.REVIEW_QUEUE_COLUMNS)
+    why = ("cleaned_title", "job_family_code", "headcount", "reasons")
+    models = ("ml_first_choice", "llm_pick", "agent_recommendation", "answer_source")
+    people = ("decision", "decided_by", "simulated", "outcome")
+    assert why + models + people == release.REVIEW_QUEUE_COLUMNS
+    assert _columns(rows, *why) == QUEUE_WHY
+    assert _columns(rows, "cleaned_title", *models) == QUEUE_MODELS
+    assert _columns(rows, "cleaned_title", *people) == QUEUE_PEOPLE
+    # The same format as the other files; a label with a comma is quoted.
+    text = written.read_text(encoding="utf-8")
+    assert text.split("\n")[0] == ",".join(release.REVIEW_QUEUE_COLUMNS)
+    assert text.endswith("\n") and "\r" not in text
+    assert ',"recorded 2026-10-04, claude-haiku-4-5",could not decide,' in text
+    # The order the entries come in does not change a byte.
+    again = tmp_path / "again"
+    release.write_review_queue(again, QUEUE[::-1])
+    assert (again / "review_queue.csv").read_bytes() == written.read_bytes()
+
+
+def test_the_review_queue_shows_the_persons_decision_marked_as_simulated(tmp_path: Path):
+    release.write_review_queue(tmp_path, QUEUE)
+    rows = datafiles.read_table(tmp_path / "review_queue.csv", release.REVIEW_QUEUE_COLUMNS)
+    by_title = {row["cleaned_title"]: row for row in rows}
+    # The person's role id, or one of the two answers that are not a role (S12).
+    decisions = [row["decision"] for row in rows]
+    assert decisions == ["no suitable role", "", "could not decide", "FIN-06"]
+    assert by_title["special projects"]["decision"] == HumanAnswer.UNDECIDED.value
+    assert by_title["staff accountant"]["decision"] == HumanAnswer.NO_SUITABLE_ROLE.value
+    for row in rows:
+        decided = row["cleaned_title"] != "financial analyst"
+        assert row["simulated"] == ("1" if decided else "0")
+        assert row["decided_by"] == (REVIEWER if decided else "")
+    # The answer label of Q40 and the final outcome are shown as given.
+    assert by_title["special projects"]["answer_source"] == "recorded 2026-10-04, claude-haiku-4-5"
+    assert {row["outcome"] for row in rows} <= {table_row.value for table_row in TableRow}
+
+
+def test_reasons_keep_the_order_they_were_given_in(tmp_path: Path):
+    entry = dataclasses.replace(
+        QUEUE[0], reasons=(Reason.QUOTE_NOT_IN_RECORD, Reason.COMPLIANCE_FLAG, Reason.ML_ALONE)
+    )
+    release.write_review_queue(tmp_path, [entry])
+    rows = datafiles.read_table(tmp_path / "review_queue.csv", release.REVIEW_QUEUE_COLUMNS)
+    assert rows[0]["reasons"] == "quote not in record; compliance-flagged role; ML alone"
+
+
+def test_a_title_marked_no_suitable_role_is_shown_waiting_for_the_catalog_owner(tmp_path: Path):
+    # Q03: written with that reason, whether or not the entry lists it already.
+    marked = _human(STAFF, HumanAnswer.NO_SUITABLE_ROLE)
+    waiting = "no suitable role, waiting for catalog owner"
+    for given, written in (
+        ((), waiting),
+        ((Reason.PERSON_NAME,), f"person's name; {waiting}"),
+        ((Reason.NO_SUITABLE_ROLE,), waiting),
+        ((Reason.NO_SUITABLE_ROLE, Reason.NO_USABLE_FAMILY), f"{waiting}; no usable family code"),
+    ):
+        entry = dataclasses.replace(QUEUE[2], reasons=given, decision=marked)
+        release.write_review_queue(tmp_path, [entry])
+        rows = datafiles.read_table(tmp_path / "review_queue.csv", release.REVIEW_QUEUE_COLUMNS)
+        assert [(row["reasons"], row["decision"]) for row in rows] == [
+            (written, "no suitable role")
+        ]
+    # Nobody else's title gets the reason: not an undecided one, not a decided one.
+    release.write_review_queue(tmp_path, QUEUE[:2])
+    rows = datafiles.read_table(tmp_path / "review_queue.csv", release.REVIEW_QUEUE_COLUMNS)
+    assert [waiting in row["reasons"] for row in rows] == [False, False]
+
+
+def test_a_decision_that_is_not_simulated_carries_no_mark(tmp_path: Path):
+    real = HumanDecision(TREASURY.key, HumanAnswer.ROLE, "FIN-06", "Catalog owner", False)
+    release.write_review_queue(tmp_path, [dataclasses.replace(QUEUE[0], decision=real)])
+    rows = datafiles.read_table(tmp_path / "review_queue.csv", release.REVIEW_QUEUE_COLUMNS)
+    assert (rows[0]["decided_by"], rows[0]["simulated"]) == ("Catalog owner", "0")
+
+
+def test_an_empty_queue_writes_the_header_alone(tmp_path: Path):
+    release.write_review_queue(tmp_path, [])
+    text = (tmp_path / "review_queue.csv").read_text(encoding="utf-8")
+    assert text == ",".join(release.REVIEW_QUEUE_COLUMNS) + "\n"
+
+
+def test_a_title_in_the_queue_twice_is_refused(tmp_path: Path):
+    with pytest.raises(ReleaseError, match="'treasury analyst' in family 'FIN' is in the review"):
+        release.write_review_queue(tmp_path, [*QUEUE, QUEUE[0]])
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("role_id", [None, ""])
+def test_a_role_decision_that_names_no_role_is_refused(tmp_path: Path, role_id):
+    entry = dataclasses.replace(QUEUE[0], decision=_human(TREASURY, HumanAnswer.ROLE, role_id))
+    with pytest.raises(ReleaseError, match="is a role and names none"):
+        release.write_review_queue(tmp_path, [entry])
+    assert list(tmp_path.iterdir()) == []

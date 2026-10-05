@@ -47,6 +47,13 @@ Decided here, where the record is silent:
   like the legacy title beside it. In the review queue it is the title key's.
 - Rows are sorted by employee_id as text, the order a title row lists its
   employees in.
+- The review queue: reasons keep the order the entry gives them; an entry
+  with no decision has a blank decision and decided_by and simulated = 0; a
+  title entered twice, or a decision for a role that names none, is refused.
+- A title a person marked "no suitable role" is written with the reason "no
+  suitable role, waiting for catalog owner" (Q03), whether or not the entry
+  already lists it: that reason is how the file says whom the title waits
+  for, since decided_by names the person who made the mark.
 - apply_reverse reads only employee_id and legacy_job_title, answers in the
   order of the load rows, and also refuses an employee listed twice in either
   file.
@@ -67,15 +74,15 @@ from titlestd.contracts import (
     DecisionSource,
     Employee,
     ExceptionReason,
+    HumanAnswer,
     QueueEntry,
+    Reason,
     Status,
     TableRow,
     TitleKey,
     TitleRow,
     TitlestdError,
 )
-
-_NOT_BUILT = "titlestd.release is built by feat/close-release-files"
 
 LOAD_FILE = "load.csv"
 LOAD_COLUMNS = (
@@ -176,7 +183,16 @@ def write_release_files(
 def write_review_queue(out_dir: Path, entries: Sequence[QueueEntry]) -> None:
     """Write review_queue.csv: one row per title that entered the review queue,
     as the queue stood after Wave 2, with what happened to it at the close (Q16)."""
-    raise NotImplementedError(_NOT_BUILT)
+    lines = {}
+    for entry in entries:
+        if entry.row.key in lines:
+            raise ReleaseError(f"{_title(entry.row.key)} is in the review queue twice")
+        lines[entry.row.key] = _queue_line(entry)
+    datafiles.write_table(
+        Path(out_dir) / REVIEW_QUEUE_FILE,
+        REVIEW_QUEUE_COLUMNS,
+        (lines[key] for key in sorted(lines)),
+    )
 
 
 def apply_reverse(
@@ -281,6 +297,34 @@ def _refuse_titles_outside_the_catalog(load: Sequence[Mapping[str, str]], catalo
                 "are not a Long and Short Title of the catalog; nothing was written"
             )
         passed.add(titles)
+
+
+def _queue_line(entry: QueueEntry) -> dict[str, str]:
+    key, decision = entry.row.key, entry.decision
+    reasons = list(entry.reasons)
+    answer = ""
+    if decision is not None:
+        role_answer = decision.answer is HumanAnswer.ROLE
+        answer = decision.role_id if role_answer else decision.answer.value
+        if not answer:
+            raise ReleaseError(f"the decision on {_title(key)} is a role and names none")
+        marked = decision.answer is HumanAnswer.NO_SUITABLE_ROLE
+        if marked and Reason.NO_SUITABLE_ROLE not in reasons:
+            reasons.append(Reason.NO_SUITABLE_ROLE)  # whom the title waits for (Q03)
+    return {
+        "cleaned_title": key.cleaned_title,
+        "job_family_code": key.family_code,
+        "headcount": str(entry.row.headcount),
+        "reasons": "; ".join(reason.value for reason in reasons),
+        "ml_first_choice": entry.ml_first_choice or "",
+        "llm_pick": entry.llm_pick or "",
+        "agent_recommendation": entry.agent_recommendation or "",
+        "answer_source": entry.answer_source,
+        "decision": answer,
+        "decided_by": decision.decided_by if decision is not None else "",
+        "simulated": _flag(decision is not None and decision.simulated),
+        "outcome": entry.outcome.value,
+    }
 
 
 def _exception(employee: Employee, reason: ExceptionReason, *, released: bool) -> dict[str, str]:

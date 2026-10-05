@@ -224,16 +224,17 @@ def test_emails_are_masked_before_names():
 
 
 @pytest.mark.parametrize(
-    "email",
+    ("local_part", "domain"),
     [
-        "payroll@example.com",
-        "first.last+tag@mail.example.com",
-        "A_B-C@EXAMPLE.COM",
-        "someone@intranet",
+        ("payroll", reference.EMAIL_DOMAIN),
+        ("first.last+tag", f"mail.{reference.EMAIL_DOMAIN}"),
+        ("A_B-C", reference.EMAIL_DOMAIN.upper()),
+        ("desk", "intranet"),  # a domain with no dot is masked too
     ],
 )
-def test_emails_of_several_shapes_are_masked(email):
-    assert mask_text(f"Send it to {email}, please.") == f"Send it to {EMAIL_MASK}, please."
+def test_emails_of_several_shapes_are_masked(local_part, domain):
+    text = f"Send it to {local_part}@{domain}, please."
+    assert mask_text(text) == f"Send it to {EMAIL_MASK}, please."
 
 
 def test_a_name_in_a_description_is_masked_as_one():

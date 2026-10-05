@@ -14,6 +14,7 @@ data in tests/integration/test_pipeline_default_run.py.
 from __future__ import annotations
 
 import dataclasses
+import os
 import shutil
 import sqlite3
 from collections.abc import Sequence
@@ -411,6 +412,116 @@ def test_a_failure_while_finishing_removes_the_output_files(mini_settings):
         assert not (mini_settings.out_dir / name).exists(), name
 
 
+# --- an output folder that cannot be used -----------------------------------------------
+
+
+@pytest.fixture
+def read_only_folder(tmp_path):
+    folder = tmp_path / "read only"
+    folder.mkdir()
+    folder.chmod(0o555)
+    if os.access(folder, os.W_OK):  # an administrator writes where nobody else may
+        folder.chmod(0o755)
+        pytest.skip("this user can write into a read-only folder")
+    yield folder
+    folder.chmod(0o755)
+
+
+@pytest.mark.parametrize("below", ["", "out"])
+def test_an_output_folder_that_may_not_be_written_stops_the_run(
+    mini_settings, read_only_folder, below
+):
+    # The folder itself: SQLite cannot make the state file in it. A folder
+    # below it: the folder cannot be made.
+    settings = dataclasses.replace(mini_settings, out_dir=read_only_folder / below)
+    with pytest.raises(pipeline.OutputError, match="cannot be used") as raised:
+        pipeline.run_pipeline(settings)
+    assert f"the output folder {settings.out_dir} " in str(raised.value)
+    assert "--out-dir" in str(raised.value)
+    assert list(read_only_folder.iterdir()) == []
+
+
+def test_a_state_file_that_cannot_grow_stops_the_run_with_no_output_file(
+    mini_settings, monkeypatch
+):
+    # As on a full disk: SQLite refuses the first write that needs another page.
+    create_store = store.create_store
+
+    def with_no_room(path):
+        connection = create_store(path)
+        (pages,) = connection.execute("PRAGMA page_count").fetchone()
+        connection.execute(f"PRAGMA max_page_count = {pages}")
+        return connection
+
+    monkeypatch.setattr(store, "create_store", with_no_room)
+    with pytest.raises(pipeline.OutputError, match="database or disk is full") as raised:
+        pipeline.run_pipeline(mini_settings)
+    assert f"the output folder {mini_settings.out_dir} " in str(raised.value)
+    for name in pipeline.OUTPUT_FILES:
+        assert not (mini_settings.out_dir / name).exists(), name
+
+
+def test_a_state_file_that_refuses_the_last_write_stops_the_run_with_no_output_file(
+    mini_settings, monkeypatch
+):
+    # The output files are written by then, and are removed again.
+    save_run = store.save_run
+    written = []
+
+    def refused(connection, result):
+        written.extend(
+            name for name in pipeline.OUTPUT_FILES if (mini_settings.out_dir / name).is_file()
+        )
+        connection.execute("PRAGMA query_only = ON")
+        save_run(connection, result)
+
+    monkeypatch.setattr(store, "save_run", refused)
+    with pytest.raises(pipeline.OutputError, match="readonly database") as raised:
+        pipeline.run_pipeline(mini_settings)
+    assert f"the output folder {mini_settings.out_dir} " in str(raised.value)
+    assert written == list(pipeline.OUTPUT_FILES)
+    for name in pipeline.OUTPUT_FILES:
+        assert not (mini_settings.out_dir / name).exists(), name
+
+
+class InTheWay:
+    """The stand-in's answers. With the first one, a folder is put where the run
+    will write an output file: the folder itself, or a link to it."""
+
+    def __init__(self, chooser, path: Path, link_to: Path | None) -> None:
+        self._chooser, self._path, self._link_to = chooser, path, link_to
+
+    def choose(self, record, roles):
+        if self._link_to is None:
+            self._path.mkdir(exist_ok=True)
+        elif not self._path.is_symlink():
+            self._path.symlink_to(self._link_to, target_is_directory=True)
+        return self._chooser.choose(record, roles)
+
+
+@pytest.mark.parametrize("in_the_way", ["a folder", "a link to a folder"])
+def test_an_output_file_that_cannot_be_written_stops_the_run(mini_settings, tmp_path, in_the_way):
+    # A folder in the place of an output file can be neither written nor
+    # removed like a file. A link to one cannot be written but is removed, so
+    # there the refusal to write is the only one.
+    models = real_models(mini_settings)
+    path = mini_settings.out_dir / release.REVIEW_QUEUE_FILE
+    link_to = None if in_the_way == "a folder" else tmp_path
+    if link_to is not None:
+        try:
+            (tmp_path / "a link").symlink_to(link_to, target_is_directory=True)
+        except OSError as error:
+            pytest.skip(f"no link can be made here: {error}")
+    spy = Spy(models, chooser=InTheWay(models.llm.chooser, path, link_to))
+    with pytest.raises(pipeline.OutputError, match="cannot be used") as raised:
+        pipeline.run_pipeline(mini_settings, models=spy.models)
+    assert f"the output folder {mini_settings.out_dir} " in str(raised.value)
+    assert spy.finished == []
+    for name in pipeline.OUTPUT_FILES:
+        assert not (mini_settings.out_dir / name).is_file(), name
+    assert path.is_dir() == (link_to is None)  # the link is gone, the folder is not
+
+
 # --- the command line ---------------------------------------------------------------
 
 MINI_FLAGS = ("--data-dir", "tests/fixtures/mini", "--wave1-size", "4", "--golden-size", "3")
@@ -454,6 +565,20 @@ def test_a_data_error_stops_the_run_with_status_1(tmp_path, capsys):
     assert captured.out == "" and captured.err.startswith("titlestd: data file not found")
 
 
+def test_an_output_folder_that_is_a_file_stops_the_run_with_one_line_and_status_1(
+    tmp_path, capsys, monkeypatch, repo_root
+):
+    monkeypatch.chdir(repo_root)
+    a_file = tmp_path / "notes.txt"
+    a_file.write_text("not a folder", encoding="utf-8")
+    assert cli.main(["run", *MINI_FLAGS, "--out-dir", str(a_file)]) == 1
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith(f"titlestd: the output folder {a_file} cannot be used: ")
+    assert captured.err.count("\n") == 1 and "--out-dir" in captured.err
+    assert a_file.read_text(encoding="utf-8") == "not a folder"
+
+
 # --- Wave 1 (1.10, Q13, Q22, Q24) -----------------------------------------------------
 
 
@@ -477,6 +602,38 @@ def test_every_wave_1_title_is_approved_by_an_sme_whatever_the_machine_proposed(
     assert proposals[WAVE1[1]] == "models agree"
     audited = {key for audit in result.audits for key in audit.audited_keys}
     assert audited.isdisjoint(WAVE1)
+
+
+def test_a_wave_1_title_is_released_with_the_sme_s_role_not_the_machine_s(mini_settings):
+    # 1.8, 1.10: the machine proposes and the SME's approval is what is released.
+    # On the default error rate the two name the same role for every Wave 1
+    # title, so the role alone cannot show whose answer the run took. An SME
+    # who is wrong about every title names another role than the machine did.
+    settings = dataclasses.replace(mini_settings, sme_error_rate=1.0)
+    result = pipeline.run_pipeline(settings)
+    approved = {
+        TitleKey(family, title): role_id
+        for family, title, role_id in rows_of(
+            settings,
+            "SELECT family_code, cleaned_title, role_id FROM human_decisions "
+            "WHERE occasion = 'Wave 1 approval'",
+        )
+    }
+    assert set(approved) == set(WAVE1)
+    accepted = {
+        TitleKey(family, title): role_id
+        for family, title, role_id in rows_of(
+            settings,
+            "SELECT family_code, cleaned_title, role_id FROM model_answers "
+            "WHERE stage = 'Wave 1' AND route = 'accept'",
+        )
+        if TitleKey(family, title) in approved
+    }
+    assert len(accepted) >= 3, "the test needs Wave 1 titles whose proposal the rules accepted"
+    for key, machine_role in accepted.items():
+        assert machine_role and machine_role != approved[key], key
+    for key in WAVE1:
+        assert decision_of(result, key).role_id == approved[key], key
 
 
 def test_in_wave_1_the_agent_only_recommends(mini_settings):
@@ -1079,6 +1236,13 @@ def test_a_title_marked_no_suitable_role_waits_for_the_catalog_owner(
     # Nothing was learned for a title with no role.
     looked_up = rows_of(settings, "SELECT family_code, cleaned_title FROM lookup")
     assert not {TitleKey(*key) for key in looked_up} & set(marked)
+    # The marked Wave 1 title is not long tail: Wave 2 does not score it again.
+    stages = rows_of(
+        settings,
+        "SELECT stage FROM scorings WHERE family_code = ? AND cleaned_title = ?",
+        *WAVE1[0],
+    )
+    assert stages == [("Wave 1",)]
     # The audit counts the mark as wrong, and the title is not released on the machine's role.
     agree = result.audits[0]
     assert TREASURY in agree.audited_keys and agree.wrong == 1

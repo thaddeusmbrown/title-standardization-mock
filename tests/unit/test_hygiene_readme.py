@@ -45,8 +45,9 @@ Decided for the README itself, which has no docstring to hold it:
 - The file the record command takes the key from is an example path in the
   home folder, outside any repository (Q39).
 - The replay command, and the sentence that the recording is under
-  recordings/, rest on the recording the other branch of this stage commits.
-  Replay and record were not run for this branch.
+  recordings/, rest on the committed recording, which
+  tests/integration/test_recordings_replay.py replays. Replay and record were
+  not run for this branch.
 """
 
 from __future__ import annotations

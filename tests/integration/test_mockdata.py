@@ -14,9 +14,10 @@ built for "no match" and "insufficient data"), Q23 (three flagged roles in
 three families), Q24 (the Wave 1 list), Q26 (no usable family code), Q35 (the
 counts), Q36 (the grade table and the worked example).
 
-Not here: the run shape of Q23, which feat/pipeline-report-cli measures in
-stage 4. That branch may change the difficulty knobs of titlestd.mockdata and
-regenerate data/; every test in this file must still pass then.
+Not here: the run shape of Q23, which is measured on the default run in
+tests/integration/test_pipeline_default_run.py. A tuning round may change the
+difficulty knobs of titlestd.mockdata and regenerate data/; every test in
+this file must still pass then.
 """
 
 from __future__ import annotations
@@ -332,7 +333,7 @@ def test_the_simulated_people_give_every_row_its_true_role(inputs, rows, truth, 
 
 
 def test_nobody_marks_a_title_no_suitable_role_on_the_default_data(data_dir, inputs, rows):
-    # Q03, through the loader the pipeline will use and the default settings.
+    # Q03, through the loader the pipeline uses and the default settings.
     simulated = people.load_people(Settings(data_dir=data_dir), inputs.catalog)
     answers = Counter()
     for row in rows:

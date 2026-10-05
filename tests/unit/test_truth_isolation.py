@@ -2,7 +2,7 @@
 
 The truth file's name, reader and writer exist only in titlestd.people, and
 only the pipeline and the data generator may import that module. These tests
-parse the package source, so they hold however the modules are filled in.
+parse the package source, so they hold whatever the modules do when they run.
 """
 
 from __future__ import annotations

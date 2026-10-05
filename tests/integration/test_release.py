@@ -1,7 +1,7 @@
 """The release files of a miniature run on the mini data set.
 
 The run uses the real readers, prepare step, catalog, simulated people and
-close. The models and the audit are built beside this branch, so two title
+close. The models and the audit are left out of these tests, so two title
 rows are handed a machine path's outcome by hand (one Confirmed, one
 Provisional with an error rate) and no model is asked anything: the seed
 look-up hits take their role, an SME approves the Wave 1 list, a reviewer

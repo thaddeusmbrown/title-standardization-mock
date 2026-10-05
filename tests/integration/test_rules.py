@@ -7,8 +7,8 @@ the stand-in LLM built by the switch, then the rules. Three tests of section
 person, a compliance-flagged role is never settled by a machine, and the
 out-of-range number of Q15, the last two with an injected answer.
 
-The nearest-neighbour match (titlestd.matcher) is built beside this branch and
-the agent's loop (titlestd.agent) after it, so score() and run_agent() do
+The nearest-neighbour match (titlestd.matcher) and the agent's loop
+(titlestd.agent) are left out of these tests: score() and run_agent() do
 their part in miniature, by the rules of 1.6 step 3, Q10 and Q20. They are
 test-only code. No expectation comes from the truth file, which nothing here
 reads.

@@ -4,13 +4,14 @@ docs/design.md 2.4; docs/build-decisions.md Q15, Q17, Q19 and the behavioural
 test (a) of Q22: the stand-in embed, choose and review return identical output
 for identical arguments, including with the truth file absent.
 
-The modules that will call the stand-ins are built later: the nearest-neighbour
-match (titlestd.matcher), the shuffle, the record block and the quote check
-(titlestd.fallback), the agent's loop and searches (titlestd.agent). This file
-does their part in miniature, by the rules the decisions record gives them, on
-the real readers, the real seeding and the real offline embedder. No expected
-answer here comes from the truth file: each is written out by hand. The truth
-file is only taken away or rewritten, with the scaffold's reader and writer.
+The modules that call the stand-ins in a run are left out of these tests: the
+nearest-neighbour match (titlestd.matcher), the shuffle, the record block and
+the quote check (titlestd.fallback), the agent's loop and searches
+(titlestd.agent). This file does their part in miniature, by the rules the
+decisions record gives them, on the real readers, the real seeding and the
+real offline embedder. No expected answer here comes from the truth file: each
+is written out by hand. The truth file is only taken away or rewritten, with
+the scaffold's reader and writer.
 """
 
 from __future__ import annotations

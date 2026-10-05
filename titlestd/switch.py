@@ -16,8 +16,8 @@ chosen, so the default run imports nothing outside the standard library:
   llm = replay          titlestd.replay.build_llm(settings, data_fingerprint)
   llm = anthropic       titlestd.live.build_llm(settings, data_fingerprint)
 
-These names are fixed: the later branches fill the provider modules in, and
-this file does not change when they do.
+These names are fixed (S09): a provider may change behind its function, and
+this file does not change when it does.
 
 No model module (this one, offline_embedder, standin, local_embedder, live,
 replay, recording) may import titlestd.people: stand-in models never read the

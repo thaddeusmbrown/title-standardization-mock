@@ -6,7 +6,7 @@ from the stand-in LLM, both built by the switch. What a model is shown is
 rendered here, and what it answers is mapped and quote-checked here
 (docs/design.md 1.6 step 4, 2.5; docs/build-decisions.md Q15, Q18, S16).
 
-The nearest-neighbour match (titlestd.matcher) is built beside this branch, so
+The nearest-neighbour match (titlestd.matcher) is left out of these tests:
 shortlist() ranks the roles in miniature by the rule of 1.6 step 3. It is
 test-only code. No expected answer comes from the truth file: each is written
 out by hand from Q17.

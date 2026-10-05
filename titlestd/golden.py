@@ -19,8 +19,8 @@ Scoring (Q08): the denominator is every golden title. "no match" and
 means the machine's role differs from the simulated SME's label (2.4).
 
 This module reads no file and never the truth (Q22): the caller hands in the
-SME's labels. It must not call titlestd.lookup, which is built in parallel:
-the caller passes the keys of the seed look-up.
+SME's labels. It does not call titlestd.lookup either: the caller passes the
+keys of the seed look-up.
 
 Decided on this branch, where the record says nothing:
 - The frame is a set of keys. A key that two rows share counts once, and a

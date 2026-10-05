@@ -4,8 +4,9 @@ Every title row a model may see goes the way a run takes it: the real readers
 and prepare step, the seed look-up, the ML match on the offline embedder, the
 seeded numbering, choose, the rules of 1.7, the agent's case and the shared
 loop with its two searches, and the agent's answer back through the rules. The
-pipeline is built beside this branch, so the steps are put together here; it
-is test-only code and does not bind the pipeline.
+pipeline is left out of these tests and the steps are put together here; it
+is test-only code and does not bind the pipeline. A whole run is recorded and
+replayed in tests/integration/test_recordings_round_trip.py.
 
 What answers is a hosted model in miniature: it is handed one Messages
 request, as the data the API would receive, and gives back one message. It
@@ -718,7 +719,7 @@ def test_replay_of_no_recording_stops_at_start_up_through_the_switch(mini_inputs
     chosen = Settings(llm="replay", recording_dir=tmp_path / "recordings")
     with pytest.raises(RecordingError, match="found no recording") as raised:
         switch.build_models(chosen, mini_inputs.catalog.ladder, mini_inputs.abbreviations, "f")
-    assert "--llm-model" in str(raised.value)
+    assert "record command" in str(raised.value)
 
 
 def test_live_mode_without_a_key_stops_at_start_up_through_the_switch(mini_inputs, settings):

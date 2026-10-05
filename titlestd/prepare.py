@@ -16,8 +16,8 @@ first, then names to contracts.NAME_MASK.
 The record of a row (Q11) is built here, once, and every later step reads only
 that. The result must not depend on the order of the employees file.
 
-This module must not call titlestd.catalog, which is built in parallel: the
-caller passes the catalog's family codes.
+This module does not call titlestd.catalog: the caller passes the catalog's
+family codes.
 
 Decided here, where the record leaves the detail open:
 

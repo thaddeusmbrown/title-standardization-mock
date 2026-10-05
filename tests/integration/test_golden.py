@@ -5,13 +5,12 @@ labels from the real simulated people, and the machine's answers from the real
 offline embedder and stand-in LLM (docs/design.md 1.2, 1.10, 2.4;
 docs/build-decisions.md Q08, Q14, Q22, Q26).
 
-The modules that will sit between these in a run are built beside this branch
-or later: the Wave 1 list and the order of a run (titlestd.pipeline), the keys
-of the seed look-up (titlestd.lookup), the nearest-neighbour match
-(titlestd.matcher), the shuffle and the numbering (titlestd.fallback). This
-file does their part in miniature, by the rules the decisions record gives
-them (Q13, Q18, Q24). No expected answer here is read from the truth file:
-each is written out by hand.
+The modules that sit between these in a run are left out of these tests: the
+Wave 1 list and the order of a run (titlestd.pipeline), the keys of the seed
+look-up (titlestd.lookup), the nearest-neighbour match (titlestd.matcher), the
+shuffle and the numbering (titlestd.fallback). This file does their part in
+miniature, by the rules the decisions record gives them (Q13, Q18, Q24). No
+expected answer here is read from the truth file: each is written out by hand.
 """
 
 from __future__ import annotations

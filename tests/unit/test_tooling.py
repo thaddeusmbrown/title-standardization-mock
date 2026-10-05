@@ -9,6 +9,8 @@ from pathlib import Path
 
 import pytest
 
+from titlestd import __main__ as entry_point
+
 # Set by the Makefile to the extras a test run was given; unset outside make.
 GATE_EXTRAS = "TITLESTD_GATE_EXTRAS"
 
@@ -22,6 +24,12 @@ def test_no_runtime_dependencies(pyproject):
     assert pyproject["project"]["name"] == "titlestd"
     assert pyproject["project"]["dependencies"] == []
     assert pyproject["project"]["requires-python"] == ">=3.12"
+
+
+def test_the_entry_point_asks_for_the_python_the_project_requires(pyproject):
+    # "python3 -m titlestd" says so itself on an older Python (titlestd/__main__.py).
+    needed = ".".join(str(part) for part in entry_point.MINIMUM_PYTHON)
+    assert pyproject["project"]["requires-python"] == f">={needed}"
 
 
 def test_the_two_optional_extras(pyproject, extra_modules):

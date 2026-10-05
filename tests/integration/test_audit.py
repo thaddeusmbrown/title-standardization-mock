@@ -5,8 +5,8 @@ simulated people, the settings from the real settings loader, and the golden
 set from titlestd.golden (docs/design.md 1.9, 2.4; docs/build-decisions.md
 Q03, Q07, Q16, Q21, Q23, Q27).
 
-What puts a title on a machine path is built beside this branch or later (the
-rules, the agent, the pipeline), so the machine's roles are written out here.
+What puts a title on a machine path (the rules, the agent, the pipeline) is
+left out of these tests, so the machine's roles are written out here.
 The mini data set has 15 title rows, which shows the path that is labeled in
 full. A sampled audit needs more than 60 titles, so the other tests put 200
 made-up titles through the real prepare step and give each a true role.

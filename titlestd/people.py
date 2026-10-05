@@ -17,8 +17,8 @@ Truth isolation is structural (Q22), checked by tests/unit/test_truth_isolation.
 A label is a pure function of (seed, family code, cleaned title), so the same
 title gets the same label on every occasion in a run and whatever the order of
 calls (Q27). The truth is looked up by a row's raw titles and its family code,
-so this module needs no cleaner and must not call titlestd.prepare or
-titlestd.catalog, which are built in parallel: it reads Catalog.roles directly.
+so this module needs no cleaner. It calls neither titlestd.prepare nor
+titlestd.catalog: it reads Catalog.roles directly.
 
 Family codes are compared after removing surrounding whitespace on both sides
 (S05): a row's key holds the trimmed code, while the truth file holds the code

@@ -11,11 +11,13 @@ the manifest), Q40 (the label's date and model).
 build_llm refuses a missing or incomplete recording before any work is done.
 Which recording it opens (Q31): with settings.llm_model set, the folder of
 that model and the embedder in force. With it unset, the one folder
-<recording_dir>/<model>/<embedder in force> that exists; none, or more than
-one, is an error at start-up that lists the models found and names
---llm-model. The model is then read from that recording's manifest; if
-settings.llm_model is set and differs from it, that is an error at start-up
-too.
+<recording_dir>/<model>/<embedder in force> that exists. More than one is an
+error at start-up that lists the models found and names --llm-model. None is
+an error at start-up too; it says which embedders the recordings under
+recording_dir were made with, because naming a model cannot help where the
+embedder in force has no recording. The model is then read from that
+recording's manifest; if settings.llm_model is set and differs from it, that
+is an error at start-up as well.
 
 A miss stops the run at once with a non-zero exit and no output files; the
 message names the step and the title and prints the differences between the
@@ -125,15 +127,28 @@ def _folder(settings: Settings) -> Path:
     if settings.llm_model is not None:
         return recording.recording_folder(settings, settings.llm_model)
     models = recording.recorded_models(settings)
-    if len(models) != 1:
-        found = ", ".join(models) if models else "none"
-        problem = "more than one recording" if models else "no recording"
+    if len(models) == 1:
+        return recording.recording_folder(settings, models[0])
+    where = f"for embedder = {settings.embedder} under {settings.recording_dir}"
+    if models:
         raise recording.RecordingError(
-            f"llm = replay found {problem} for embedder = {settings.embedder} under "
-            f"{settings.recording_dir} (models found: {found}). Name the model of the "
-            "recording to replay with --llm-model; recordings are made with the record command."
+            f"llm = replay found more than one recording {where} (models found: "
+            f"{', '.join(models)}). Name the model of the recording to replay with "
+            "--llm-model; recordings are made with the record command."
         )
-    return recording.recording_folder(settings, models[0])
+    # No folder for the embedder in force, so every recording is another embedder's.
+    others = recording.recorded_embedders(settings)
+    if others:
+        made_with = " and ".join(f"embedder = {name}" for name in others)
+        raise recording.RecordingError(
+            f"llm = replay found no recording {where}. The recordings there were made with "
+            f"{made_with}: replay with that setting, or make a recording for embedder = "
+            f"{settings.embedder} with the record command."
+        )
+    raise recording.RecordingError(
+        f"llm = replay found no recording {where}, nor one for another embedder. "
+        "Recordings are made with the record command."
+    )
 
 
 def build_llm(settings: Settings, data_fingerprint: str) -> Llm:

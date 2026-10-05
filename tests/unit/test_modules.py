@@ -11,7 +11,7 @@ import pytest
 import titlestd
 from titlestd import live, local_embedder, pipeline
 
-# Module -> the branch that fills it in ("scaffold" modules are complete).
+# Module -> the branch that built it ("scaffold" for the shared branch's modules).
 # docs/build-decisions.md, "How the build is cut", is the record of this table.
 OWNERS = {
     "__main__": "scaffold",
@@ -97,8 +97,8 @@ def _keeps(function, declared: list[tuple[str, object]]) -> bool:
 
 
 def test_the_seams_for_tests_are_declared():
-    # S09: a test hands in its own models or its own client here. The owner
-    # branches fill these functions in and keep these parameters.
+    # S09: a test hands in its own models or its own client here, so these
+    # functions keep these parameters.
     assert _keeps(pipeline.run_pipeline, [("settings", REQUIRED), ("models", None)])
     assert _keeps(pipeline.data_fingerprint, [("data_dir", REQUIRED)])
     assert _keeps(

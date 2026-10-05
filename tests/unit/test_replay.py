@@ -205,23 +205,30 @@ def test_with_the_model_set_its_folder_is_opened(settings: Settings):
     assert llm.chooser.choose(RECORD, ROLES).source == "recorded 2026-01-05, claude-haiku-4-5"
 
 
-def test_no_recording_is_an_error_at_start_up_that_names_the_flag(settings: Settings):
+def test_no_recording_is_an_error_at_start_up_that_names_the_record_command(settings: Settings):
     with pytest.raises(RecordingError) as raised:
         replay.build_llm(settings, FINGERPRINT)
-    message = str(raised.value)
-    assert message.startswith(
-        f"llm = replay found no recording for embedder = offline under {settings.recording_dir} "
-        "(models found: none)."
+    assert str(raised.value) == (
+        f"llm = replay found no recording for embedder = offline under {settings.recording_dir}, "
+        "nor one for another embedder. Recordings are made with the record command."
     )
-    assert "--llm-model" in message and "record command" in message
     assert isinstance(raised.value, TitlestdError)
 
 
 def test_a_recording_of_another_embedder_is_no_recording_of_this_one(settings: Settings):
     make_recording(settings)
     local = Settings(llm="replay", embedder="local", recording_dir=settings.recording_dir)
-    with pytest.raises(RecordingError, match=r"found no recording for embedder = local .*: none\)"):
+    with pytest.raises(RecordingError) as raised:
         replay.build_llm(local, FINGERPRINT)
+    message = str(raised.value)
+    assert message.startswith(
+        f"llm = replay found no recording for embedder = local under {settings.recording_dir}. "
+    )
+    # Naming a model cannot help here, so the message does not advise it: it
+    # says which embedder the recordings that are there were made with.
+    assert "The recordings there were made with embedder = offline:" in message
+    assert "--llm-model" not in message and "models found" not in message
+    assert "embedder = local with the record command" in message
 
 
 def test_more_than_one_recording_is_an_error_that_lists_the_models(settings: Settings):

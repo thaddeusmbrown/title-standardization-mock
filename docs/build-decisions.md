@@ -76,8 +76,8 @@ Undecided titles are the leftovers the close works on (order and cap in Q25). Se
 to 0 turns the mechanism off. The rate is not tuned to force an outcome: the default run needs
 only a non-empty generic row for the fixed seed; cap overflow and the two bars are proven by
 the unit tests for the cap (2.7) plus one integration run at a high rate (for example 0.5).
-The README says this is a simulation device. "No suitable role" is never the source of
-leftovers.
+The rate is a simulation device. That is recorded here and not in the README, which owner
+decision 10 keeps short. "No suitable role" is never the source of leftovers.
 
 **Basis.** 1.8: "At the close, a title nobody could decide takes its family's generic role,
 marked provisional and capped at 2% of employees." 1.10: "People clear the queue; leftovers
@@ -131,10 +131,12 @@ has not acted by the close.
 **Decision.** The route is built, with a concrete trigger. The simulated reviewer returns the
 decision "no suitable role" only when the truth file has no row for the title; a data test
 asserts that every title in the default data has a truth row, so the default run never
-produces the mark. A marked title is assigned to "Catalog owner (simulated)", written to the
+produces the mark. A marked title waits for the catalog owner: it is written to the
 review-queue file with the reason "no suitable role, waiting for catalog owner", skipped by
 the generic-role step, not counted against the 2% cap, and counted in the "left on legacy
-title" row. The catalog is read-only during a run: no role is added. Unit tests on a small
+title" row. That reason is how the file names the catalog owner: its `decided_by` column holds
+the SME or the reviewer who made the mark, and no output carries the persona "Catalog owner
+(simulated)". The catalog is read-only during a run: no role is added. Unit tests on a small
 fixture cover the route, the never-generic rule and the cap exclusion. There is no seeded
 share of such titles, and the mark is never the source of the leftovers that take the generic
 role (Q01).
@@ -477,8 +479,8 @@ first, then names. A row whose title held a name is keyed on the masked cleaned 
 family, goes straight to the review queue with reason "person's name", and `embed`, `choose`
 and `review` are never called for it (test with spies). It is out of the golden-set frame. A
 person's decision on it joins the look-up under the masked key but never the ML examples,
-because joining the examples means embedding it. The README says the list stands in for a real
-name masker.
+because joining the examples means embedding it. The list stands in for a real name masker
+(1.11). That is recorded here and not in the README, which owner decision 10 keeps short.
 
 **Basis.** 1.4: "Names are masked before any text reaches a model. A title that contains a
 person's name goes to a person and to no model." 1.6 step 1: "Clean each title (lower-case,
@@ -798,7 +800,9 @@ required to exceed 60; if it holds 60 or fewer it is fully labeled as 2.4 provid
 README says so. The bar is reached by shaping the generator only (its difficulty knobs are
 generator settings), never by tuning stand-ins or thresholds against the truth and never by
 aiming at a status. At most three tuning rounds, then ship what the seed yields and state the
-shape in the README and the final report. The bar can first be measured when the pipeline
+shape in the final report. Of the shape, the README shows the table of the default run and
+says what the audit gave each path; the rest is recorded in the docstring of
+`titlestd/pipeline.py` (owner decision 10). The bar can first be measured when the pipeline
 exists, so the rounds are made in stage 4 by the branch that builds it ("Work that crosses a
 branch boundary"). The three outcomes, the 60-or-fewer case and the stopped-path release
 setting are covered by unit tests of the audit function on constructed counts (0 to 2, 3 to
@@ -993,7 +997,9 @@ download stops with a clear message (for a missing extra, the command of S09) an
 back to `offline`. Unit tests cover the
 switch and the lazy import with a stub. One smoke test, marked `local_model` and excluded from
 the merge gate, may install the extra and embed a few titles once during the build, time-boxed
-to 15 minutes; if it fails or times out, that is noted in the README and the build moves on.
+to 15 minutes; if it fails or times out, the build moves on. It passed during the build: about
+5 seconds with an empty cache, a download of about 30 MB included, and about 2 seconds on the
+cached model. The README carries no note on that result: owner decision 10 keeps it short.
 sentence-transformers and PyTorch are not installed anywhere.
 
 **Basis.** 2.5: "`local` (a small local embedding model)" and "Import the SDK and the
@@ -1016,12 +1022,14 @@ replay` reads the model from the recording's manifest; if `llm_model` is also se
 that is a start-up error. The layout of Q29 has the model in the path, so the recording is
 found first: with `llm_model` set, replay opens `<recording_dir>/<llm_model>/<embedder>/`;
 with it unset, it uses the only folder `<recording_dir>/<model>/<embedder>` that exists for
-the embedder in force, and stops at start-up, listing the models found and naming
-`--llm-model`, if there is none or more than one. Docs and tests use the alias
-`claude-haiku-4-5` exactly as written, with no date suffix. Any model string is passed through
-unchanged; to stay valid across current models the request sends no `temperature`, `top_p` or
-`top_k`, no thinking parameter, no effort parameter and no forced tool choice (tool choice
-auto with a strict tool, or structured output).
+the embedder in force, and stops at start-up if there is none or more than one. With more
+than one it lists the models found and names `--llm-model`. With none it says which embedders
+the recordings in the folder were made with, since naming a model does not help where the
+embedder in force has no recording. Docs and tests use the alias `claude-haiku-4-5` exactly
+as written, with no date suffix. Any model string is passed through unchanged; to stay valid
+across current models the request sends no `temperature`, `top_p` or `top_k`, no thinking
+parameter, no effort parameter and no forced tool choice (tool choice auto with a strict tool,
+or structured output).
 
 **Basis.** 2.5: "`llm_model` | a small hosted model, for example `claude-haiku-4-5` |" with an
 empty default, while `embedder` and `llm` both show `offline`; the key is read "only when `llm
@@ -1057,7 +1065,10 @@ unstated whether the suite must pass where the SDK is not installed.
   is absent.
 - (d) Tests marked `live` and `local_model`, skipped unless a key or a cached model is
   present, and never part of the gate. The build may run `local_model` once at the end if the
-  model download works; the result is reported but never gates a merge.
+  model download works; the result is reported but never gates a merge. As built, this tier
+  holds one test, the `local_model` smoke test of Q30. No test carries the `live` marker,
+  which stays declared as a reserved name: the live adapter met the hosted model in the run
+  that made the recording of Q02, with the `record` command, and that is not a test.
 
 The committed recording gets its own replay test, marked `replay`: a full run with `llm =
 replay` has zero misses.
@@ -1176,10 +1187,10 @@ each other" (1.9). 2.2 lists this exercise neither in nor out of the mock. "The 
 is out, but 1.10 describes that as "a small pilot timed", a different thing. The footer has no
 agreement figure.
 
-**Decision.** The three-SME exercise is left out, and the README says so in one line. Set-up
-in the mock is the Set-up row of 1.10 without the pilot: load and validate the catalog and
-data files, fix and record the thresholds and settings in force before any scoring, and draw
-the golden set (seeded, from long-tail titles).
+**Decision.** The three-SME exercise is left out. That is recorded here and not in the README,
+which owner decision 10 keeps short. Set-up in the mock is the Set-up row of 1.10 without the
+pilot: load and validate the catalog and data files, fix and record the thresholds and
+settings in force before any scoring, and draw the golden set (seeded, from long-tail titles).
 
 **Basis.** 2.2: the "In the mock" list names no agreement exercise, and "Not in the mock: a
 review application (people are simulated), a real HR system, cloud deployment, sign-in, the
@@ -1500,12 +1511,12 @@ title ended in). Rows are sorted by key.
 `python3 -m titlestd <command>` with the commands `run`, `generate-data` and `record`. Every
 command takes `--config` and the setting flags. `record` is `run` with `llm` forced to
 `anthropic`: live mode always records (2.5), so the command needs nothing of its own. Exit
-status: 0 success; 1 the run stopped with an error, or the command is not built yet; 2 the
-command line or a setting is wrong. Each command is one function in the module that owns it
-(`titlestd.pipeline.run_command`, `titlestd.mockdata.generate_command`), so the command-line
-module does not change as parts are built. The smoke run of Q02 is `record` on the mini data
-set (`--data-dir tests/fixtures/mini`, with `--out-dir` and `--recording-dir` outside the
-repository): 15 title rows, about ten of which reach the model.
+status: 0 success; 1 the run stopped with an error; 2 the command line or a setting is wrong.
+Each command is one function in the module that owns it (`titlestd.pipeline.run_command`,
+`titlestd.mockdata.generate_command`), so the command-line module did not change as parts were
+built. The smoke run of Q02 is `record` on the mini data set (`--data-dir tests/fixtures/mini`,
+with `--out-dir` and `--recording-dir` outside the repository): 15 title rows, about ten of
+which reach the model.
 
 ### S14. The check command
 
@@ -1726,7 +1737,9 @@ by running the library. They are what the entries above rely on.
 
 The work is cut into one shared branch and fifteen component branches in five stages. Branches
 within a stage are built in parallel; each stage starts from main after the previous stage is
-merged.
+merged. Two more branches follow stage 5 and belong to no stage, eighteen branches in all:
+`docs/live-run-observation`, the last row of the stage plan, and `chore/final-review-fixes`,
+which settles the findings of a final review of the finished main and owns no file.
 
 ### Rules for every branch
 
@@ -1809,6 +1822,7 @@ owner here.
 | 4 | `feat/live-replay` | `llm = anthropic`, `llm = replay`, the recorder and its key | `titlestd/live.py`, `replay.py`, `recording.py` | model-switch-offline, llm-fallback-rules, agent | None of the eight. Tiers (b) and (c) of Q32 at the level of `choose` and the agent loop over the mini data set; the start-up errors of Q31; the failures of Q39 with a fake client; the message for a missing extra (S09). |
 | 5 | `feat/recordings-replay-e2e` | The round trip of a whole run with a scripted client, first; then the smoke run, the one live recording, the committed recordings and the replay run in the gate | `recordings/`, `tests/integration/test_recordings*.py` | pipeline-report-cli, live-replay | None of the eight of its own: the replay run passes the same invariants as the default run. The round trip of a whole run (Q32 b); the replay run under the import guard (Q32 a); the committed recording replays with zero misses, marked `replay` (Q02, Q32); no recording holds a key-shaped string (Q29). |
 | 5 | `docs/readme-hygiene` | The README; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None of the eight. Mock emails use `example.com`; no tracked file holds a key-shaped string and no `.env` file is tracked (Q02, Q28). The README is held to the program and to "What the README must say" below: the two statements of 2.4 are in it; every command it gives is one the command line or the Makefile takes; the output it shows is the frozen table; the files and modules it names exist. No test asks any other statement of it (owner decision 10). |
+| after 5 | `docs/live-run-observation` | A note on what the one live run showed about the quote check, and the README's pointer to it (owner decision 10) | `docs/live-run-observation.md`; the one line of `README.md` that names it | recordings-replay-e2e, readme-hygiene | None of the eight and none of its own: the README test of `docs/readme-hygiene` holds that the note the README names exists, and the note's last section gives the commands that reproduce its figures from the committed recording. |
 
 ### Work that crosses a branch boundary
 
@@ -1842,7 +1856,11 @@ any money is spent: on the mini data set, live mode with a scripted client under
 `test-double` runs through the pipeline and the real recorder into a temporary folder; replay
 then gives the same decisions and files, apart from the answer label; one changed input gives
 a miss, a non-zero exit and no output files. It uses the seams of S09 and commits no
-recording.
+recording. As built, the two came in the other order: the recording of the live run was
+committed first and the scripted round-trip test after it. By then the smoke run had recorded
+the mini data set with the hosted model and its replay had given the same files with no miss,
+as the commit message of the recording says. That replay had served as the round trip of a
+whole run, on a real recording, before the full run was paid for.
 
 **The runs under the import guard (Q32 a).** Both use `IMPORT_GUARD` of `tests/conftest.py`
 (S15): the default run in `feat/pipeline-report-cli`, the replay run in
@@ -1865,9 +1883,11 @@ commands as the program takes them:
 | Q02, Q39 | The `record` command; the key comes only from the environment, exported in the shell or passed from a file outside version control with `uv run --env-file`. |
 | S14 | The check command. |
 
-Everything else that an entry above asks of the README is left out of it and stays recorded in
-that entry: that the "could not decide" rate of simulated reviewers is a simulation device
-(Q01), that the invented name list stands in for a real name masker (Q14), the full rule on
-what invalidates a recording (Q18), the rest of the shape of the default run (Q23), the result
-of the `local_model` smoke test (Q30) and that the three-SME agreement exercise of set-up is
-left out (Q37). Where one of those entries says "the README says", owner decision 10 decides.
+Everything else that an entry above asked of the README is left out of it: that the "could not
+decide" rate of simulated reviewers is a simulation device (Q01), that the invented name list
+stands in for a real name masker (Q14), the full rule on what invalidates a recording (Q18),
+the rest of the shape of the default run (Q23), the result of the `local_model` smoke test
+(Q30) and that the three-SME agreement exercise of set-up is left out (Q37). Each of those
+entries records its own point, except that the shape of the default run is in the docstring of
+`titlestd/pipeline.py`, as Q23 says. Q01, Q14, Q23, Q30 and Q37 each say that the README does
+not hold their point, with a pointer to owner decision 10.

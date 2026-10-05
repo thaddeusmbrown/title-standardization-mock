@@ -2,7 +2,7 @@
 
 The title rows come from titlestd.prepare, and who could not decide comes from
 the simulated people of titlestd.people, read from the truth file. The models
-and the rules are built beside this branch, so what they would hand the close
+and the rules are left out of these tests, so what they would hand the close
 is stood in for by hand: the Wave 1 list is the four most widely held rows
 (Q24), the seed look-up hits never reach the queue (Q13), and the compliance
 check of 1.7 is taken to have fired on the one title of the flagged role.

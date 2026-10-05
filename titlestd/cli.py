@@ -8,8 +8,7 @@ Commands (Q38):
                  (2.5, Q02); it needs --llm-model and ANTHROPIC_API_KEY
 
 Each command is one function in the module that owns it, imported only when
-the command runs. This file does not change when a component is built: a
-command whose module is still a stub exits with status 1 and says so.
+the command runs.
 
 Exit status: 0 success, 1 the run stopped with an error, 2 the command line or
 a setting is wrong.
@@ -73,13 +72,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         function = getattr(importlib.import_module(module_name), function_name)
         return int(function(settings) or 0)
-    except NotImplementedError as error:
-        detail = f" ({error})" if str(error) else ""
-        print(
-            f"titlestd: the '{arguments.command}' command is not built yet{detail}",
-            file=sys.stderr,
-        )
-        return 1
     except TitlestdError as error:
         print(f"titlestd: {error}", file=sys.stderr)
         return 1

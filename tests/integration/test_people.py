@@ -4,7 +4,8 @@ The people are loaded from the truth file on disk (titlestd.people.load_people)
 against the catalog read by titlestd.datafiles, with settings built by
 titlestd.settings, and asked about the hand-written title rows of the mini
 data set (docs/build-decisions.md Q01, Q03, Q09, Q27, S05). Two tests show
-which permuted truth the people accept, for test (b) of Q22 in stage 4.
+which permuted truth the people accept, for test (b) of Q22, which is in
+tests/integration/test_pipeline.py.
 """
 
 from __future__ import annotations
@@ -177,7 +178,7 @@ def test_two_spellings_of_one_row_with_different_true_roles_stop_the_run(
         simulated.wave1_approval(row)
 
 
-# --- A truth permuted on purpose, as test (b) of Q22 needs one in stage 4 -------
+# --- A truth permuted on purpose, as test (b) of Q22 needs one ------------------
 
 
 def test_one_mapping_of_role_ids_per_family_gives_a_truth_the_people_accept(

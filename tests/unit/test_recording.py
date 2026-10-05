@@ -75,6 +75,24 @@ def test_the_models_found_are_those_with_a_folder_for_the_embedder_in_force(tmp_
     assert recording.recorded_models(settings(tmp_path, embedder="local")) == ["model-c"]
 
 
+def test_the_embedders_found_are_those_of_the_folders_that_hold_a_manifest(tmp_path: Path):
+    chosen = settings(tmp_path)
+    assert recording.recorded_embedders(chosen) == []  # no recordings folder at all
+    root = tmp_path / "recordings"
+    for made in ("model-b/offline", "model-a/offline", "model-c/local", "model-d/local.partial"):
+        (root / made).mkdir(parents=True)
+        (root / made / MANIFEST_FILE).write_text("{}", encoding="utf-8")
+    (root / "model-e" / "another").mkdir(parents=True)  # no manifest: no recording
+    (root / "model-f" / "offline" / MANIFEST_FILE).mkdir(parents=True)  # a folder of that name
+    (root / "notes.txt").write_text("not a model", encoding="utf-8")
+    # Whatever embedder is in force: each once, sorted, a stopped run left out.
+    assert recording.recorded_embedders(chosen) == ["local", "offline"]
+    assert recording.recorded_embedders(settings(tmp_path, embedder="local")) == [
+        "local",
+        "offline",
+    ]
+
+
 # --- The manifest (Q18, Q29) -------------------------------------------------------------
 
 

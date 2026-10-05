@@ -599,6 +599,75 @@ def test_the_guard_is_the_catalogs_own(
     assert not (tmp_path / "out").exists()
 
 
+def test_the_guard_is_asked_about_every_row_of_the_load_file(
+    tmp_path: Path, mini_catalog: Catalog, monkeypatch: pytest.MonkeyPatch
+):
+    # A release that passes: the catalog's guard saw the titles of every row
+    # that was written, whatever its path, its level or its role.
+    asked = set()
+
+    def spy(catalog_: Catalog, long_title: str, short_title: str) -> bool:
+        asked.add((long_title, short_title))
+        return catalog.is_catalog_title(catalog_, long_title, short_title)
+
+    monkeypatch.setattr(release, "is_catalog_title", spy)
+    release.write_release_files(tmp_path, DECISIONS, ROWS, EMPLOYEES, mini_catalog)
+    load = _read(tmp_path)[0]
+    assert asked == {(row["long_title"], row["short_title"]) for row in load}
+    assert len(load) == 9 and len(asked) == 8  # A1 and A2 hold the same two titles
+
+
+# What the naming rule is asked for each employee of the small release who gets
+# a new title: the role of the title row and the employee's own grade.
+_ASKED_FOR = {
+    employee_id: (decision.role_id, _BY_ID[employee_id].grade)
+    for decision in DECISIONS
+    if decision.role_id is not None
+    for row in ROWS
+    if row.key == decision.key
+    for employee_id in row.employee_ids
+}
+
+
+@pytest.mark.parametrize(
+    ("employee_id", "titles"),
+    [
+        # the last row of the file
+        ("H1", ("Chief Treasury Analyst", "Chf Treasury Analyst")),
+        # the Long Title of the row before it, which passed, beside another role's Short Title
+        ("A2", ("Senior Account Manager", "Sr Sales Rep")),
+        # an employee with no grade, so a row with a blank level: here the legacy title
+        ("B1", ("BDR", "BDR")),
+        # the row on the generic family role
+        ("E1", ("Special Projects", "Special Projects")),
+        # a look-up hit, and a row in the middle of the file
+        ("C1", ("Sales Engineer #20311", "Assoc Sales Eng")),
+    ],
+)
+def test_one_title_outside_the_catalog_on_any_row_stops_the_release(
+    tmp_path: Path,
+    mini_catalog: Catalog,
+    monkeypatch: pytest.MonkeyPatch,
+    employee_id: str,
+    titles: tuple[str, str],
+):
+    # The naming rule is wrong for one employee and right for all the others,
+    # so a guard that reads only some of the rows lets the release through.
+    assert len(set(_ASKED_FOR.values())) == len(_ASKED_FOR) == 9  # one employee per question
+
+    def wrong_for_one(catalog_: Catalog, role, grade: int | None) -> StandardTitle:
+        title = catalog.standard_title(catalog_, role, grade)
+        if (role.role_id, grade) != _ASKED_FOR[employee_id]:
+            return title
+        return dataclasses.replace(title, long_title=titles[0], short_title=titles[1])
+
+    monkeypatch.setattr(release, "standard_title", wrong_for_one)
+    with pytest.raises(ReleaseError, match=f"employee {employee_id}: the titles") as refusal:
+        release.write_release_files(tmp_path / "out", DECISIONS, ROWS, EMPLOYEES, mini_catalog)
+    assert f"{titles[0]!r} and {titles[1]!r} are not a Long and Short Title" in str(refusal.value)
+    assert not (tmp_path / "out").exists()
+
+
 def test_a_refused_release_leaves_the_files_of_an_earlier_one_alone(
     out: Path, mini_catalog: Catalog
 ):

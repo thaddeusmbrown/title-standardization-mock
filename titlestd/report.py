@@ -26,9 +26,10 @@ reads no data file.
 The text holds no wall-clock time, so two runs print the same bytes (Q06).
 
 Decided here, where the record is silent:
-- Shares are printed with one decimal and rounded so that the printed shares
-  of a column add up to exactly 100.0% (largest remainder, in whole-number
-  arithmetic): the table's share column, and the coverage by status.
+- A share is printed with one decimal, each rounded on its own (half up, in
+  whole-number arithmetic), so the same count shows the same share wherever
+  it is printed. The rows partition the employees, so the shares add up to
+  100%; the printed ones can differ from that by a tenth through rounding.
 - The status cell. A path row shows its audit outcome: "Confirmed";
   "Provisional, error rate 5.0%"; "Stopped, 150 titles left on legacy
   titles", or "Stopped, released as provisional, error rate 25.0%" when
@@ -86,8 +87,7 @@ def render(result: RunResult, settings: Settings) -> str:
     audits = {audit.path.value: audit for audit in result.audits}
 
     lines = [HEADER]
-    shares = percentages(list(employees.values()))
-    for table_row, share in zip(TableRow, shares, strict=True):
+    for table_row in TableRow:
         audit = audits.get(table_row.value)
         if audit is not None:
             audited, wrong = str(audit.audited), str(audit.wrong)
@@ -101,7 +101,7 @@ def render(result: RunResult, settings: Settings) -> str:
                 table_row.value,
                 str(titles[table_row]),
                 str(employees[table_row]),
-                share,
+                _percent(employees[table_row], result.employee_count),
                 audited,
                 wrong,
                 status,
@@ -109,11 +109,10 @@ def render(result: RunResult, settings: Settings) -> str:
         )
     total = (TOTAL, str(len(result.decisions)), str(result.employee_count), "100.0%", "", "", "")
 
-    coverage = zip(
-        (*(status.value for status in Status), LEGACY),
-        percentages(list(by_status.values())),
-        strict=True,
-    )
+    coverage = [
+        f"{LEGACY if status is None else status.value} {_percent(count, result.employee_count)}"
+        for status, count in by_status.items()
+    ]
     sent = {*result.wave1_keys, *(entry.row.key for entry in result.queue)}
     audited_titles = sum(audit.audited for audit in result.audits)
     text = [
@@ -121,8 +120,7 @@ def render(result: RunResult, settings: Settings) -> str:
         "",
         *_table(lines, total),
         "",
-        "Coverage by status, by employee: "
-        + ", ".join(f"{name} {share}" for name, share in coverage),
+        "Coverage by status, by employee: " + ", ".join(coverage),
         f"Sent to a person: {len(sent)} of {len(result.decisions)} titles "
         f"({_percent(len(sent), len(result.decisions))}): {len(result.wave1_keys)} on the "
         f"Wave 1 list, {len(result.queue)} in the review queue. "
@@ -145,22 +143,10 @@ def render(result: RunResult, settings: Settings) -> str:
     return "\n".join(text)
 
 
-def percentages(counts: Sequence[int]) -> list[str]:
-    """Each count as a share of their sum, with one decimal, so that the printed
-    shares add up to exactly 100.0% (largest remainder)."""
-    total = sum(counts)
-    if total == 0:
-        return ["0.0%" for _ in counts]
-    tenths = [count * 1000 // total for count in counts]
-    lost = [count * 1000 % total for count in counts]
-    by_loss = sorted(range(len(counts)), key=lambda at: (-lost[at], at))
-    for at in by_loss[: 1000 - sum(tenths)]:
-        tenths[at] += 1
-    return [f"{each // 10}.{each % 10}%" for each in tenths]
-
-
 def _percent(part: int, whole: int) -> str:
-    return f"{100 * part / whole:.1f}%" if whole else "0.0%"
+    """The part as a percentage of the whole with one decimal, rounded half up."""
+    tenths = (2000 * part + whole) // (2 * whole) if whole else 0
+    return f"{tenths // 10}.{tenths % 10}%"
 
 
 def _path_status(audit: AuditResult, settings: Settings) -> str:

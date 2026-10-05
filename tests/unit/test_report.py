@@ -186,6 +186,7 @@ def test_the_rows_add_up_to_the_totals_and_the_shares_to_100_percent():
     body = [rows[row.value] for row in TableRow]
     assert sum(int(cells[1]) for cells in body) == int(rows["total"][1]) == 10
     assert sum(int(cells[2]) for cells in body) == int(rows["total"][2]) == 40
+    # Here every share is a whole number of tenths, so the printed ones add up too.
     tenths = sum(int(cells[3].rstrip("%").replace(".", "")) for cells in body)
     assert tenths == 1000
 
@@ -243,28 +244,30 @@ def test_a_row_with_no_title_shows_no_status():
 # --- shares -----------------------------------------------------------------------
 
 
-def test_printed_shares_add_up_to_exactly_100_percent():
-    assert report.percentages([1, 1, 1]) == ["33.4%", "33.3%", "33.3%"]
-    assert report.percentages([26, 604, 669, 79, 105, 6, 11]) == [
-        "1.7%",
-        "40.3%",
-        "44.6%",
-        "5.3%",
-        "7.0%",
-        "0.4%",
-        "0.7%",
-    ]
-    for counts in ([1, 2, 4], [7, 7, 7, 7, 7, 7], [1, 0, 999], [5], [3, 3, 3, 1, 1, 1, 1]):
-        shares = report.percentages(counts)
-        assert sum(int(share.rstrip("%").replace(".", "")) for share in shares) == 1000, counts
-        # No share is moved by more than a tenth of a percent.
-        for count, share in zip(counts, shares, strict=True):
-            assert abs(float(share.rstrip("%")) - 100 * count / sum(counts)) < 0.1
+def test_a_share_is_rounded_half_up_to_one_decimal_on_its_own():
+    assert report._percent(1, 3) == "33.3%" and report._percent(2, 3) == "66.7%"
+    assert report._percent(13, 1500) == "0.9%" and report._percent(11, 1500) == "0.7%"
+    # Exactly half a tenth goes up, which binary floating point would not promise.
+    assert report._percent(1, 2000) == "0.1%" and report._percent(5, 2000) == "0.3%"
+    assert report._percent(0, 40) == "0.0%" and report._percent(40, 40) == "100.0%"
+    assert report._percent(0, 0) == "0.0%"
 
 
-def test_shares_of_nothing_are_zero():
-    assert report.percentages([0, 0]) == ["0.0%", "0.0%"]
-    assert report.percentages([]) == []
+def test_the_same_count_shows_the_same_share_in_the_table_and_in_the_footer():
+    # 13 of 1,500 employees are on a legacy title: 0.9% in both places.
+    result = a_result(employee_count=1500)
+    big = title_row("widely held", 1500 - 40 + 12 - 8)  # the legacy rows grow from 5 to 13
+    rows = tuple(big if row.record.cleaned_title == "widely held" else row for row in result.rows)
+    legacy = [d.key for d in result.decisions if d.row is TableRow.LEGACY]
+    sized = {legacy[0]: 6, legacy[1]: 7}
+    rows = tuple(
+        title_row(row.record.cleaned_title, sized[row.key]) if row.key in sized else row
+        for row in rows
+    )
+    assert sum(row.headcount for row in rows) == 1500
+    text = report.render(dataclasses.replace(result, rows=rows), SETTINGS)
+    assert table(text)["left on legacy title"][1:4] == ["2", "13", "0.9%"]
+    assert line_starting(text, "Coverage by status").endswith("left on legacy title 0.9%")
 
 
 # --- the footer -------------------------------------------------------------------

@@ -1111,6 +1111,13 @@ def test_a_title_marked_no_suitable_role_waits_for_the_catalog_owner(
     # Nothing was learned for a title with no role.
     looked_up = rows_of(settings, "SELECT family_code, cleaned_title FROM lookup")
     assert not {TitleKey(*key) for key in looked_up} & set(marked)
+    # The marked Wave 1 title is not long tail: Wave 2 does not score it again.
+    stages = rows_of(
+        settings,
+        "SELECT stage FROM scorings WHERE family_code = ? AND cleaned_title = ?",
+        *WAVE1[0],
+    )
+    assert stages == [("Wave 1",)]
     # The audit counts the mark as wrong, and the title is not released on the machine's role.
     agree = result.audits[0]
     assert TREASURY in agree.audited_keys and agree.wrong == 1

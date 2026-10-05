@@ -148,6 +148,9 @@ def write_release_files(
     applied per employee from the grade (1.4). Raises TitlestdError rather than
     write a role or title that is not in the catalog.
     """
+    # The title rows and the employees are each read twice. Read once here, so
+    # that an iterator cannot pass the checks and then give files with no line.
+    decisions, rows, employees = tuple(decisions), tuple(rows), tuple(employees)
     decision_of = _decision_of_each_employee(decisions, rows, employees)
     load, reverse, exceptions = [], [], []
     for employee in sorted(employees, key=lambda employee: employee.employee_id):

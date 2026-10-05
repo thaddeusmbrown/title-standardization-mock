@@ -277,6 +277,20 @@ def test_the_order_of_the_arguments_does_not_change_a_byte(
         assert (again / name).read_bytes() == (out / name).read_bytes()
 
 
+@pytest.mark.parametrize("read_once", ["decisions", "rows", "employees"])
+def test_an_argument_that_can_be_read_only_once_gives_the_same_files(
+    out: Path, tmp_path: Path, mini_catalog: Catalog, read_once: str
+):
+    # The writer reads its title rows and employees twice. An iterator must not
+    # pass the checks and then leave three files with a header and no line.
+    arguments = {"decisions": DECISIONS, "rows": ROWS, "employees": EMPLOYEES}
+    arguments[read_once] = iter(arguments[read_once])
+    again = tmp_path / "again"
+    release.write_release_files(again, catalog=mini_catalog, **arguments)
+    for name in (release.LOAD_FILE, release.REVERSE_FILE, release.EXCEPTIONS_FILE):
+        assert (again / name).read_bytes() == (out / name).read_bytes()
+
+
 def test_rows_are_sorted_by_employee_id(out: Path):
     for rows in _read(out):
         ids = [row["employee_id"] for row in rows]

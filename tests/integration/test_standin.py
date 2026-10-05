@@ -9,7 +9,8 @@ match (titlestd.matcher), the shuffle, the record block and the quote check
 (titlestd.fallback), the agent's loop and searches (titlestd.agent). This file
 does their part in miniature, by the rules the decisions record gives them, on
 the real readers, the real seeding and the real offline embedder. No expected
-answer here comes from the truth file: each is written out by hand.
+answer here comes from the truth file: each is written out by hand. The truth
+file is only taken away or rewritten, with the scaffold's reader and writer.
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ from pathlib import Path
 
 import pytest
 
-from titlestd import datafiles, seeding, switch
+from titlestd import datafiles, people, seeding, switch
 from titlestd.contracts import (
     LABEL_STAND_IN,
     QUOTE_MAX_WORDS,
@@ -52,7 +53,6 @@ from titlestd.contracts import (
     TitleRow,
     Vector,
 )
-from titlestd.people import TRUTH_FILE  # its name only: to take it away or to rewrite it
 from titlestd.settings import Settings
 
 # What the stand-in LLM should answer for each model-eligible mini row: the
@@ -408,7 +408,7 @@ def test_the_output_is_the_same_with_the_truth_file_absent(
     mini_dir, mini_rows, everything, tmp_path, monkeypatch
 ):
     bare = copy_of_the_inputs(mini_dir, tmp_path / "data")
-    assert (mini_dir / TRUTH_FILE).is_file() and not (bare / TRUTH_FILE).exists()
+    assert (mini_dir / people.TRUTH_FILE).is_file() and not (bare / people.TRUTH_FILE).exists()
     monkeypatch.chdir(tmp_path)  # so that a relative "data" folder has no truth file either
     without = run_everything(bare, [*mini_rows, MISFILED])
     assert without.plain() == everything.plain()
@@ -421,13 +421,14 @@ def test_the_output_is_the_same_whatever_the_truth_file_says(
     # Every title's true role replaced by another: a stand-in that peeked
     # would now answer differently.
     other = copy_of_the_inputs(mini_dir, tmp_path / "data")
-    header, *lines = (mini_dir / TRUTH_FILE).read_text(encoding="utf-8").splitlines()
-    rows = [line.rsplit(",", 1) for line in lines]
-    distinct = sorted({role for _, role in rows})
+    truth = people.read_truth(mini_dir)
+    distinct = sorted({row.true_role_id for row in truth})
     another = dict(zip(distinct, distinct[1:] + distinct[:1], strict=True))
     assert len(distinct) > 1 and all(another[role] != role for role in distinct)
-    turned = [f"{title},{another[role]}" for title, role in rows]
-    (other / TRUTH_FILE).write_text("\n".join([header, *turned]) + "\n", encoding="utf-8")
+    people.write_truth(
+        other, [dataclasses.replace(row, true_role_id=another[row.true_role_id]) for row in truth]
+    )
+    assert people.read_truth(other) != truth
     monkeypatch.chdir(tmp_path)
     assert run_everything(other, [*mini_rows, MISFILED]).plain() == everything.plain()
 
@@ -528,7 +529,7 @@ def test_another_process_gives_the_same_output_and_opens_no_file(
     # The process works in the data folder itself, once with the truth file
     # beside it and twice without. It is handed its arguments and nothing else.
     data_dir = mini_dir if truth == "present" else copy_of_the_inputs(mini_dir, tmp_path / "data")
-    assert (data_dir / TRUTH_FILE).exists() == (truth == "present")
+    assert (data_dir / people.TRUTH_FILE).exists() == (truth == "present")
     plain = everything.plain()
     given = {
         "data_dir": str(data_dir),

@@ -29,6 +29,10 @@ recommends; the pipeline decides what stands.
 
 Decided here, where the record leaves the detail open:
 
+- Who calls the rules. review returns the answer, the role its number named
+  and the transcript, and checks nothing else. The caller hands
+  AgentResult.answer and AgentResult.transcript.numbered_roles to
+  rules.check_agent, with the record block of fallback.render_record.
 - The recorded family. A role is of the case's family when its family code
   equals the record's, trimmed, as titlestd.catalog reads a code. A blank
   code is no family, so no role is numbered for it.
@@ -58,6 +62,17 @@ Decided here, where the record leaves the detail open:
 - Numbers. A role new to the case gets one more than the highest number
   in the transcript. SearchTools.search raises ValueError for a search past
   the cap and for a tool that is not one of the two, whoever calls it.
+- A number that names no numbered role. The answer stays as the backend
+  gave it and AgentResult.role_id is None; rules.check_agent then fails the
+  catalog check (S11). Only an answer of the kind "role" has its number
+  read.
+- A broken protocol (S10). The loop answers INVALID itself, with a detail,
+  and runs nothing further when a turn is neither a search request nor a
+  final answer, when a request names no search tool or its query is not
+  text, and when a search is requested after the cap. Such an answer
+  carries the label of the case's LLM answer: the chooser and the reviewer
+  of a run come from one llm setting (contracts.Llm), and a search request
+  carries no label of its own. Whatever the backend raises passes through.
 """
 
 from __future__ import annotations
@@ -79,7 +94,9 @@ from titlestd.contracts import (
     NumberedRole,
     Reason,
     Record,
+    ReviewAnswer,
     Reviewer,
+    ReviewKind,
     SearchHit,
     SearchRequest,
     SearchStep,
@@ -87,6 +104,7 @@ from titlestd.contracts import (
     TitleRow,
     Vector,
 )
+from titlestd.fallback import role_for_number
 from titlestd.lookup import Knowledge
 from titlestd.matcher import cosine, embed_text, role_text
 from titlestd.settings import Settings
@@ -196,7 +214,19 @@ def build_case(
 
 def review(case: AgentCase, tools: SearchTools, reviewer: Reviewer) -> AgentResult:
     """Run the loop for one case and map the final number to a role."""
-    raise NotImplementedError(_NOT_BUILT)
+    transcript = AgentTranscript(case)
+    while True:
+        turn = reviewer.next_turn(transcript)
+        if isinstance(turn, ReviewAnswer):
+            role = None
+            if turn.answer == ReviewKind.ROLE:
+                role = role_for_number(turn.number, transcript.numbered_roles)
+            return AgentResult(turn, role.role_id if role else None, transcript)
+        broken = _broken_protocol(turn, transcript)
+        if broken:
+            invalid = ReviewAnswer(ReviewKind.INVALID, None, "", case.llm_answer.source, broken)
+            return AgentResult(invalid, None, transcript)
+        transcript = AgentTranscript(case, (*transcript.steps, tools.search(turn, transcript)))
 
 
 def render_case(case: AgentCase) -> str:
@@ -226,6 +256,17 @@ def _shown(role: CatalogRole, record: Record, numbers: dict[str, int]) -> Number
     if role.role_id not in numbers:
         numbers[role.role_id] = max(numbers.values(), default=0) + 1
     return NumberedRole(numbers[role.role_id], role)
+
+
+def _broken_protocol(turn: object, transcript: AgentTranscript) -> str:
+    """Why a turn that is no final answer cannot be run as a search; empty when it can (Q20)."""
+    if not isinstance(turn, SearchRequest):
+        return f"a turn must be one search request or the final answer, not {type(turn).__name__}"
+    if turn.tool not in tuple(SearchTool) or not isinstance(turn.query, str):
+        return "a search request must name one of the two searches and give its query as text"
+    if transcript.searches_left == 0:
+        return f"a search was requested after the {AGENT_MAX_SEARCHES} a case may run"
+    return ""
 
 
 def _refuse_generic(role: CatalogRole) -> None:

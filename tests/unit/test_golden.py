@@ -1,8 +1,9 @@
-"""The golden set: which titles can be drawn, and the seeded draw.
+"""The golden set: which titles can be drawn, the seeded draw, and the scoring.
 
-docs/design.md 1.2; docs/build-decisions.md Q08 (size and frame), Q14 and Q26
-(a title with a person's name or no usable family code is out of the frame),
-Q22 (the draw depends only on the seed and the title keys).
+docs/design.md 1.2 and 2.4 ("Wrong"); docs/build-decisions.md Q08 (size, frame
+and scoring), Q14 and Q26 (a title with a person's name or no usable family
+code is out of the frame), Q22 (the draw depends only on the seed and the
+title keys).
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ import dataclasses
 import pytest
 
 from titlestd import golden
-from titlestd.contracts import NAME_MASK, Record, TitleKey, TitleRow
+from titlestd.contracts import NAME_MASK, GoldenScore, Record, Stage, TitleKey, TitleRow
 from titlestd.settings import Settings
 
 SEED = 20260101
@@ -236,3 +237,95 @@ def test_a_title_added_to_the_wave1_list_leaves_the_rest_of_the_frame_drawable()
     first = _draw(rows, golden_size=10)
     second = _draw(rows, [first[0]], golden_size=10)
     assert first[0] not in second and len(second) == 10
+
+
+# --- Scoring (2.4, Q08) -------------------------------------------------------------
+
+GOLDEN = tuple(TitleKey("SAL", f"golden {number}") for number in range(5))
+LABELS = dict(zip(GOLDEN, ("SAL-01", "SAL-02", "SAL-03", "SAL-04", "SAL-05"), strict=True))
+
+
+def test_a_model_that_gives_every_label_is_right_every_time():
+    score = golden.score_golden(Stage.WAVE1, LABELS, dict(LABELS), dict(LABELS))
+    assert score == GoldenScore(Stage.WAVE1, size=5, ml_right=5, llm_right=5, llm_no_answer=0)
+
+
+def test_wrong_means_the_machines_role_differs_from_the_label():
+    ml = {**LABELS, GOLDEN[0]: "SAL-06"}
+    llm = {**LABELS, GOLDEN[1]: "SAL-06", GOLDEN[2]: "FIN-01"}
+    score = golden.score_golden(Stage.WAVE2, LABELS, ml, llm)
+    assert score == GoldenScore(Stage.WAVE2, size=5, ml_right=4, llm_right=3, llm_no_answer=0)
+
+
+def test_no_match_and_insufficient_data_count_as_wrong_and_on_their_own():
+    # The caller maps both answers to no role: None, or no entry at all.
+    llm = {GOLDEN[0]: "SAL-01", GOLDEN[1]: "SAL-06", GOLDEN[2]: None, GOLDEN[3]: None}
+    score = golden.score_golden(Stage.WAVE2, LABELS, dict(LABELS), llm)
+    assert score.llm_right == 1
+    assert score.llm_no_answer == 3  # two None and one missing
+    assert score.size == 5  # the denominator is every golden title
+    assert score.ml_right == 5  # the ML model is scored on its own
+
+
+def test_the_denominator_is_every_golden_title_whatever_the_models_answered():
+    score = golden.score_golden(Stage.CLOSE, LABELS, {}, {})
+    assert score == GoldenScore(Stage.CLOSE, size=5, ml_right=0, llm_right=0, llm_no_answer=5)
+
+
+def test_a_title_with_no_ml_first_choice_is_wrong_for_the_ml_model():
+    ml = {GOLDEN[0]: "SAL-01", GOLDEN[1]: None}
+    score = golden.score_golden(Stage.WAVE1, LABELS, ml, dict(LABELS))
+    assert (score.ml_right, score.llm_right, score.llm_no_answer) == (1, 5, 0)
+
+
+def test_only_golden_titles_are_scored():
+    # The answers of a whole wave may be handed in (Q08: Wave 2 is scored on the
+    # answers it produced). Titles outside the golden set count for nothing.
+    others = {TitleKey("SAL", f"other {number}"): "SAL-01" for number in range(50)}
+    others[TitleKey("FIN", "golden 0")] = "SAL-01"  # the same title in another family
+    no_role = {TitleKey("SAL", "other no match"): None}
+    score = golden.score_golden(
+        Stage.WAVE2, LABELS, {**others, **LABELS}, {**others, **no_role, **LABELS}
+    )
+    assert score == GoldenScore(Stage.WAVE2, size=5, ml_right=5, llm_right=5, llm_no_answer=0)
+
+
+def test_the_label_is_the_measure_even_where_the_sme_was_mistaken():
+    # 2.4, Q27: wrong is measured against the SME's label, so an SME's mistake
+    # counts against a machine that named the true role.
+    truth = dict(LABELS)
+    labels = {**truth, GOLDEN[4]: "SAL-06"}  # the SME mislabeled one title
+    score = golden.score_golden(Stage.WAVE1, labels, truth, {**truth, GOLDEN[4]: "SAL-06"})
+    assert (score.ml_right, score.llm_right) == (4, 5)
+
+
+def test_a_title_the_sme_gave_no_role_stays_in_the_denominator_and_nobody_is_right():
+    # "No suitable role" (Q03). A model that named no role either has not
+    # matched the label: there is no label to match.
+    labels = {**LABELS, GOLDEN[0]: None}
+    named = golden.score_golden(Stage.WAVE1, labels, dict(LABELS), dict(LABELS))
+    assert named == GoldenScore(Stage.WAVE1, size=5, ml_right=4, llm_right=4, llm_no_answer=0)
+    silent = {**LABELS, GOLDEN[0]: None}
+    unnamed = golden.score_golden(Stage.WAVE1, labels, silent, silent)
+    assert unnamed == GoldenScore(Stage.WAVE1, size=5, ml_right=4, llm_right=4, llm_no_answer=1)
+
+
+@pytest.mark.parametrize("stage", [Stage.WAVE1, Stage.WAVE2, Stage.CLOSE])
+def test_a_score_names_the_stage_it_was_taken_at(stage):
+    # Q08: the set is scored three times, and the footer prints each.
+    assert golden.score_golden(stage, LABELS, {}, {}).stage is stage
+
+
+def test_an_empty_golden_set_scores_nothing():
+    score = golden.score_golden(Stage.WAVE1, {}, dict(LABELS), dict(LABELS))
+    assert score == GoldenScore(Stage.WAVE1, size=0, ml_right=0, llm_right=0, llm_no_answer=0)
+
+
+def test_scoring_a_drawn_set_uses_every_drawn_title():
+    rows = _rows(100)
+    drawn = _draw(rows)
+    labels = dict.fromkeys(drawn, "SAL-01")
+    ml = {row.key: "SAL-01" for row in rows}
+    llm = {key: ("SAL-01" if at % 4 else None) for at, key in enumerate(drawn)}
+    score = golden.score_golden(Stage.WAVE2, labels, ml, llm)
+    assert score == GoldenScore(Stage.WAVE2, size=40, ml_right=40, llm_right=30, llm_no_answer=10)

@@ -25,6 +25,18 @@ the caller passes the keys of the seed look-up.
 Decided on this branch, where the record says nothing:
 - The frame is a set of keys. A key that two rows share counts once, and a
   Wave 1 or look-up key that no row has changes nothing.
+- Only golden titles are scored: the keys of labels. Any other key in the two
+  mappings of machine roles is passed over, so the caller may hand in the
+  answers of a whole wave.
+- "No answer" counts every golden title the LLM gave no role. That is "no
+  match" and "insufficient data" (Q08), and also whatever else left the title
+  without a role: an answer that is not usable, a number that maps to no role
+  shown (S10, Q15), or no call at all. A role id or None cannot tell them
+  apart, and each is wrong in the same way.
+- A golden title the SME gave no role, which is "no suitable role" (Q03) and
+  happens only when the truth has no row for it, has the label None. It stays
+  in the denominator and no model is right about it, not even one that named
+  no role either.
 """
 
 from __future__ import annotations
@@ -34,8 +46,6 @@ from collections.abc import Collection, Mapping, Sequence
 from titlestd import seeding
 from titlestd.contracts import GoldenScore, Stage, TitleKey, TitleRow
 from titlestd.settings import Settings
-
-_NOT_BUILT = "titlestd.golden is built by feat/golden-audit-status"
 
 
 def draw_golden(
@@ -59,13 +69,25 @@ def draw_golden(
 
 def score_golden(
     stage: Stage,
-    labels: Mapping[TitleKey, str],
+    labels: Mapping[TitleKey, str | None],
     ml_first_choices: Mapping[TitleKey, str | None],
     llm_picks: Mapping[TitleKey, str | None],
 ) -> GoldenScore:
     """Score the golden set at one stage.
 
-    labels maps each golden title to the SME's role. A missing or None entry in
-    the other two mappings is a title with no role from that model.
+    labels maps each golden title to the SME's role, or to None where the SME
+    named none. A missing or None entry in the other two mappings is a title
+    with no role from that model.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    return GoldenScore(
+        stage=stage,
+        size=len(labels),
+        ml_right=sum(_right(ml_first_choices.get(key), label) for key, label in labels.items()),
+        llm_right=sum(_right(llm_picks.get(key), label) for key, label in labels.items()),
+        llm_no_answer=sum(llm_picks.get(key) is None for key in labels),
+    )
+
+
+def _right(role_id: str | None, label: str | None) -> bool:
+    """True when the model named a role and it is the SME's label (2.4)."""
+    return role_id is not None and role_id == label

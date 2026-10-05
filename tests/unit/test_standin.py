@@ -86,6 +86,19 @@ def test_content_words_are_lower_case_tokens():
     }
 
 
+def test_a_word_ends_where_the_quote_check_says_a_word_ends():
+    # Letters of any script and the underscore are word characters for the
+    # shared quote check, so a piece of a longer word is not a word here.
+    words = make().content_words
+    assert words("Screens each résumé") == {"screens", "résumé"}
+    assert words("cost_centre owner") == {"cost_centre", "owner"}
+    clerk = numbered(role("R-50", "Sum Clerk", "Files each sum."))
+    asked = record("widget wrangler", "Screens each résumé and files it.")
+    # "files" alone is one shared word. "sum" inside "résumé" is not a second,
+    # and could not be quoted: it neither starts nor ends on a word boundary.
+    assert make().choose(asked, clerk).answer is ChooseKind.NO_MATCH
+
+
 def test_an_abbreviation_is_expanded_when_a_whole_word_equals_it():
     words = make().content_words
     assert words("Acct MGR") == {"account", "manager"}

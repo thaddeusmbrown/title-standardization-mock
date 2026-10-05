@@ -30,9 +30,12 @@ Every answer carries contracts.LABEL_STAND_IN. This module must not import
 titlestd.people or titlestd.catalog.
 
 Decided here, where Q17 and Q19 leave the detail open:
-- Words. A word is a run of letters and digits. An abbreviation is expanded
-  when a whole word equals its short form, once; a long form of several words
-  gives several content words. The masks [NAME] and [EMAIL] are not words.
+- Words. A word is a run of word characters as the re module knows them:
+  letters of any script, digits and the underscore. A quote therefore starts
+  and ends where a word does, and a piece of a longer word is never taken
+  for a word. An abbreviation is expanded when a whole word equals its short
+  form, once; a long form of several words gives several content words. The
+  masks [NAME] and [EMAIL] are not words.
   STOP_WORDS is a short list of English function words; it leaves out "it"
   and "us", which job titles use as nouns. The level numerals are 1 to 5 and
   i to v, one for each of the design's five levels.
@@ -145,7 +148,7 @@ DESCRIPTION_QUERY_WORDS = 12
 APPROVED_TITLE_BONUS = 1
 
 _MASKS = (NAME_MASK, EMAIL_MASK)
-_WORD = re.compile("|".join([*map(re.escape, _MASKS), "[A-Za-z0-9]+"]))
+_WORD = re.compile("|".join([*map(re.escape, _MASKS), r"\w+"]))
 
 
 @dataclass(frozen=True, slots=True)

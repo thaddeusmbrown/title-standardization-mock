@@ -22,6 +22,14 @@ Decided here, where the record is silent:
   when it has no definition. A record is embedded as its cleaned title, one
   space and its description; the title alone when there is no description
   (2.4), and the description alone in the odd case of an empty title.
+  Nothing else of a record is embedded: not its family code and not its
+  department, which 1.4 gives to the family rule and to the LLM, the agent
+  and reviewers.
+- The match is not filtered by family. A title is compared with every role
+  a model may be shown and with every example, whatever family either is in
+  (1.6 step 3: "every catalog role", "every human-approved title"). The
+  family rule is checked afterwards (1.7), and ml_alone_eligible checks the
+  family for the ML-alone route (Q04).
 - matched_text, for the audit trail, is the role's catalog text when that
   scored best, otherwise the cleaned title of the approved title that did.
   On equal scores the catalog text is named before an approved title, and
@@ -41,6 +49,9 @@ Decided here, where the record is silent:
 - A Matcher keeps the vector of every text it has embedded, since the same
   text always gives the same vector (contracts.Embedder). So match makes one
   embed call, for the texts that are new, and none when no row is eligible.
+- An embedder that does not return exactly one vector per text, as
+  contracts.Embedder promises, is not worked around: match raises ValueError
+  and gives no result.
 - ml_alone_eligible reads the family code as titlestd.catalog does: trimmed,
   then compared exactly. A blank or unknown code, an empty shortlist and a
   generic or unknown first choice are never eligible. "Clears the cut-off"

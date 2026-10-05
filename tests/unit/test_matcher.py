@@ -490,13 +490,15 @@ def test_rows_with_the_same_text_share_one_embedding():
     assert len(embedder.texts) == len(set(embedder.texts)) == 4  # three roles and "baker"
 
 
-def test_an_embedder_that_does_not_answer_text_for_text_is_refused():
-    class Short:
+@pytest.mark.parametrize("vectors", [1, 9], ids=["too few", "too many"])
+def test_an_embedder_that_does_not_answer_text_for_text_is_refused(vectors):
+    class Miscounting:
         def embed(self, texts):
-            return [{0: 1.0}]
+            assert len(texts) == 4  # three roles and the row
+            return [{0: 1.0}] * vectors
 
     with pytest.raises(ValueError):
-        Matcher(TRADES, Short()).match([_row("FOOD", "baker")], Knowledge())
+        Matcher(TRADES, Miscounting()).match([_row("FOOD", "baker")], Knowledge())
 
 
 # --- ML-alone eligibility (1.6 step 4, Q04) -------------------------------------------

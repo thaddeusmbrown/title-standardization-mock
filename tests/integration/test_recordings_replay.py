@@ -14,12 +14,13 @@ other.
 
 The replay run then passes the invariants the default run passes in
 tests/integration/test_pipeline_default_run.py: the rows partition the titles
-and the employees and the status of a path follows from its counts (Q16, Q23),
-the files cover every employee once (Q05), and the rules of docs/design.md 2.7
-hold on the files and the state. In the default run T2 and T4 need a model
-that is made to misbehave. Here the answers are a hosted model's own, so both
-are read off the state: where its quote is not in the record, or its number
-names no role it was shown, the title went to a person.
+and the employees, the status of a path follows from its counts and the footer
+agrees with the files (Q16, Q23), the files cover every employee once (Q05),
+and the rules of docs/design.md 2.7 hold on the files and the state. In the
+default run T2 and T4 need a model that is made to misbehave. Here the answers
+are a hosted model's own, so both are read off the state: where its quote is
+not in the record, or its number names no role it was shown, the title went
+to a person.
 
 Decided here, where the record leaves the detail open:
 
@@ -102,6 +103,14 @@ PATH_ROWS = [path.value for path in MachinePath]
 CONFIRMED_UP_TO, STOPPED_ABOVE = 2, 12
 # The answers whose quote is checked against the record (Q15).
 QUOTE_CHECKED = {"choose": ("role", "no_match", "insufficient_data"), "review": ("role",)}
+# The status of the titles of a row that is no machine path (Q16).
+ROW_STATUS = {
+    "look-up hit": "Approved",
+    "approved in Wave 1": "Approved",
+    "review queue": "Approved",
+    "generic family role": "Provisional",
+    "left on legacy title": "",
+}
 # The titles on which the compliance check of 1.7 fired, in any scoring of a run.
 COMPLIANCE_FIRED = (
     "SELECT DISTINCT family_code, cleaned_title FROM scorings "
@@ -200,6 +209,13 @@ def printed_table(text: str) -> dict[str, list[str]]:
             if line.startswith(name + "  "):
                 found[name] = re.split(r"\s{2,}", line.strip())[1:]
     return found
+
+
+def printed_numbers(text: str, pattern: str) -> list[int]:
+    """The whole numbers that the groups of the pattern find on the one printed
+    line it matches in full."""
+    (found,) = [match for line in text.splitlines() if (match := re.fullmatch(pattern, line))]
+    return [int(number) for number in found.groups()]
 
 
 # --- the run itself (2.5, Q02, Q29, Q32) -----------------------------------------------
@@ -322,8 +338,11 @@ def test_the_status_of_a_path_follows_from_its_audited_and_wrong_counts(replay_r
             pipeline.OCCASION_AUDIT,
         )
         assert differing == [(wrong,)]
-    for name in set(ROW_NAMES) - set(PATH_ROWS):
-        assert len(printed[name]) <= 4  # audited and wrong are filled on the path rows only
+    # Audited and wrong are filled on the path rows only. On the other rows
+    # the status is that of the row's titles, where it holds any (Q16).
+    for name, status in ROW_STATUS.items():
+        held = int(printed[name][0])
+        assert printed[name][3:] == ([status] if status and held else []), name
 
 
 def test_load_file_and_exceptions_cover_every_employee_exactly_once(replay_run, data):
@@ -342,14 +361,46 @@ def test_load_file_and_exceptions_cover_every_employee_exactly_once(replay_run, 
     listed = [line for line in replay_run.exceptions if line["released"] == "1"]
     assert {line["employee_id"] for line in listed} == no_grade
     assert {line["reason"] for line in listed} <= {"no grade"}
-    # The coverage line of the footer counts what the files hold, by employee (Q16).
-    by_status = {"left on legacy title": len(legacy)}
+
+
+def test_the_footer_agrees_with_the_files_and_the_state(replay_run, data, title_rows):
+    text = replay_run.stdout
+    # Coverage by status is by employee, includes those left on a legacy title
+    # and adds up to every employee (Q05, Q16).
+    by_status = dict.fromkeys(("Approved", "Confirmed", "Provisional"), 0)
     for line in replay_run.load:
-        by_status[line["status"]] = by_status.get(line["status"], 0) + 1
-    (coverage,) = [line for line in replay_run.stdout.splitlines() if line.startswith("Coverage")]
+        by_status[line["status"]] += 1
+    legacy = [line for line in replay_run.exceptions if line["released"] == "0"]
+    by_status["left on legacy title"] = len(legacy)
+    assert sum(by_status.values()) == len(data.employees)
+    (coverage,) = [line for line in text.splitlines() if line.startswith("Coverage by status")]
     for name, count in by_status.items():
         assert re.search(rf"{name} (\d+) \(", coverage)[1] == str(count), name
-    assert set(by_status) <= {"Approved", "Confirmed", "Provisional", "left on legacy title"}
+    # Sent to a person: the Wave 1 list and the review queue, over all titles.
+    wave1 = replay_run.keys("SELECT family_code, cleaned_title FROM title_rows WHERE on_wave1_list")
+    sent, total, on_list, in_queue, audited, golden = printed_numbers(
+        text,
+        r"Sent to a person: (\d+) of (\d+) titles \([\d.]+%\): (\d+) on the Wave 1 list, "
+        r"(\d+) in the review queue\. Blind labels besides: (\d+) in the audits, "
+        r"(\d+) on the golden set\.",
+    )
+    assert (on_list, in_queue) == (len(wave1), len(replay_run.queue))
+    assert sent == len(wave1 | set(replay_run.queue)) and total == len(title_rows)
+    assert [(audited,)] == replay_run.state("SELECT sum(audited) FROM audits")
+    assert [(golden,)] == replay_run.state("SELECT count(*) FROM title_rows WHERE in_golden_set")
+    # The golden set at each stage, as the state holds it (Q08).
+    scores = replay_run.state("SELECT * FROM golden_scores ORDER BY rowid")
+    assert [score[0] for score in scores] == ["Wave 1", "Wave 2", "close"]
+    for stage, size, ml_right, llm_right, no_answer in scores:
+        line = rf"  {stage}: ML first choice (\d+)/(\d+), LLM pick (\d+)/(\d+) \((\d+) with .*"
+        assert printed_numbers(text, line) == [ml_right, size, llm_right, size, no_answer]
+        assert size == golden and no_answer <= size - llm_right
+    # The two counts under the table (Q05).
+    no_grade = [line for line in replay_run.exceptions if line["released"] == "1"]
+    counts = printed_numbers(
+        text, r"Exceptions list: (\d+) employees left on a legacy title; (\d+) employees .*"
+    )
+    assert counts == [len(legacy), len(no_grade)]
 
 
 def test_every_released_title_says_who_decided_it_and_how_far_to_rely_on_it(replay_run, title_rows):

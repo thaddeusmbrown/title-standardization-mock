@@ -38,6 +38,31 @@ EXTRA_MODULES = {"live": ("anthropic", "httpx2"), "local": ("model2vec", "numpy"
 # Third-party modules the default run must never import (2.5, Q32).
 OPTIONAL_MODULES = tuple(module for modules in EXTRA_MODULES.values() for module in modules)
 
+# The start of a subprocess script (2.5, Q32, S15): an import finder that
+# records and refuses every import from outside the standard library and this
+# package. Recording is what catches an optional import wrapped in
+# "try: ... except ImportError", which swallows the refusal. A script puts this
+# text first, does its work and reports attempted_imports, which must be empty.
+IMPORT_GUARD = """\
+import sys
+
+attempted_imports = []
+
+
+class _ImportGuard:
+    allowed = frozenset(sys.stdlib_module_names) | {"titlestd"}
+
+    def find_spec(self, name, path=None, target=None):
+        top = name.partition(".")[0]
+        if top in self.allowed or top.startswith("_sysconfigdata"):
+            return None
+        attempted_imports.append(top)
+        raise ImportError(f"{name} is outside the standard library: not to be imported here")
+
+
+sys.meta_path.insert(0, _ImportGuard())
+"""
+
 
 def _row(
     family: str,
@@ -258,3 +283,30 @@ def run_bare(*arguments: str, cwd: Path = REPO_ROOT) -> subprocess.CompletedProc
 def bare_cli():
     """Callable running the command line on a bare interpreter; see run_bare."""
     return run_bare
+
+
+def run_bare_script(
+    script: str, *arguments: str, cwd: Path = REPO_ROOT
+) -> subprocess.CompletedProcess[str]:
+    """Run a script on a bare interpreter, like run_bare: "python -S -E -c script"."""
+    return subprocess.run(
+        [sys.executable, "-S", "-E", "-c", script, *arguments],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+
+
+@pytest.fixture(scope="session")
+def bare_python():
+    """Callable running a script on a bare interpreter; see run_bare_script."""
+    return run_bare_script
+
+
+@pytest.fixture(scope="session")
+def import_guard() -> str:
+    """Script text that records and refuses imports from outside the standard
+    library and the package; see IMPORT_GUARD."""
+    return IMPORT_GUARD

@@ -1023,7 +1023,8 @@ unstated whether the suite must pass where the SDK is not installed.
 - (a) The core suite needs only the standard library and pytest; this is the merge gate,
   whose second run has no optional extra installed (S14). It includes a subprocess test that
   runs the default mode and replay mode with an import blocker on `anthropic`, `httpx2`,
-  `model2vec` and `numpy` and expects success.
+  `model2vec` and `numpy` and expects success. The blocker is the import guard of S15, which
+  refuses those four and everything else from outside the standard library.
 - (b) Record-then-replay round trip: live mode with an injected scripted client under the
   model ID `test-double` writes through the real recorder into a temporary directory; replay
   gives identical outputs; changing one input gives a miss error, non-zero exit and no output
@@ -1471,8 +1472,14 @@ Markers: `integration` (set automatically on everything under `tests/integration
   (`switch`, `offline_embedder`, `standin`, `local_embedder`, `live`, `replay`, `recording`)
   may (Q22).
 - Only `titlestd/seeding.py` imports `random`; nothing calls `hash()` (Q06).
-- Importing any module of the package imports none of `anthropic`, `httpx2`, `model2vec`,
-  `numpy` (2.5, Q32), checked in a fresh interpreter that refuses those imports.
+- Importing any module of the package imports nothing from outside the standard library and
+  the package itself, so none of `anthropic`, `httpx2`, `model2vec`, `numpy` (2.5, Q32). It is
+  checked in a fresh interpreter without site-packages whose import system records and
+  refuses every such attempt: the record is what catches an optional import wrapped in
+  `try`/`except ImportError` at module level, which swallows the refusal. It is checked again
+  with site-packages present, where such an import would succeed. The guard is `IMPORT_GUARD`
+  in `tests/conftest.py` (fixtures `import_guard` and `bare_python`); the blocked runs of Q32
+  (a) use the same one.
 - The package is flat: every module is a file directly under `titlestd/`.
 - Every component module's docstring names its owner branch and the design sections and
   entries that govern it.

@@ -24,6 +24,19 @@ Family codes are compared after removing surrounding whitespace on both sides
 (S05): a row's key holds the trimmed code, while the truth file holds the code
 as recorded, which may be padded or made of spaces only. The mini data set has
 one padded code to show it.
+
+Decided on this branch, where the record says nothing:
+- Which SME. A Wave 1 approval or a blind label names one of the three SMEs,
+  picked by a keyed draw of the title on the sme_error stream. So a title
+  falls to the same SME on every occasion, like its label.
+- A row's true role is the one its raw titles name. A raw title with no truth
+  row is passed over, so a row is "no suitable role" only when none of its raw
+  titles has one (Q03).
+- A wrong label needs another non-generic role in the true role's family.
+  Where the family has none, the label is the true role.
+- The people check the truth against the catalog when they are built
+  (validate_truth), not only in load_people, so no way of building them can
+  hand out an unknown or a generic role.
 """
 
 from __future__ import annotations
@@ -32,8 +45,8 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from titlestd import datafiles
-from titlestd.contracts import Catalog, HumanDecision, TitleRow
+from titlestd import datafiles, seeding
+from titlestd.contracts import Catalog, HumanAnswer, HumanDecision, TitleRow
 from titlestd.settings import Settings
 
 _NOT_BUILT = "titlestd.people is built by feat/simulated-people"
@@ -135,17 +148,29 @@ class SimulatedPeople:
     """
 
     def __init__(self, truth: Sequence[TruthRow], catalog: Catalog, settings: Settings) -> None:
-        raise NotImplementedError(_NOT_BUILT)
+        validate_truth(truth, catalog)
+        self._seed = settings.seed
+        self._error_rate = settings.sme_error_rate
+        # Every role a person may name, with its family: the generic ones are left out.
+        self._family_of = {
+            role.role_id: role.family_code for role in catalog.roles if not role.is_generic
+        }
+        # (raw title, trimmed family code) to the true role (Q09, S05).
+        self._truth = {
+            (row.job_title, row.job_family_code.strip()): row.true_role_id for row in truth
+        }
 
     def wave1_approval(self, row: TitleRow) -> HumanDecision:
         """An HR SME's decision on a Wave 1 title. Never undecided (Q01)."""
-        raise NotImplementedError(_NOT_BUILT)
+        sme, role_id = self._label(row)
+        return _decision(row, role_id, sme)
 
     def blind_label(self, row: TitleRow) -> HumanDecision:
         """An HR SME's label, given without seeing the system's answer: the
         golden set, the random audit and a fully labeled small path. Never
         undecided (Q01)."""
-        raise NotImplementedError(_NOT_BUILT)
+        sme, role_id = self._label(row)
+        return _decision(row, role_id, sme)
 
     def queue_decision(self, row: TitleRow) -> HumanDecision:
         """A reviewer's decision on a review-queue title at the close.
@@ -155,7 +180,45 @@ class SimulatedPeople:
         """
         raise NotImplementedError(_NOT_BUILT)
 
+    def _label(self, row: TitleRow) -> tuple[str, str | None]:
+        """The SME a title falls to and the title's one label: a role, or None
+        when the title has no truth row.
+
+        Both come from the title's own draws on the sme_error stream, so they
+        are the same on every occasion and whatever was asked before (Q27).
+        """
+        generator = seeding.rng(self._seed, seeding.STREAM_SME_ERROR, *row.key)
+        sme = generator.choice(PERSONA_SMES)
+        role_id = self._true_role(row)
+        draw = seeding.unit(self._seed, seeding.STREAM_SME_ERROR, *row.key)
+        if role_id is not None and draw < self._error_rate:
+            family = self._family_of[role_id]
+            others = sorted(
+                other
+                for other, its_family in self._family_of.items()
+                if its_family == family and other != role_id
+            )
+            if others:
+                role_id = generator.choice(others)
+        return sme, role_id
+
+    def _true_role(self, row: TitleRow) -> str | None:
+        """The true role the row's raw titles name, or None when none has a truth row."""
+        family = row.key.family_code.strip()
+        roles = sorted(
+            {self._truth[(raw, family)] for raw in row.raw_titles if (raw, family) in self._truth}
+        )
+        return roles[0] if roles else None
+
+
+def _decision(row: TitleRow, role_id: str | None, persona: str) -> HumanDecision:
+    """The persona's decision on a title whose label is role_id."""
+    if role_id is None:
+        return HumanDecision(row.key, HumanAnswer.NO_SUITABLE_ROLE, None, persona, True)
+    return HumanDecision(row.key, HumanAnswer.ROLE, role_id, persona, True)
+
 
 def load_people(settings: Settings, catalog: Catalog) -> SimulatedPeople:
-    """Read and check the truth file in settings.data_dir and build the people."""
-    raise NotImplementedError(_NOT_BUILT)
+    """Read the truth file in settings.data_dir and build the people, who check
+    it against the catalog."""
+    return SimulatedPeople(read_truth(settings.data_dir), catalog, settings)

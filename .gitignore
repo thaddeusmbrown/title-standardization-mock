@@ -1,0 +1,19 @@
+# secrets
+.env
+.env.*
+
+# office files and exports never belong here
+*.pptx
+*.ppt
+*.docx
+*.pdf
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# local run outputs
+out/
+*.sqlite

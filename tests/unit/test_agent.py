@@ -1,4 +1,4 @@
-"""The agent's case and its loop (Q10, Q20).
+"""The agent's case, its loop and what a model is shown of them (Q10, Q20).
 
 Tests of section 2.7 on the shared loop, with a scripted backend: the agent
 cannot pick a role it was not shown or one outside the family (T4), and a
@@ -557,3 +557,120 @@ def test_no_number_the_reviewer_can_return_settles_the_flagged_role():
         else:
             assert outcome.role_id in (None, "FOOD-04")
     assert settled == {"FOOD-01", "FOOD-02", "FOOD-03"}
+
+
+# --- What a model is shown (Q10, S16) -------------------------------------------------
+
+
+def test_the_case_as_a_model_is_shown_it():
+    assert agent.render_case(CASE) == (
+        "Title: night baker\n"
+        "Family: FOOD\n"
+        "Department: Kitchen\n"
+        "Description: bakes bread at night\n"
+        "\n"
+        "Roles:\n"
+        "- Cashier (family SHOP): sells bread and beer [the LLM's pick]\n"
+        "1. Baker (family FOOD): bakes bread and rolls [the ML model's first choice]\n"
+        "2. Brewer (family FOOD): brews beer\n"
+        "\n"
+        "Referred because: models disagree; role outside recorded family"
+    )
+
+
+def test_the_case_starts_with_the_record_block_the_quote_check_reads():
+    # Q15: one string serves the prompt and the check.
+    text = agent.render_case(CASE)
+    assert text.startswith(BLOCK + "\n\n")
+    assert fallback.quote_in_record("bakes bread at night", text[: len(BLOCK)])
+    lines = text.splitlines()
+    assert lines[6:9] == [
+        line + mark
+        for line, mark in zip(
+            fallback.render_roles(CASE.roles).splitlines(),
+            [f" {agent.LLM_PICK_MARK}", f" {agent.ML_FIRST_CHOICE_MARK}", ""],
+            strict=True,
+        )
+    ]
+
+
+def test_both_opinions_on_one_role_are_both_marked_and_a_no_match_marks_none():
+    agree = dataclasses.replace(CASE, llm_role_id="FOOD-02", reasons=(Reason.FAMILY_MISMATCH,))
+    assert (
+        "1. Baker (family FOOD): bakes bread and rolls "
+        "[the LLM's pick] [the ML model's first choice]\n"
+    ) in agent.render_case(agree)
+    no_match = dataclasses.replace(
+        CASE, llm_role_id=None, ml_first_choice="SHOP-02", reasons=(Reason.NO_MATCH,)
+    )
+    text = agent.render_case(no_match)
+    assert "[" not in text  # the ML first choice is not among the roles shown
+    assert text.endswith("\n\nReferred because: no match")
+
+
+def test_no_rendered_text_shows_a_role_id_or_a_score():
+    # S16.
+    result, _, _ = _run(_catalog("bread"), _approved("bread"), _catalog("beer"), _pick(1))
+    texts = [agent.render_case(CASE), *map(agent.render_step, result.transcript.steps)]
+    for text in texts:
+        assert not any(role_id in text for role_id in ROLE_IDS)
+        assert not re.search(r"\d\.\d", text)  # no similarity score
+        assert "Generic role" not in text
+
+
+def test_a_catalog_search_as_a_model_is_shown_it():
+    result, _, _ = _run(_catalog("bread"), _pick(1))
+    assert agent.render_step(result.transcript.steps[0]) == (
+        "3. Bread Taster (family FOOD): tastes bread\n"
+        "1. Baker (family FOOD): bakes bread and rolls\n"
+        "- Cashier (family SHOP): sells bread and beer\n"
+        "2. Brewer (family FOOD): brews beer\n"
+        "4. Butcher (family FOOD): cuts meat"
+    )
+
+
+def test_an_approved_title_search_as_a_model_is_shown_it():
+    request = _approved("bread")
+    step = SearchStep(
+        request,
+        (
+            SearchHit(NumberedRole(None, CASHIER), "bread seller", "SHOP"),
+            SearchHit(NumberedRole(3, BUTCHER), "meat cutter ii", "FOOD"),
+            SearchHit(NumberedRole(1, BAKER), "night baker", ""),  # no usable family code (Q26)
+        ),
+    )
+    assert agent.render_step(step) == (
+        '- Cashier: approved for the title "bread seller" (family SHOP)\n'
+        '3. Butcher: approved for the title "meat cutter ii" (family FOOD)\n'
+        '1. Baker: approved for the title "night baker" (family none recorded)'
+    )
+    assert agent.NO_FAMILY == "none recorded"
+
+
+def test_a_search_that_found_nothing_says_so():
+    for request in (_catalog("bread"), _approved("bread")):
+        assert agent.render_step(SearchStep(request, ())) == "No results." == agent.NO_RESULTS
+
+
+def test_which_lines_a_step_gets_follows_the_search_that_ran():
+    # An approved title can be the empty string (a title made only of removable
+    # parts), so the hit does not say which search it came from; the request does.
+    hit = SearchHit(NumberedRole(1, BAKER), "", "FOOD")
+    assert agent.render_step(SearchStep(_approved("x"), (hit,))) == (
+        '1. Baker: approved for the title "" (family FOOD)'
+    )
+    assert agent.render_step(SearchStep(_catalog("x"), (hit,))) == (
+        "1. Baker (family FOOD): bakes bread and rolls"
+    )
+
+
+@pytest.mark.parametrize("generic", [FOOD, SHOP])
+def test_no_renderer_shows_a_generic_family_role(generic):
+    # 1.2, T5: the last thing a role passes before a model reads it.
+    for number in (None, 3):
+        shown = NumberedRole(number, generic)
+        with pytest.raises(ValueError, match="generic family role"):
+            agent.render_case(dataclasses.replace(CASE, roles=(*CASE.roles, shown)))
+        for request in (_catalog("x"), _approved("x")):
+            with pytest.raises(ValueError, match="generic family role"):
+                agent.render_step(SearchStep(request, (SearchHit(shown, "food person", "FOOD"),)))

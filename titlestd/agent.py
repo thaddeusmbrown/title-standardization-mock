@@ -73,6 +73,18 @@ Decided here, where the record leaves the detail open:
   carries the label of the case's LLM answer: the chooser and the reviewer
   of a run come from one llm setting (contracts.Llm), and a search request
   carries no label of its own. Whatever the backend raises passes through.
+- render_case is the record block of fallback.render_record, an empty
+  line, "Roles:", one line per shown role as fallback.render_roles writes
+  it, followed by LLM_PICK_MARK and ML_FIRST_CHOICE_MARK where they apply,
+  an empty line and "Referred because: " with the reasons joined by "; ".
+  An LLM answer that named no role ("no match") marks no line; the reasons
+  say it. The LLM's quote is not shown.
+- render_step is the text of one tool result: one line per hit, NO_RESULTS
+  when there is none, and no heading, because the request is a turn of its
+  own. A catalog hit is the role line of fallback.render_roles. An
+  approved-title hit is '3. Role Name: approved for the title "cleaned
+  title" (family SAL)', with "-" for the number of an out-of-family role
+  and the title's own family code, or NO_FAMILY when that is blank (Q26).
 """
 
 from __future__ import annotations
@@ -104,12 +116,18 @@ from titlestd.contracts import (
     TitleRow,
     Vector,
 )
-from titlestd.fallback import role_for_number
+from titlestd.fallback import render_record, render_roles, role_for_number
 from titlestd.lookup import Knowledge
 from titlestd.matcher import cosine, embed_text, role_text
 from titlestd.settings import Settings
 
-_NOT_BUILT = "titlestd.agent is built by feat/agent"
+# What render_case writes after the line of a role (Q10).
+LLM_PICK_MARK = "[the LLM's pick]"
+ML_FIRST_CHOICE_MARK = "[the ML model's first choice]"
+# What render_step writes for a search that found nothing.
+NO_RESULTS = "No results."
+# What render_step writes for an approved title with a blank family code (Q26).
+NO_FAMILY = "none recorded"
 
 
 class _Candidate(NamedTuple):
@@ -232,14 +250,35 @@ def review(case: AgentCase, tools: SearchTools, reviewer: Reviewer) -> AgentResu
 def render_case(case: AgentCase) -> str:
     """The case as a model is shown it: the record block, the shown roles with
     the LLM's pick and the ML first choice marked, and the referral reasons."""
-    raise NotImplementedError(_NOT_BUILT)
+    lines = [render_record(case.record), "", "Roles:"]
+    for shown in case.roles:
+        line = [render_roles([shown])]
+        if shown.role.role_id == case.llm_role_id:
+            line.append(LLM_PICK_MARK)
+        if shown.role.role_id == case.ml_first_choice:
+            line.append(ML_FIRST_CHOICE_MARK)
+        lines.append(" ".join(line))
+    lines += ["", "Referred because: " + "; ".join(case.reasons)]
+    return "\n".join(lines)
 
 
 def render_step(step: SearchStep) -> str:
     """One search's results as a model is shown them (Q10): catalog hits show
     role name, family code and definition; approved-title hits show title,
     family code and role name. No similarity score."""
-    raise NotImplementedError(_NOT_BUILT)
+    if step.request.tool == SearchTool.APPROVED_TITLES:
+        lines = [_approved_title_line(hit) for hit in step.hits]
+    else:
+        lines = [render_roles([hit.role]) for hit in step.hits]
+    return "\n".join(lines) or NO_RESULTS
+
+
+def _approved_title_line(hit: SearchHit) -> str:
+    role = hit.role.role
+    _refuse_generic(role)
+    mark = "-" if hit.role.number is None else f"{hit.role.number}."
+    title, family = hit.approved_title, hit.title_family_code or NO_FAMILY
+    return f'{mark} {role.role_name}: approved for the title "{title}" (family {family})'
 
 
 def _shown(role: CatalogRole, record: Record, numbers: dict[str, int]) -> NumberedRole:

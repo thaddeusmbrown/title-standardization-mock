@@ -36,6 +36,14 @@ Decided here, where the record is silent:
   them. A title joins once: a later call adds only what is new.
 - Every function commits what it wrote, so a run that stops leaves the state
   as it stood at the last completed step.
+- What a model gave is recorded as it was given, and recording it never
+  stops a run: shared code decides what an answer means (2.5), the state
+  only keeps it. A number SQLite cannot hold as a whole number (one too
+  large, or something that is no whole number at all) is kept as its text;
+  the number column of model_answers has no declared type, so that SQLite
+  does not turn such a text into a number of its own. A quote, detail or
+  search query that is not valid Unicode is kept with the offending
+  characters escaped.
 """
 
 from __future__ import annotations
@@ -51,6 +59,7 @@ from titlestd.contracts import (
     MatchResult,
     NumberedRole,
     Reason,
+    ReviewAnswer,
     RuleOutcome,
     RunResult,
     Stage,
@@ -92,7 +101,7 @@ CREATE TABLE ml_shortlist (
     matched_text TEXT NOT NULL, PRIMARY KEY (stage, family_code, cleaned_title, place));
 CREATE TABLE model_answers (
     stage TEXT NOT NULL, family_code TEXT NOT NULL, cleaned_title TEXT NOT NULL,
-    step TEXT NOT NULL, answer TEXT NOT NULL, number INTEGER, quote TEXT NOT NULL,
+    step TEXT NOT NULL, answer TEXT NOT NULL, number, quote TEXT NOT NULL,
     source TEXT NOT NULL, detail TEXT NOT NULL,
     role_id TEXT, route TEXT NOT NULL, reasons TEXT NOT NULL,
     PRIMARY KEY (stage, family_code, cleaned_title, step));
@@ -222,9 +231,9 @@ def save_scoring(
         case = review.transcript.case
         shown_roles += [(*at, STEP_REVIEW, "case", "", *each) for each in _places(case.roles)]
         for step in review.transcript.steps:
+            asked = (step.request.tool.value, _storable(step.request.query))
             shown_roles += [
-                (*at, STEP_REVIEW, step.request.tool.value, step.request.query, *each)
-                for each in _places(hit.role for hit in step.hits)
+                (*at, STEP_REVIEW, *asked, *each) for each in _places(hit.role for hit in step.hits)
             ]
     with connection:
         connection.execute(
@@ -330,9 +339,18 @@ def _places(roles: Iterable[NumberedRole]) -> list[tuple[int, int | None, str]]:
     return [(place, each.number, each.role.role_id) for place, each in enumerate(roles, start=1)]
 
 
-def _answer(answer) -> tuple[str, int | None, str, str, str]:
+def _answer(answer: ChooseAnswer | ReviewAnswer) -> tuple[object, ...]:
     """The fields a ChooseAnswer and a ReviewAnswer share, before the role."""
-    return (answer.answer.value, answer.number, answer.quote, answer.source, answer.detail)
+    given = (_storable(answer.number), _storable(answer.quote))
+    return (answer.answer.value, *given, answer.source, _storable(answer.detail))
+
+
+def _storable(value: object) -> int | str | None:
+    """What a model gave as a number, a quote or a query, in a form SQLite takes."""
+    if value is None or (type(value) is int and -(2**63) <= value < 2**63):
+        return value
+    text = value if isinstance(value, str) else repr(value)
+    return text.encode("utf-8", "backslashreplace").decode("utf-8")
 
 
 def _ruled(outcome: RuleOutcome) -> tuple[str | None, str, str]:

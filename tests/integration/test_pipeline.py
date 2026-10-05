@@ -626,6 +626,10 @@ def test_what_people_decide_is_learned_after_the_wave_it_was_decided_in(mini_set
         ({"quote": ""}, "quote not in record"),
         ({"number": 11}, "role not in catalog"),  # Q15: out of range
         ({"number": 0}, "role not in catalog"),
+        # What a hosted model could answer and no file or database takes as it is.
+        ({"number": 10**30}, "role not in catalog"),
+        ({"number": [3]}, "role not in catalog"),
+        ({"quote": "treasury \ud800 analyst"}, "quote not in record"),
     ],
 )
 def test_t2_a_quote_that_is_not_in_the_record_sends_the_title_to_a_person(
@@ -652,6 +656,15 @@ def test_t2_a_quote_that_is_not_in_the_record_sends_the_title_to_a_person(
     assert [each for each in result.decisions if each.key != TREASURY] == [
         each for each in honest.decisions if each.key != TREASURY
     ]
+    # The state keeps the answer that was refused, and only the rules read it.
+    ((answer, role_id, route),) = rows_of(
+        mini_settings,
+        "SELECT answer, role_id, route FROM model_answers "
+        "WHERE stage = 'Wave 2' AND step = 'choose' AND cleaned_title = ?",
+        TREASURY.cleaned_title,
+    )
+    assert (answer, route) == ("role", "person")
+    assert (role_id is None) == (reason == "role not in catalog")
 
 
 def test_t2_a_chooser_that_never_quotes_the_record_settles_nothing(mini_settings):
@@ -713,7 +726,9 @@ def test_t3_a_flagged_role_the_agent_picks_is_never_settled_by_a_machine(
     assert [audit.path_size for audit in result.audits] == [0, 0]
 
 
-@pytest.mark.parametrize("number", [0, 1, 2, 3, 4, 5, 6, 7, 11, 40, None, True, "1", 1.0])
+@pytest.mark.parametrize(
+    "number", [0, 1, 2, 3, 4, 5, 6, 7, 11, 40, None, True, "1", 1.0, 10**30, -(10**30), [1]]
+)
 def test_t4_the_agent_cannot_pick_a_role_it_was_not_shown_or_one_outside_the_family(
     mini_settings, mini_catalog, number
 ):
@@ -764,6 +779,32 @@ def test_t4_the_agent_cannot_pick_a_role_it_was_not_shown_or_one_outside_the_fam
     assert bool(picked) == names_a_role
     if not names_a_role:
         assert result.audits[1].path_size == 0
+
+
+class AskingOddly:
+    """A reviewer whose first search asks with text that is not valid Unicode."""
+
+    def __init__(self, reviewer) -> None:
+        self._reviewer = reviewer
+
+    def next_turn(self, transcript):
+        turn = self._reviewer.next_turn(transcript)
+        if isinstance(turn, SearchRequest) and not transcript.steps:
+            return dataclasses.replace(turn, query=turn.query + " \udfff")
+        return turn
+
+
+def test_a_search_is_run_and_recorded_whatever_the_agent_asks_with(mini_settings):
+    # A model's text reaches the embedder and the state as it is; neither stops the run.
+    models = real_models(mini_settings)
+    spy = Spy(models, chooser=NoMatch(), reviewer=AskingOddly(models.llm.reviewer))
+    result = pipeline.run_pipeline(mini_settings, models=spy.models)
+    asked = rows_of(
+        mini_settings,
+        "SELECT DISTINCT query FROM shown_roles WHERE shown_in = 'search_catalog'",
+    )
+    assert asked and all(query.endswith(" \\udfff") for (query,) in asked)
+    assert result.audits[1].path_size > 0  # the agent went on to settle titles
 
 
 def test_t5_no_model_is_ever_shown_a_generic_family_role(mini_settings, mini_catalog):

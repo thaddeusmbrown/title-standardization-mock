@@ -286,6 +286,70 @@ def test_a_title_is_scored_once_per_stage(connection):
         store.save_scoring(connection, Stage.CLOSE, key, match=MATCH, route="person", reasons=())
 
 
+@pytest.mark.parametrize(
+    ("number", "kept"),
+    [
+        (7, 7),
+        (-(2**63), -(2**63)),
+        (2**63 - 1, 2**63 - 1),
+        (None, None),
+        # What SQLite cannot hold as a whole number is kept as its text.
+        (2**63, "9223372036854775808"),
+        (-(10**30), "-1" + "0" * 30),
+        (True, "True"),
+        (2.5, "2.5"),
+        ("7", "7"),
+        ([7], "[7]"),
+    ],
+)
+def test_a_number_a_model_gave_is_kept_whatever_it_is(connection, number, kept):
+    key = TitleKey("SAL", "sales rep")
+    answer = ChooseAnswer(ChooseKind.ROLE, number, "sales", "live")
+    outcome = RuleOutcome(Route.PERSON, (Reason.ROLE_NOT_IN_CATALOG,))
+    store.save_scoring(
+        connection,
+        Stage.WAVE2,
+        key,
+        match=MATCH,
+        route="person",
+        reasons=outcome.reasons,
+        shown=SHOWN,
+        answer=answer,
+        outcome=outcome,
+    )
+    assert read(connection, "SELECT number FROM model_answers") == [(kept,)]
+
+
+def test_text_a_model_gave_that_is_not_valid_unicode_is_kept_with_escapes(connection):
+    # A lone surrogate, which JSON can carry, is nothing SQLite or a file takes.
+    key = TitleKey("SAL", "account manager ii")
+    answer = ChooseAnswer(ChooseKind.INVALID, None, "a quote \ud800 cut", "live", "cut off \udfff")
+    case = AgentCase(Record("account manager ii", "SAL", "", ""), (), answer, None, None, ())
+    step = SearchStep(
+        SearchRequest(SearchTool.CATALOG, "manager \ud800"), (SearchHit(NumberedRole(1, SAL_1)),)
+    )
+    review = AgentResult(
+        ReviewAnswer(ReviewKind.ESCALATE, None, "", "live"), None, AgentTranscript(case, (step,))
+    )
+    outcome = RuleOutcome(Route.PERSON, (Reason.INVALID_ANSWER,))
+    store.save_scoring(
+        connection,
+        Stage.WAVE2,
+        key,
+        match=MATCH,
+        route="person",
+        reasons=outcome.reasons,
+        answer=answer,
+        outcome=outcome,
+        review=review,
+        review_outcome=outcome,
+    )
+    assert read(connection, "SELECT quote, detail FROM model_answers WHERE step = 'choose'") == [
+        ("a quote \\ud800 cut", "cut off \\udfff")
+    ]
+    assert read(connection, "SELECT query FROM shown_roles") == [("manager \\ud800",)]
+
+
 def test_save_people_keeps_the_occasion_the_persona_and_the_simulated_mark(connection):
     key = TitleKey("FIN", "analyst")
     store.save_people(

@@ -1,4 +1,4 @@
-"""Catalog access (design 1.2; Q26 for a usable family code).
+"""Catalog access, grade to level and the naming rule (design 1.2, 1.3, 2.4).
 
 One test of section 2.7 starts here: model_visible_roles is the only source of
 the roles a model may be shown, so it must never hold a generic family role.
@@ -17,6 +17,7 @@ from titlestd.contracts import (
     CatalogRole,
     GradeLevel,
     LadderLevel,
+    StandardTitle,
     TitlestdError,
 )
 
@@ -196,3 +197,116 @@ def test_a_family_must_have_exactly_one_generic_role():
 
 def test_a_catalog_error_is_meant_for_the_person_running_the_program():
     assert issubclass(CatalogError, TitlestdError)
+
+
+# --- Grade to level (1.2, Q36) ----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("grade", "level"),
+    [
+        (1, "Junior"),
+        (2, "Junior"),
+        (3, "Junior"),
+        (4, "Associate"),
+        (5, "Associate"),
+        (6, "Associate"),
+        (7, "Senior"),
+        (8, "Senior"),
+        (9, "Lead"),
+        (10, "Principal"),
+    ],
+)
+def test_the_level_comes_from_the_grade_through_hrs_table(mini_catalog: Catalog, grade, level):
+    assert catalog.level_for_grade(mini_catalog, grade) == level
+
+
+@pytest.mark.parametrize("grade", [None, 0, 11, -1, 70])
+def test_a_missing_or_unlisted_grade_has_no_level(mini_catalog: Catalog, grade):
+    assert catalog.level_for_grade(mini_catalog, grade) is None
+
+
+def test_the_level_is_looked_up_never_worked_out():
+    # A table in no order, where a higher grade reads as a lower level.
+    assert [catalog.level_for_grade(ODD, grade) for grade in (2, 5, 9)] == ["L2", "L1", "L1"]
+    assert [catalog.level_for_grade(ODD, grade) for grade in (1, 3, 4, 6, 7, 8)] == [None] * 6
+
+
+# --- The naming rule (1.3, 2.4) ------------------------------------------------------------
+
+
+def test_the_worked_example_of_the_design(mini_catalog: Catalog):
+    # 1.3 and Q36: "ACCT MGR II" (Sales, grade 8) and "Senior Account Manager"
+    # (Sales, grade 7) are both Sales x Account Manager at level Senior.
+    role = catalog.get_role(mini_catalog, "SAL-01")
+    assert (role.family_code, role.role_name, role.short_name) == (
+        "SAL",
+        "Account Manager",
+        "Acct Mgr",
+    )
+    expected = StandardTitle("Senior", "Senior Account Manager", "Sr Acct Mgr")
+    assert catalog.standard_title(mini_catalog, role, 7) == expected
+    assert catalog.standard_title(mini_catalog, role, 8) == expected
+
+
+@pytest.mark.parametrize(
+    ("grade", "level", "long_title", "short_title"),
+    [
+        (1, "Junior", "Junior Account Manager", "Jr Acct Mgr"),
+        (3, "Junior", "Junior Account Manager", "Jr Acct Mgr"),
+        (4, "Associate", "Associate Account Manager", "Assoc Acct Mgr"),
+        (6, "Associate", "Associate Account Manager", "Assoc Acct Mgr"),
+        (9, "Lead", "Lead Account Manager", "Lead Acct Mgr"),
+        (10, "Principal", "Principal Account Manager", "Prin Acct Mgr"),
+    ],
+)
+def test_each_level_puts_its_long_and_its_short_word_before_the_names(
+    mini_catalog: Catalog, grade, level, long_title, short_title
+):
+    role = catalog.get_role(mini_catalog, "SAL-01")
+    assert catalog.standard_title(mini_catalog, role, grade) == StandardTitle(
+        level, long_title, short_title
+    )
+
+
+@pytest.mark.parametrize("grade", [None, 0, 11])
+def test_with_no_usable_grade_both_titles_are_the_name_alone(mini_catalog: Catalog, grade):
+    # 2.4: "No grade: the title with no level word". A grade the table does not
+    # list is no more usable than a missing one.
+    role = catalog.get_role(mini_catalog, "SAL-01")
+    assert catalog.standard_title(mini_catalog, role, grade) == StandardTitle(
+        None, "Account Manager", "Acct Mgr"
+    )
+
+
+def test_a_generic_family_role_is_named_like_any_other_role(mini_catalog: Catalog):
+    generic = catalog.generic_role(mini_catalog, "SAL")
+    assert catalog.standard_title(mini_catalog, generic, 7) == StandardTitle(
+        "Senior", "Senior Sales", "Sr Sales"
+    )
+    assert catalog.standard_title(mini_catalog, generic, None) == StandardTitle(
+        None, "Sales", "Sales"
+    )
+
+
+def test_the_words_are_the_ladders_not_the_name_of_the_level():
+    planner = catalog.get_role(ODD, "R-10")
+    senior = StandardTitle("L2", "Senior Planner", "Sr Plnr")
+    junior = StandardTitle("L1", "Junior Planner", "Jr Plnr")
+    assert catalog.standard_title(ODD, planner, 2) == senior
+    assert catalog.standard_title(ODD, planner, 9) == junior
+
+
+def test_the_names_are_used_exactly_as_the_catalog_holds_them():
+    role = _role("R-40", "OPS", "Head of R&D, EMEA", "Hd R&D (EMEA)")
+    assert catalog.standard_title(ODD, role, 2) == StandardTitle(
+        "L2", "Senior Head of R&D, EMEA", "Sr Hd R&D (EMEA)"
+    )
+
+
+def test_a_grade_whose_level_is_not_on_the_ladder_is_an_error():
+    # The reader refuses such a catalog; the naming rule does not guess a word.
+    broken = dataclasses.replace(ODD, grade_levels=(*ODD.grade_levels, GradeLevel(4, "L9")))
+    assert catalog.level_for_grade(broken, 4) == "L9"
+    with pytest.raises(CatalogError, match="grade 4 names level L9"):
+        catalog.standard_title(broken, catalog.get_role(broken, "R-10"), 4)

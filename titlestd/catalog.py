@@ -25,19 +25,25 @@ Decided here, where the record is silent:
 - generic_role raises CatalogError unless the family has exactly one generic
   role. That covers every code that is not a usable family: with no family
   there is no generic role to take (Q26), so the caller checks usability first.
+- A grade HR's table does not list is no more usable than a missing one: no
+  level, and the title with no level word (2.4). A grade whose level is not on
+  the ladder is a CatalogError, not a title with a guessed word; the readers
+  refuse such a catalog.
+- A generic family role is named like any other role: "Senior Sales".
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
 
-from titlestd.contracts import Catalog, CatalogRole, StandardTitle, TitlestdError
+from titlestd.contracts import Catalog, CatalogRole, LadderLevel, StandardTitle, TitlestdError
 
 _NOT_BUILT = "titlestd.catalog is built by feat/catalog-naming"
 
 
 class CatalogError(TitlestdError):
-    """The catalog cannot answer: a family without exactly one generic role."""
+    """The catalog cannot answer: a family without exactly one generic role, or
+    a grade whose level is not on the ladder."""
 
 
 def _by_role_id(roles: Iterable[CatalogRole]) -> tuple[CatalogRole, ...]:
@@ -50,6 +56,15 @@ def _family_roles(catalog: Catalog, family_code: str) -> list[CatalogRole]:
     if not family:
         return []
     return [role for role in catalog.roles if role.family_code == family]
+
+
+def _name(role: CatalogRole, rung: LadderLevel | None) -> StandardTitle:
+    """The naming rule (1.3): the role at one level, or with no level word."""
+    if rung is None:
+        return StandardTitle(None, role.role_name, role.short_name)
+    return StandardTitle(
+        rung.level, f"{rung.long_word} {role.role_name}", f"{rung.short_word} {role.short_name}"
+    )
 
 
 def family_codes(catalog: Catalog) -> tuple[str, ...]:
@@ -94,7 +109,7 @@ def generic_role(catalog: Catalog, family_code: str) -> CatalogRole:
 
 def level_for_grade(catalog: Catalog, grade: int | None) -> str | None:
     """The level HR's table gives the grade; None for a missing or unlisted grade."""
-    raise NotImplementedError(_NOT_BUILT)
+    return next((row.level for row in catalog.grade_levels if row.grade == grade), None)
 
 
 def standard_title(catalog: Catalog, role: CatalogRole, grade: int | None) -> StandardTitle:
@@ -104,7 +119,13 @@ def standard_title(catalog: Catalog, role: CatalogRole, grade: int | None) -> St
     Manager" and "Sr Acct Mgr" (1.3). With no usable grade the level is None
     and both titles carry no level word (2.4).
     """
-    raise NotImplementedError(_NOT_BUILT)
+    level = level_for_grade(catalog, grade)
+    if level is None:
+        return _name(role, None)
+    for rung in catalog.ladder:
+        if rung.level == level:
+            return _name(role, rung)
+    raise CatalogError(f"grade {grade} names level {level}, which is not on the level ladder")
 
 
 def is_catalog_title(catalog: Catalog, long_title: str, short_title: str) -> bool:

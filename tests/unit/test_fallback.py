@@ -88,7 +88,9 @@ def test_an_empty_field_leaves_its_label_alone_on_the_line():
     bare = Record("bdr", "SAL", "", "")
     block = fallback.render_record(bare)
     assert block == "Title: bdr\nFamily: SAL\nDepartment:\nDescription:"
-    # Nothing is written in place of what is missing, so nothing can be quoted from it.
+    # Nothing is written in place of what is missing, so no word stands there
+    # to be quoted. The label left alone on the line is another matter: see
+    # test_label_text_alone_passes_the_check_on_every_record.
     for invented in ("none", "empty", "n/a", "not given"):
         assert not fallback.quote_in_record(invented, block)
 
@@ -491,6 +493,20 @@ def test_the_quote_is_checked_against_the_block_as_rendered():
     # What the block does not hold fails, however near the record it is.
     assert not fallback.quote_in_record("senior account manager SAL", BLOCK)
     assert not fallback.quote_in_record("job title: senior account manager", BLOCK)
+
+
+def test_label_text_alone_passes_the_check_on_every_record():
+    # Decided in the module docstring: the labels are text of the block that
+    # Q15 checks a quote against. A quote of nothing else is evidence of
+    # nothing and passes all the same, also where the field under the label
+    # is empty.
+    bare = fallback.render_record(Record("bdr", "SAL", "", ""))
+    for label_text in ("Title", "family", "Department", "Description:"):
+        assert fallback.quote_in_record(label_text, BLOCK)
+        assert fallback.quote_in_record(label_text, bare)
+    # Two labels in a row are text of the block only where the field between them is empty.
+    assert fallback.quote_in_record("Department: Description:", bare)
+    assert not fallback.quote_in_record("Department: Description:", BLOCK)
 
 
 def test_the_check_reads_nothing_but_the_quote_and_the_block():

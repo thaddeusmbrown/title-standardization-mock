@@ -24,9 +24,18 @@ Decided here, where the record leaves the detail open:
 - The record block is four lines, "Title: ", "Family: ", "Department: " and
   "Description: ", each followed by the field exactly as the record holds it.
   An empty field leaves its label alone on the line, with nothing written in
-  its place, so the block never holds a word that the record does not. The
-  labels are part of the block that Q15 checks a quote against, so a quote
-  may run across them ("Family: SAL").
+  its place, so the labels are the only words of the block that do not come
+  from the record.
+- The labels are text of the block, and Q15 checks a quote against the block
+  exactly as rendered. A quote may therefore run across a label
+  ("Family: SAL"), and one made of label text alone ("Description:",
+  "Title") passes on every record, one with empty fields included, though it
+  is evidence of nothing. This is Q15 as written, and it is kept: the check
+  shows that a quote was copied from what the model was shown, not that it
+  is good evidence, and a word such as "the" passes wherever the record
+  holds it. The stand-ins quote from the title and the description only
+  (Q17). A stricter reading would change quote_in_record and nothing else:
+  no prompt and no recording key moves with it.
 - The numbered list is one line per role: "3. Account Manager (family SAL):
   the definition". A role with no number starts with "-" instead.
 - A generic family role is refused with ValueError, by number_roles and again

@@ -94,6 +94,17 @@ The rewording was not adopted. The prompt text is part of every recording key, s
 means recording again, and the repository owner chose to keep the one planned live run and
 treat this as a finding.
 
+## Three answers were cut off
+
+Three of the 452 recorded `choose` answers stopped at the limit of 1,024 output tokens
+(`max_tokens`) before they were complete, and each was recorded as an invalid answer, which
+the rules send to a person. One was the Wave 2 answer for "senior business development
+representative", the one title under "Invalid model answer" in the table above; the other two
+were the golden-set passes of Wave 1 and of the close for "senior internal communications
+specialist", whose Wave 2 answer was complete. The limit was left as it is: like the prompt it
+is part of every recording key, so raising it means recording again, and the recording keeps
+no text of a cut-off answer to show what the model was writing.
+
 ## What it says about the design
 
 - **The rule does its job.** No answer with unverifiable evidence was released by a machine.

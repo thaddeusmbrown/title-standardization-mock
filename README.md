@@ -128,7 +128,7 @@ section 1.6 of the design as set-up, Wave 1, Wave 2 and the close:
 | LLM and agent, optional | The hosted model `claude-haiku-4-5` through its Python SDK (extra `live`). |
 | Tooling | Standard-library Python, SQLite, uv, pytest and ruff. |
 
-Two things to keep in mind when reading the table of a run:
+Three things to keep in mind when reading the table of a run:
 
 - **Offline accuracy shows the flow, not model quality.** The default answers come from
   stand-ins, and the people are simulated.
@@ -137,6 +137,11 @@ Two things to keep in mind when reading the table of a run:
   the models-agree path (252 titles) is Confirmed with 1 wrong of 60; with `--seed` 1 to 10 it is
   Confirmed seven times and Provisional three. The agent-settled path holds 34 titles, so it is
   labeled in full and gets no status.
+- **A few employees stay on a legacy title on purpose.** The simulated reviewer is set to leave
+  one queue title in ten undecided: 10 of 66 on the default seed. An undecided title that
+  touches a compliance-flagged role may not take a generic family role, so it stays on its
+  legacy title and is listed in `exceptions.csv`: 6 titles, 11 employees on the default seed. In
+  a real delivery a person decides each of these before sign-off.
 
 ## Where to read more
 

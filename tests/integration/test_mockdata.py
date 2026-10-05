@@ -198,6 +198,22 @@ def test_the_three_flagged_roles_sit_in_three_different_families(inputs: InputDa
     assert not any(role.is_generic for role in flagged)
 
 
+def test_every_flagged_role_has_titles_in_the_long_tail(inputs, rows, true_roles, wave1):
+    # 1.7: the compliance rule sends such a title to a person, so the long tail
+    # must hold some for the rule to have anything to show.
+    listed = {row.key for row in wave1}
+    for role in inputs.catalog.roles:
+        if role.compliance_flag:
+            long_tail = [
+                row
+                for row in rows
+                if row.model_eligible
+                and row.key not in listed
+                and true_roles[row.key] == {role.role_id}
+            ]
+            assert len(long_tail) >= 3, role.role_id
+
+
 def test_the_grade_table_and_the_ladder_are_those_of_the_record(inputs: InputData):
     # Q36: grades 1-3 Junior, 4-6 Associate, 7-8 Senior, 9 Lead, 10 Principal.
     levels = {row.grade: row.level for row in inputs.catalog.grade_levels}

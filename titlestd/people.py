@@ -36,6 +36,14 @@ Decided on this branch, where the record says nothing:
   out in the data, are a DataError: when the people are built if the truth
   alone shows it (one raw title under family codes that differ only in
   padding), otherwise when the row is first asked about.
+- What that asks of a truth changed on purpose, as test (b) of Q22 permutes
+  true_role_id: every raw spelling of a title row keeps one role, and every
+  role stays in its family. One mapping of role ids per family, applied to
+  every truth row, does both; so does giving each title row, with all its
+  spellings, another role of its family. Moving the roles from truth row to
+  truth row does not: such a truth still loads, since each role is a real
+  one of its family, and the run then stops at the first decision on a row
+  with two spellings.
 - "No suitable role" comes before "could not decide". A review-queue title
   with no truth row is always marked, whatever the undecided rate, so it can
   never become a leftover that takes a generic role (Q01, Q03).

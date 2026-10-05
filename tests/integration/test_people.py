@@ -3,7 +3,8 @@
 The people are loaded from the truth file on disk (titlestd.people.load_people)
 against the catalog read by titlestd.datafiles, with settings built by
 titlestd.settings, and asked about the hand-written title rows of the mini
-data set (docs/build-decisions.md Q01, Q03, Q09, Q27, S05).
+data set (docs/build-decisions.md Q01, Q03, Q09, Q27, S05). Two tests show
+which permuted truth the people accept, for test (b) of Q22 in stage 4.
 """
 
 from __future__ import annotations
@@ -174,6 +175,74 @@ def test_two_spellings_of_one_row_with_different_true_roles_stop_the_run(
     (row,) = [row for row in mini_rows if "Sr. Acct Mgr - NYC" in row.raw_titles]
     with pytest.raises(DataError, match="'senior account manager' in family 'SAL'"):
         simulated.wave1_approval(row)
+
+
+# --- A truth permuted on purpose, as test (b) of Q22 needs one in stage 4 -------
+
+
+def test_one_mapping_of_role_ids_per_family_gives_a_truth_the_people_accept(
+    data_dir, mini_dir, mini_inputs, mini_rows, mini_settings
+):
+    # Every truth row that named role A now names role B of the same family. So
+    # each title row keeps one true role across its spellings (Q09), each role
+    # stays in its family, and nothing stops.
+    by_family: dict[str, list[str]] = {}
+    for role in mini_inputs.catalog.roles:
+        if not role.is_generic:
+            by_family.setdefault(role.family_code, []).append(role.role_id)
+    mapping: dict[str, str] = {}
+    for role_ids in by_family.values():
+        mapping.update(zip(role_ids, role_ids[1:] + role_ids[:1], strict=True))
+    people.write_truth(
+        data_dir,
+        [
+            dataclasses.replace(truth, true_role_id=mapping[truth.true_role_id])
+            for truth in people.read_truth(mini_dir)
+        ],
+    )
+    settings = dataclasses.replace(
+        mini_settings, data_dir=data_dir, sme_error_rate=0.0, undecided_rate=0.0
+    )
+    simulated = people.load_people(settings, mini_inputs.catalog)
+    before = _true_roles(mini_dir, mini_rows)
+    expected = {key: mapping[role_id] for key, role_id in before.items()}
+    assert all(expected[key] != before[key] for key in before)  # every true role changed
+    for occasion in OCCASIONS:
+        decisions = [getattr(simulated, occasion)(row) for row in mini_rows]
+        assert {d.key: d.role_id for d in decisions} == expected
+
+
+def test_true_roles_moved_between_truth_rows_stop_the_run_at_a_row_with_two_spellings(
+    data_dir, mini_dir, mini_inputs, mini_rows, mini_settings
+):
+    # The same roles, each moved one truth row on within its family. Every role
+    # is still a real one of its family, so the load passes. The run then stops
+    # at the first decision on a row whose spellings no longer agree.
+    truth = people.read_truth(mini_dir)
+    family_of = {role.role_id: role.family_code for role in mini_inputs.catalog.roles}
+    positions: dict[str, list[int]] = {}
+    for position, row in enumerate(truth):
+        positions.setdefault(family_of[row.true_role_id], []).append(position)
+    moved = list(truth)
+    for in_family in positions.values():
+        for position, source in zip(in_family, in_family[1:] + in_family[:1], strict=True):
+            moved[position] = dataclasses.replace(
+                truth[position], true_role_id=truth[source].true_role_id
+            )
+    assert sorted(row.true_role_id for row in moved) == sorted(row.true_role_id for row in truth)
+    people.write_truth(data_dir, moved)
+
+    settings = dataclasses.replace(mini_settings, data_dir=data_dir)
+    simulated = people.load_people(settings, mini_inputs.catalog)
+    stopped = []
+    for row in mini_rows:
+        if len(row.raw_titles) > 1:
+            with pytest.raises(DataError, match="have different true roles"):
+                simulated.wave1_approval(row)
+            stopped.append(row.key.cleaned_title)
+        else:
+            assert simulated.wave1_approval(row).answer is HumanAnswer.ROLE
+    assert stopped == ["sales representative", "senior account manager"]
 
 
 # --- The same decisions in every process, on the standard library alone (Q06) ---

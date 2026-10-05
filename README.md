@@ -1,5 +1,16 @@
 # Job-title standardization mock
 
+I translated my work to a docs/design.md file with Claude.  The
+architecture is my own design, with my selection of models and
+replay strategy.  The architecture PNGs are my design work as well to help
+inform the final agnostic/Microsoft designs. Claude Code ran the end-to-end 
+build, which is why there are many commits in a short overnight period, 
+with light code and ML result checks from me in the morning.
+
+Below this line is the LLM-generated README for setup.
+
+_______________________________________________________________________________
+
 A small offline mock of a job-title standardization design: every employee's free-text job
 title is mapped onto a role from an approved catalog, which gives the employee a standard Short
 Title and Long Title. It runs on made-up data. There is no real employer and there are no real

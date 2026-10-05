@@ -32,7 +32,10 @@ Decided on this branch, where the record says nothing:
   decision is always the reviewer's.
 - A row's true role is the one its raw titles name. A raw title with no truth
   row is passed over, so a row is "no suitable role" only when none of its raw
-  titles has one (Q03).
+  titles has one (Q03). Two different true roles for one row, which Q09 rules
+  out in the data, are a DataError: when the people are built if the truth
+  alone shows it (one raw title under family codes that differ only in
+  padding), otherwise when the row is first asked about.
 - "No suitable role" comes before "could not decide". A review-queue title
   with no truth row is always marked, whatever the undecided rate, so it can
   never become a leftover that takes a generic role (Q01, Q03).
@@ -159,9 +162,15 @@ class SimulatedPeople:
             role.role_id: role.family_code for role in catalog.roles if not role.is_generic
         }
         # (raw title, trimmed family code) to the true role (Q09, S05).
-        self._truth = {
-            (row.job_title, row.job_family_code.strip()): row.true_role_id for row in truth
-        }
+        self._truth: dict[tuple[str, str], str] = {}
+        for row in truth:
+            pair = (row.job_title, row.job_family_code.strip())
+            known = self._truth.setdefault(pair, row.true_role_id)
+            if known != row.true_role_id:
+                raise datafiles.DataError(
+                    f"{TRUTH_FILE}: title {pair[0]!r} in family {pair[1]!r} has two true "
+                    f"roles, {known} and {row.true_role_id}"
+                )
 
     def wave1_approval(self, row: TitleRow) -> HumanDecision:
         """An HR SME's decision on a Wave 1 title. Never undecided (Q01)."""
@@ -212,11 +221,16 @@ class SimulatedPeople:
         return sme, role_id
 
     def _true_role(self, row: TitleRow) -> str | None:
-        """The true role the row's raw titles name, or None when none has a truth row."""
+        """The one true role the row's raw titles name, or None when none has a truth row."""
         family = row.key.family_code.strip()
         roles = sorted(
             {self._truth[(raw, family)] for raw in row.raw_titles if (raw, family) in self._truth}
         )
+        if len(roles) > 1:
+            raise datafiles.DataError(
+                f"{TRUTH_FILE}: the raw titles of {row.key.cleaned_title!r} in family "
+                f"{family!r} have different true roles: {', '.join(roles)}"
+            )
         return roles[0] if roles else None
 
 

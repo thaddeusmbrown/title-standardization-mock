@@ -513,3 +513,30 @@ def test_family_codes_are_compared_after_trimming(mini_catalog, recorded, in_key
     for occasion in OCCASIONS:
         decision = getattr(simulated, occasion)(row)
         assert (decision.answer, decision.role_id) == (HumanAnswer.ROLE, "FIN-02")
+
+
+# --- One true role per title row (Q09) ------------------------------------------------
+
+
+def test_the_same_true_role_under_two_paddings_is_one_truth(mini_catalog):
+    truth = [TruthRow("Odd Job", "FIN", "FIN-02"), TruthRow("Odd Job", "FIN ", "FIN-02")]
+    simulated = _people(truth, mini_catalog, sme_error_rate=0.0)
+    assert simulated.blind_label(_row("FIN", "odd job", "Odd Job")).role_id == "FIN-02"
+
+
+def test_two_true_roles_under_codes_that_differ_only_in_padding_are_refused(mini_catalog):
+    truth = [TruthRow("Odd Job", "FIN", "FIN-02"), TruthRow("Odd Job", "FIN ", "FIN-03")]
+    with pytest.raises(DataError, match=r"'Odd Job' in family 'FIN' has two true roles"):
+        _people(truth, mini_catalog)
+
+
+def test_raw_titles_of_one_row_with_different_true_roles_are_refused(mini_catalog):
+    truth = [TruthRow("Sales Rep", "SAL", "SAL-02"), TruthRow("SALES REP.", "SAL", "SAL-05")]
+    simulated = _people(truth, mini_catalog)
+    row = _row("SAL", "sales representative", "SALES REP.", "Sales Rep")
+    for occasion in OCCASIONS:
+        with pytest.raises(DataError, match="different true roles: SAL-02, SAL-05"):
+            getattr(simulated, occasion)(row)
+    # A row that holds only one of the spellings is not affected.
+    one_spelling = _row("SAL", "sales representative", "Sales Rep")
+    assert simulated.blind_label(one_spelling).answer is HumanAnswer.ROLE

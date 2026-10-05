@@ -1,7 +1,7 @@
 """The command line: commands, settings, exit statuses.
 
-These tests replace the command functions, so they hold before and after the
-components behind the commands are built.
+These tests replace the command functions, so they say what the command line
+does with a command and nothing about the commands themselves.
 """
 
 from __future__ import annotations
@@ -130,27 +130,6 @@ def test_the_command_status_is_returned(monkeypatch):
     assert cli.main(["run"]) == 3
     monkeypatch.setattr(pipeline, "run_command", lambda settings: None)
     assert cli.main(["run"]) == 0
-
-
-def test_a_command_that_is_not_built_exits_with_1_and_says_so(monkeypatch, capsys):
-    def not_built(settings: Settings) -> int:
-        raise NotImplementedError("titlestd.pipeline is built by feat/pipeline-report-cli")
-
-    monkeypatch.setattr(pipeline, "run_command", not_built)
-    assert cli.main(["run"]) == 1
-    captured = capsys.readouterr()
-    assert captured.out == ""
-    assert "the 'run' command is not built yet" in captured.err
-    assert "feat/pipeline-report-cli" in captured.err
-
-
-def test_a_part_that_is_not_built_is_reported_the_same_way(monkeypatch, capsys):
-    def half_built(settings: Settings) -> int:
-        raise NotImplementedError
-
-    monkeypatch.setattr(mockdata, "generate_command", half_built)
-    assert cli.main(["generate-data"]) == 1
-    assert "the 'generate-data' command is not built yet" in capsys.readouterr().err
 
 
 def test_a_run_error_exits_with_1_and_prints_its_message(monkeypatch, capsys):

@@ -1500,12 +1500,12 @@ title ended in). Rows are sorted by key.
 `python3 -m titlestd <command>` with the commands `run`, `generate-data` and `record`. Every
 command takes `--config` and the setting flags. `record` is `run` with `llm` forced to
 `anthropic`: live mode always records (2.5), so the command needs nothing of its own. Exit
-status: 0 success; 1 the run stopped with an error, or the command is not built yet; 2 the
-command line or a setting is wrong. Each command is one function in the module that owns it
-(`titlestd.pipeline.run_command`, `titlestd.mockdata.generate_command`), so the command-line
-module does not change as parts are built. The smoke run of Q02 is `record` on the mini data
-set (`--data-dir tests/fixtures/mini`, with `--out-dir` and `--recording-dir` outside the
-repository): 15 title rows, about ten of which reach the model.
+status: 0 success; 1 the run stopped with an error; 2 the command line or a setting is wrong.
+Each command is one function in the module that owns it (`titlestd.pipeline.run_command`,
+`titlestd.mockdata.generate_command`), so the command-line module did not change as parts were
+built. The smoke run of Q02 is `record` on the mini data set (`--data-dir tests/fixtures/mini`,
+with `--out-dir` and `--recording-dir` outside the repository): 15 title rows, about ten of
+which reach the model.
 
 ### S14. The check command
 

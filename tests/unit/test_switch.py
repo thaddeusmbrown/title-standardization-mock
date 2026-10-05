@@ -1,8 +1,8 @@
 """The model switch: each setting value builds its own provider, and no other (2.5, S09).
 
-The local embedder and the replay and live providers are built by later
-branches. Here they are replaced by recorders, so these tests say what the
-switch hands each provider and hold whatever those modules become.
+The five providers are replaced by recorders here, so these tests say what the
+switch hands each provider and nothing about the providers themselves, which
+have their own tests.
 """
 
 from __future__ import annotations
@@ -169,12 +169,12 @@ def test_the_embedder_is_built_first_so_its_failure_starts_no_llm_provider(calls
 
 
 def test_an_error_of_another_kind_passes_through_too(calls, monkeypatch):
-    # A provider module that is still a stub says so; the command line reports it.
-    def not_built(*args, **kwargs):
-        raise NotImplementedError("built by a later branch")
+    # The switch catches nothing: an error that is no TitlestdError is not hidden either.
+    def breaks(*args, **kwargs):
+        raise OSError("the recording cannot be read")
 
-    monkeypatch.setattr(replay, "build_llm", not_built)
-    with pytest.raises(NotImplementedError, match="later branch"):
+    monkeypatch.setattr(replay, "build_llm", breaks)
+    with pytest.raises(OSError, match="cannot be read"):
         switch.build_models(make_settings(llm="replay"), LADDER, ABBREVIATIONS, FINGERPRINT)
 
 

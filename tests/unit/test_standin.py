@@ -23,7 +23,7 @@ from titlestd.contracts import (
     Record,
 )
 from titlestd.settings import Settings
-from titlestd.standin import StandIn
+from titlestd.standin import StandIn, build_llm
 
 LADDER = (
     LadderLevel("Junior", "Junior", "Jr"),
@@ -417,6 +417,29 @@ def test_an_answer_does_not_depend_on_what_was_asked_before():
     forward = [stand_in.choose(asked, THREE) for asked in RECORDS]
     backward = [stand_in.choose(asked, THREE) for asked in reversed(RECORDS)]
     assert forward == alone == backward[::-1]
+
+
+# --- The provider -------------------------------------------------------------
+
+
+def test_the_provider_returns_one_stand_in_for_both_calls():
+    llm = build_llm(Settings(), LADDER, ABBREVIATIONS)
+    assert isinstance(llm.chooser, StandIn) and llm.reviewer is llm.chooser
+    assert llm.chooser.choose(record("senior account manager"), THREE) == ChooseAnswer(
+        ChooseKind.ROLE, 1, "account manager", LABEL_STAND_IN
+    )
+
+
+def test_finish_does_nothing(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    llm = build_llm(Settings(), LADDER, ABBREVIATIONS)
+    assert llm.finish() is None
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_the_provider_reads_the_stand_in_settings():
+    strict = build_llm(Settings(standin_no_match_below=99), LADDER, ABBREVIATIONS)
+    assert strict.chooser.choose(record("account manager"), THREE).answer is ChooseKind.NO_MATCH
 
 
 # --- What the module may use (2.4, Q22) ---------------------------------------

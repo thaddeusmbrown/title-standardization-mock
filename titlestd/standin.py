@@ -29,7 +29,7 @@ quote is tested with an injected answer, not produced here.
 Every answer carries contracts.LABEL_STAND_IN. This module must not import
 titlestd.people or titlestd.catalog.
 
-Decided here, where Q17 leaves the detail open:
+Decided here, where Q17 and Q19 leave the detail open:
 - Words. A word is a run of letters and digits. An abbreviation is expanded
   when a whole word equals its short form, once; a long form of several words
   gives several content words. The masks [NAME] and [EMAIL] are not words.
@@ -38,7 +38,10 @@ Decided here, where Q17 leaves the detail open:
   i to v, one for each of the design's five levels.
 - "No description" means record.description is empty or blank.
 - A role's words are its name's and its definition's content words. A word
-  of the record matches a role when it shares a content word with them.
+  of the record matches a role when it shares a content word with them. The
+  agent's "shares a content word with the title" is the same test on the
+  title, so the agent's quote comes from the title whenever the matching
+  title words are long enough to quote.
 - The quote for a role is the longest run of consecutive title words that
   all match it, the first such run on a tie, copied from the first to the
   last of its words with whatever stands between them. With no such run in
@@ -52,14 +55,18 @@ Decided here, where Q17 leaves the detail open:
   is. A title of one or two characters, or an empty one, then fails the
   shared quote check and goes to a person: that is the record's doing, not a
   fault injected here.
-- Only roles that carry a number are candidates. With none, the LLM answers
-  "no match".
+- Only roles that carry a number are candidates, for the LLM and the agent.
+  With none, the LLM answers "no match" and the agent escalates.
+- The agent's bonus is one point, once per role, for a role that any hit of
+  an approved-title search maps to. With a single candidate there is no
+  runner-up to beat. Its turn depends only on the transcript: how many
+  searches have run and what they returned.
 """
 
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Collection, Iterable, Sequence
 from dataclasses import dataclass
 
 from titlestd.contracts import (
@@ -69,16 +76,19 @@ from titlestd.contracts import (
     QUOTE_MAX_WORDS,
     QUOTE_MIN_CHARS,
     Abbreviation,
+    AgentTranscript,
     ChooseAnswer,
     ChooseKind,
     LadderLevel,
     Llm,
     NumberedRole,
     Record,
+    ReviewAnswer,
+    ReviewKind,
+    SearchRequest,
+    SearchTool,
 )
 from titlestd.settings import Settings
-
-_NOT_BUILT = "titlestd.standin is built by feat/model-switch-offline"
 
 # English function words, never content. "it" and "us" are left out on purpose.
 STOP_WORDS = frozenset(
@@ -129,6 +139,10 @@ STOP_WORDS = frozenset(
 )
 # A level written as a number, as in "ACCT MGR II" or "Analyst 2".
 LEVEL_NUMERALS = frozenset({"1", "2", "3", "4", "5", "i", "ii", "iii", "iv", "v"})
+# Q19: the third search asks with the first words of the description.
+DESCRIPTION_QUERY_WORDS = 12
+# Q19: worth one shared word.
+APPROVED_TITLE_BONUS = 1
 
 _MASKS = (NAME_MASK, EMAIL_MASK)
 _WORD = re.compile("|".join([*map(re.escape, _MASKS), "[A-Za-z0-9]+"]))
@@ -192,7 +206,7 @@ def _longest_run(text: str, words: Sequence[_Word], role_words: frozenset[str]) 
 
 
 class StandIn:
-    """The stand-in chooser: word overlap, nothing kept between calls."""
+    """The stand-in chooser and reviewer: word overlap, nothing kept between calls."""
 
     def __init__(
         self,
@@ -233,7 +247,12 @@ class StandIn:
 
     # --- the overlap score (Q17) ------------------------------------------------
 
-    def _rank(self, record: Record, roles: Iterable[NumberedRole]) -> list[_Scored]:
+    def _rank(
+        self,
+        record: Record,
+        roles: Iterable[NumberedRole],
+        bonus_role_ids: Collection[str] = (),
+    ) -> list[_Scored]:
         """The numbered roles, best first: by score, then |T and N|, then role_id."""
         title = self.content_words(record.cleaned_title)
         record_words = title | self.content_words(record.description)
@@ -245,6 +264,8 @@ class StandIn:
             role_words = name | self.content_words(numbered.role.definition)
             name_hits = len(title & name)
             score = 2 * name_hits + len(record_words & role_words)
+            if numbered.role.role_id in bonus_role_ids:
+                score += APPROVED_TITLE_BONUS
             scored.append(_Scored(numbered, score, name_hits, role_words))
         return sorted(scored, key=lambda s: (-s.score, -s.name_hits, s.numbered.role.role_id))
 
@@ -271,9 +292,46 @@ class StandIn:
             ChooseKind.ROLE, best.numbered.number, self._quote(record, best.words), LABEL_STAND_IN
         )
 
+    # --- review, one turn at a time (Q19, Q20) -------------------------------------
+
+    def next_turn(self, transcript: AgentTranscript) -> SearchRequest | ReviewAnswer:
+        record = transcript.case.record
+        searches = len(transcript.steps)
+        if searches == 0:
+            return SearchRequest(SearchTool.CATALOG, record.cleaned_title)
+        if searches == 1:
+            return SearchRequest(SearchTool.APPROVED_TITLES, record.cleaned_title)
+        if searches == 2 and len(transcript.numbered_roles) < 2 and record.description.strip():
+            first_words = record.description.split()[:DESCRIPTION_QUERY_WORDS]
+            return SearchRequest(SearchTool.CATALOG, " ".join(first_words))
+        return self._final_answer(transcript)
+
+    def _final_answer(self, transcript: AgentTranscript) -> ReviewAnswer:
+        record = transcript.case.record
+        approved = {
+            hit.role.role.role_id
+            for step in transcript.steps
+            if step.request.tool == SearchTool.APPROVED_TITLES
+            for hit in step.hits
+        }
+        ranked = self._rank(record, transcript.numbered_roles, approved)
+        if ranked:
+            best = ranked[0]
+            shares_title_word = bool(best.words & self.content_words(record.cleaned_title))
+            beats_runner_up = len(ranked) == 1 or best.score > ranked[1].score
+            if shares_title_word and beats_runner_up:
+                return ReviewAnswer(
+                    ReviewKind.ROLE,
+                    best.numbered.number,
+                    self._quote(record, best.words),
+                    LABEL_STAND_IN,
+                )
+        return ReviewAnswer(ReviewKind.ESCALATE, None, "", LABEL_STAND_IN)
+
 
 def build_llm(
     settings: Settings, ladder: Sequence[LadderLevel], abbreviations: Sequence[Abbreviation]
 ) -> Llm:
     """The stand-in chooser and reviewer. finish does nothing."""
-    raise NotImplementedError(_NOT_BUILT)
+    standin = StandIn(settings, ladder, abbreviations)
+    return Llm(chooser=standin, reviewer=standin)

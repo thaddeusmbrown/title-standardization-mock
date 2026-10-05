@@ -30,6 +30,8 @@ Decided here, where the record is silent:
   whole-number arithmetic), so the same count shows the same share wherever
   it is printed. The rows partition the employees, so the shares add up to
   100%; the printed ones can differ from that by a tenth through rounding.
+  That is why the coverage by status gives the number of employees beside
+  each share: the four numbers add up to every employee exactly.
 - The status cell. A path row shows its audit outcome: "Confirmed";
   "Provisional, error rate 5.0%"; "Stopped, 150 titles left on legacy
   titles", or "Stopped, released as provisional, error rate 25.0%" when
@@ -110,7 +112,8 @@ def render(result: RunResult, settings: Settings) -> str:
     total = (TOTAL, str(len(result.decisions)), str(result.employee_count), "100.0%", "", "", "")
 
     coverage = [
-        f"{LEGACY if status is None else status.value} {_percent(count, result.employee_count)}"
+        f"{LEGACY if status is None else status.value} {count} "
+        f"({_percent(count, result.employee_count)})"
         for status, count in by_status.items()
     ]
     sent = {*result.wave1_keys, *(entry.row.key for entry in result.queue)}

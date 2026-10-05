@@ -292,8 +292,10 @@ def test_the_footer_agrees_with_the_files_and_the_state(default_run, data, title
     by_status["left on legacy title"] = len(data.employees) - len(default_run.load)
     (coverage,) = [line for line in text.splitlines() if line.startswith("Coverage by status")]
     for name, count in by_status.items():
-        share = float(re.search(rf"{name} ([\d.]+)%", coverage).group(1))
-        assert abs(share - 100 * count / len(data.employees)) <= 0.05, name
+        printed, share = re.search(rf"{name} (\d+) \(([\d.]+)%\)", coverage).groups()
+        assert int(printed) == count, name
+        assert abs(float(share) - 100 * count / len(data.employees)) <= 0.05, name
+    assert sum(by_status.values()) == len(data.employees)  # it sums to 100% (Q16)
     # Sent to a person: the Wave 1 list and the review queue, over all titles.
     wave1 = default_run.keys(
         "SELECT family_code, cleaned_title FROM title_rows WHERE on_wave1_list"

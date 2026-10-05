@@ -267,19 +267,22 @@ def test_the_same_count_shows_the_same_share_in_the_table_and_in_the_footer():
     assert sum(row.headcount for row in rows) == 1500
     text = report.render(dataclasses.replace(result, rows=rows), SETTINGS)
     assert table(text)["left on legacy title"][1:4] == ["2", "13", "0.9%"]
-    assert line_starting(text, "Coverage by status").endswith("left on legacy title 0.9%")
+    assert line_starting(text, "Coverage by status").endswith("left on legacy title 13 (0.9%)")
 
 
 # --- the footer -------------------------------------------------------------------
 
 
-def test_coverage_by_status_is_by_employee_and_adds_up_to_100_percent():
+def test_coverage_by_status_is_by_employee_and_adds_up_to_every_employee():
     text = report.render(a_result(), SETTINGS)
     # Approved 3 + 12 + 5 + 3 + 7 = 30, Confirmed 4, Provisional 1, legacy 5, of 40.
-    assert line_starting(text, "Coverage by status") == (
-        "Coverage by status, by employee: Approved 75.0%, Confirmed 10.0%, "
-        "Provisional 2.5%, left on legacy title 12.5%"
+    line = line_starting(text, "Coverage by status")
+    assert line == (
+        "Coverage by status, by employee: Approved 30 (75.0%), Confirmed 4 (10.0%), "
+        "Provisional 1 (2.5%), left on legacy title 5 (12.5%)"
     )
+    # Q16: the four sum to 100%. The counts do so exactly, whatever the rounding.
+    assert sum(int(count) for count in re.findall(r" (\d+) \(", line)) == 40
 
 
 def test_sent_to_a_person_is_the_wave_1_list_and_the_review_queue_over_all_titles():

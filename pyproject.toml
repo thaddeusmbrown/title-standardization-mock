@@ -1,0 +1,48 @@
+[project]
+name = "titlestd"
+version = "0.1.0"
+description = "A small offline mock of a job-title standardization workflow"
+requires-python = ">=3.12"
+# No runtime dependencies: the default run uses the standard library only
+# (docs/design.md 2.1 and 2.5). The package is not installed to be used;
+# "python3 -m titlestd" runs from the repository root.
+dependencies = []
+
+[project.optional-dependencies]
+# llm = anthropic (live mode). Imported lazily, only when that setting is chosen.
+live = ["anthropic>=1.11,<2"]
+# embedder = local. Imported lazily, only when that setting is chosen.
+local = ["model2vec>=0.9,<0.10"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.9"]
+
+[tool.uv]
+# A directory at the repository root, not an installed distribution.
+package = false
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+norecursedirs = [".worktrees", ".claude", ".venv", "out", ".git", "__pycache__"]
+# importlib mode lets tests/unit and tests/integration hold files of the same name.
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+markers = [
+    "integration: several components together, or the program as a subprocess",
+    "e2e: the whole run on the mock data",
+    "replay: needs a committed recording",
+    "live: calls the hosted model; needs ANTHROPIC_API_KEY; never part of the merge gate",
+    "local_model: downloads and runs the local embedding model; never part of the merge gate",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = [".worktrees", ".claude", ".venv", "out"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "C4", "RUF"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["titlestd"]

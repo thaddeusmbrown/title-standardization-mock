@@ -1,0 +1,24 @@
+Job-title standardization mock: set-up, Wave 1, Wave 2 and the close
+
+                      titles  employees  share of employees  audited  wrong  status
+--------------------  ------  ---------  ------------------  -------  -----  -----------
+look-up hit                8         26                1.7%                  Approved
+approved in Wave 1        40        604               40.3%                  Approved
+models agree             252        669               44.6%       60      1  Confirmed
+agent-settled             34         79                5.3%       34      7  all labeled
+review queue              56        105                7.0%                  Approved
+generic family role        4          6                0.4%                  Provisional
+left on legacy title       6         11                0.7%
+--------------------  ------  ---------  ------------------  -------  -----
+total                    400       1500              100.0%
+
+Coverage by status, by employee: Approved 986 (65.7%), Confirmed 497 (33.1%), Provisional 6 (0.4%), left on legacy title 11 (0.7%)
+Sent to a person: 106 of 400 titles (26.5%): 40 on the Wave 1 list, 66 in the review queue. Blind labels besides: 94 in the audits, 40 on the golden set.
+Golden-set accuracy, by the SME's labels:
+  Wave 1: ML first choice 32/40, LLM pick 34/40 (3 with no role named)
+  Wave 2: ML first choice 29/40, LLM pick 34/40 (3 with no role named)
+  close: ML first choice 30/40, LLM pick 34/40 (3 with no role named)
+Exceptions list: 11 employees left on a legacy title; 20 employees with no grade given a title with no level word.
+LLM and agent answers: stand-in. Embedder: offline.
+People were simulated from the truth file: every decision a person made in this run is a simulated one.
+Files written to the folder out: load.csv, reverse.csv, exceptions.csv, review_queue.csv, state.sqlite.

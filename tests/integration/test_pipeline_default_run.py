@@ -10,8 +10,10 @@ A few more runs on the mock data, each made once and in this process, show
 what the default seed does not: a close with more leftovers than the cap holds
 (Q01) and the other two outcomes of an audit (2.4).
 
-The tests state rules, not the numbers of the default run: the run shape may
-be tuned by regenerating data/ (Q23).
+The tests above the last one state rules, not the numbers of the default run.
+The numbers are in tests/fixtures/expected/default_run.txt, which the run
+itself wrote on Python 3.12, and the last test compares the run with that
+file byte for byte (Q23, Q38).
 """
 
 from __future__ import annotations
@@ -20,6 +22,7 @@ import dataclasses
 import re
 import shutil
 import sqlite3
+import sys
 import time
 from pathlib import Path
 
@@ -47,6 +50,8 @@ from titlestd.contracts import (
 )
 from titlestd.settings import Settings
 
+# What the default run prints, frozen once the run shape was final (Q23).
+EXPECTED_OUTPUT = Path("tests") / "fixtures" / "expected" / "default_run.txt"
 ROW_NAMES = [row.value for row in TableRow]
 PATH_ROWS = ("models agree", "agent-settled")
 # The occasions on which an HR SME decides, as the state file names them.
@@ -854,3 +859,17 @@ def test_a_stopped_path_stays_on_legacy_titles_unless_the_setting_releases_it(
         assert printed[5] == f"Stopped, {audited.path_size - 60} titles left on legacy titles"
     # Nothing the machine alone decided is called Confirmed in a stopped path.
     assert not [d for d in row if d.status.value == "Confirmed"]
+
+
+# --- the frozen table (Q23, Q38) -----------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    sys.version_info[:2] != (3, 12), reason="exact output is compared on Python 3.12 only (Q38)"
+)
+def test_the_default_run_prints_the_frozen_table(default_run, repo_root):
+    # Whoever changes what the default run prints regenerates the file in the
+    # same commit, from a real run on Python 3.12 and never by hand:
+    #   uv run python -S -E -m titlestd run > tests/fixtures/expected/default_run.txt
+    expected = (repo_root / EXPECTED_OUTPUT).read_bytes()
+    assert default_run.stdout.encode("utf-8") == expected

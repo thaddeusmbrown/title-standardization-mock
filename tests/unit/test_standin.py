@@ -121,6 +121,13 @@ def test_stop_words_are_not_content():
     assert {"a", "and", "of", "the", "their", "to", "with"} <= standin.STOP_WORDS
 
 
+def test_the_ending_an_apostrophe_leaves_behind_is_not_content():
+    # Otherwise "customer's" and "company's" would share a word.
+    words = make().content_words
+    assert words("the customer's accounts") == {"customer", "accounts"}
+    assert not words("customer's") & words("company's")
+
+
 def test_it_and_us_stay_content_words():
     # Job titles use both as nouns ("IT Support", "US Payroll").
     assert make().content_words("IT Support for US Payroll") == {"it", "support", "us", "payroll"}

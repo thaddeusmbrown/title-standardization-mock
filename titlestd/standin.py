@@ -36,9 +36,10 @@ Decided here, where Q17 and Q19 leave the detail open:
   for a word. An abbreviation is expanded when a whole word equals its short
   form, once; a long form of several words gives several content words. The
   masks [NAME] and [EMAIL] are not words.
-  STOP_WORDS is a short list of English function words; it leaves out "it"
-  and "us", which job titles use as nouns. The level numerals are 1 to 5 and
-  i to v, one for each of the design's five levels.
+  STOP_WORDS is a short list of English function words, with the "s" an
+  apostrophe leaves behind ("customer's"); it leaves out "it" and "us",
+  which job titles use as nouns. The level numerals are 1 to 5 and i to v,
+  one for each of the design's five levels.
 - "No description" means record.description is empty or blank.
 - A role's words are its name's and its definition's content words. A word
   of the record matches a role when it shares a content word with them. The
@@ -51,9 +52,9 @@ Decided here, where Q17 and Q19 leave the detail open:
   the title it is the longest in the description, and with none there the
   whole title. Any other word ends a run, a stop word included. A run is cut
   to its first contracts.QUOTE_MAX_WORDS words, and a run under
-  contracts.QUOTE_MIN_CHARS characters or without a letter is passed over,
-  so that the stand-in never offers a quote the shared check must refuse
-  while the record holds one it would accept.
+  contracts.QUOTE_MIN_CHARS characters or without a letter is passed over
+  for the next longest, so the stand-in does not offer a quote the shared
+  check must refuse while another matching run would pass.
 - For "no match" and "insufficient data" the quote is the whole title as it
   is. A title of one or two characters, or an empty one, then fails the
   shared quote check and goes to a person: that is the record's doing, not a
@@ -93,7 +94,8 @@ from titlestd.contracts import (
 )
 from titlestd.settings import Settings
 
-# English function words, never content. "it" and "us" are left out on purpose.
+# English function words, never content, and the "s" of "customer's".
+# "it" and "us" are left out on purpose.
 STOP_WORDS = frozenset(
     {
         "a",
@@ -122,6 +124,7 @@ STOP_WORDS = frozenset(
         "or",
         "other",
         "our",
+        "s",
         "such",
         "that",
         "the",

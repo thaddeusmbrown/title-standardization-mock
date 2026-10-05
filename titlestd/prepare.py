@@ -18,16 +18,52 @@ that. The result must not depend on the order of the employees file.
 
 This module must not call titlestd.catalog, which is built in parallel: the
 caller passes the catalog's family codes.
+
+Decided here, where the record leaves the detail open:
+
+- Punctuation is every character that is not a letter or a digit, the
+  underscore included. It separates tokens, so "acct/mgr" is two tokens. A
+  cleaned title is lower-case tokens of letters and digits joined by single
+  spaces, plus NAME_MASK where a name stood.
+- Location tokens are removed from the end only, as many as stand there
+  ("- NYC / Remote"). A location anywhere else in the title stays.
+- An abbreviation is matched as one whole token, without regard to case, and
+  expanded once: the words it expands to are not expanded again.
+- A title made only of removable parts cleans to the empty string. It is
+  still a title row, keyed on the empty title.
+- A name is a token of the given-name or surname list, in any case, with no
+  letter or digit directly beside it. A given name followed by a surname
+  across white space is one NAME_MASK. Every other listed token is a
+  NAME_MASK of its own, so "surname, given name" gives two.
+- An email is a run of letters, digits and "._+-", an "@", and a domain of
+  letters, digits, dots and hyphens that ends in a letter or digit, so the
+  full stop that ends a sentence stays.
+- Titles are masked for names only, as the order above says. An email
+  address in a job title is not recognised: the punctuation step breaks it
+  into tokens, and those that are listed names are masked.
 """
 
 from __future__ import annotations
 
-from collections.abc import Collection, Sequence
+import re
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 
-from titlestd.contracts import Abbreviation, Employee, TitleKey, TitleRow
+from titlestd import reference
+from titlestd.contracts import EMAIL_MASK, NAME_MASK, Abbreviation, Employee, TitleKey, TitleRow
 
 _NOT_BUILT = "titlestd.prepare is built by feat/prepare"
+
+_REQUISITION = re.compile("|".join(reference.REQUISITION_PATTERNS), re.IGNORECASE)
+_TOKEN = re.compile(r"[^\W_]+")  # a run of letters and digits
+_LOCATIONS = frozenset(reference.LOCATIONS)
+_EMAIL = re.compile(r"[\w.+-]+@[\w.-]*\w")
+_GIVEN = "|".join(reference.GIVEN_NAMES)
+_SURNAME = "|".join(reference.SURNAMES)
+_NAME = re.compile(
+    rf"(?<![^\W_])(?:(?:{_GIVEN})\s+(?:{_SURNAME})|{_GIVEN}|{_SURNAME})(?![^\W_])",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,12 +80,12 @@ def clean_title(job_title: str, abbreviations: Sequence[Abbreviation]) -> Cleane
     "Sr. Acct Mgr - NYC" gives "senior account manager". An adjacent given name
     and surname become one NAME_MASK; a lone listed name token is masked too.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    return _clean(job_title, _expansions(abbreviations))
 
 
 def mask_text(text: str) -> str:
     """Mask emails, then names, in a description or department. Nothing else changes."""
-    raise NotImplementedError(_NOT_BUILT)
+    return _NAME.sub(NAME_MASK, _EMAIL.sub(EMAIL_MASK, text))
 
 
 def title_key(
@@ -60,7 +96,7 @@ def title_key(
     The look-up uses it to clean the seed file on load (Q09). The family code
     is trimmed of surrounding whitespace and otherwise kept as recorded (Q26).
     """
-    raise NotImplementedError(_NOT_BUILT)
+    return TitleKey(job_family_code.strip(), clean_title(job_title, abbreviations).text)
 
 
 def prepare(
@@ -78,3 +114,22 @@ def prepare(
     blank after trimming or not in family_codes (Q26).
     """
     raise NotImplementedError(_NOT_BUILT)
+
+
+def _expansions(abbreviations: Sequence[Abbreviation]) -> dict[str, list[str]]:
+    """Each short form, lower-case, with the tokens of its long form."""
+    return {
+        abbreviation.short_form.strip().lower(): _TOKEN.findall(abbreviation.long_form.lower())
+        for abbreviation in abbreviations
+    }
+
+
+def _clean(job_title: str, expansions: Mapping[str, Sequence[str]]) -> CleanedTitle:
+    """The steps of S06, in order, then the name mask."""
+    text = _REQUISITION.sub(" ", job_title.lower())
+    tokens = _TOKEN.findall(text)
+    while tokens and tokens[-1] in _LOCATIONS:
+        tokens.pop()
+    words = [word for token in tokens for word in expansions.get(token, (token,))]
+    masked, names = _NAME.subn(NAME_MASK, " ".join(words))
+    return CleanedTitle(text=masked, has_person_name=names > 0)

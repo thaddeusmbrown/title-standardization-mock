@@ -142,3 +142,4 @@ Two things to keep in mind when reading the table of a run:
 
 - `docs/design.md`: the design, and what the mock builds from it.
 - `docs/build-decisions.md`: every point the design left open and how it was settled.
+- `docs/live-run-observation.md`: what the one live run showed about the quote check.

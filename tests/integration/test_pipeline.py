@@ -479,6 +479,38 @@ def test_every_wave_1_title_is_approved_by_an_sme_whatever_the_machine_proposed(
     assert audited.isdisjoint(WAVE1)
 
 
+def test_a_wave_1_title_is_released_with_the_sme_s_role_not_the_machine_s(mini_settings):
+    # 1.8, 1.10: the machine proposes and the SME's approval is what is released.
+    # On the default error rate the two name the same role for every Wave 1
+    # title, so the role alone cannot show whose answer the run took. An SME
+    # who is wrong about every title names another role than the machine did.
+    settings = dataclasses.replace(mini_settings, sme_error_rate=1.0)
+    result = pipeline.run_pipeline(settings)
+    approved = {
+        TitleKey(family, title): role_id
+        for family, title, role_id in rows_of(
+            settings,
+            "SELECT family_code, cleaned_title, role_id FROM human_decisions "
+            "WHERE occasion = 'Wave 1 approval'",
+        )
+    }
+    assert set(approved) == set(WAVE1)
+    accepted = {
+        TitleKey(family, title): role_id
+        for family, title, role_id in rows_of(
+            settings,
+            "SELECT family_code, cleaned_title, role_id FROM model_answers "
+            "WHERE stage = 'Wave 1' AND route = 'accept'",
+        )
+        if TitleKey(family, title) in approved
+    }
+    assert len(accepted) >= 3, "the test needs Wave 1 titles whose proposal the rules accepted"
+    for key, machine_role in accepted.items():
+        assert machine_role and machine_role != approved[key], key
+    for key in WAVE1:
+        assert decision_of(result, key).role_id == approved[key], key
+
+
 def test_in_wave_1_the_agent_only_recommends(mini_settings):
     # With a chooser that finds no role, the rules refer the titles to the
     # agent, and the stand-in agent settles some of them.

@@ -1,7 +1,9 @@
 """Catalog access, grade to level and the naming rule (design 1.2, 1.3, 2.4).
 
-One test of section 2.7 starts here: model_visible_roles is the only source of
-the roles a model may be shown, so it must never hold a generic family role.
+Two tests of section 2.7 start here. is_catalog_title is the guard behind "no
+title outside the catalog can reach the load file", and model_visible_roles is
+the only source of the roles a model may be shown, so it must never hold a
+generic family role.
 """
 
 from __future__ import annotations
@@ -310,3 +312,119 @@ def test_a_grade_whose_level_is_not_on_the_ladder_is_an_error():
     assert catalog.level_for_grade(broken, 4) == "L9"
     with pytest.raises(CatalogError, match="grade 4 names level L9"):
         catalog.standard_title(broken, catalog.get_role(broken, "R-10"), 4)
+
+
+# --- No title outside the catalog can reach the load file: the guard (2.7) ---------------
+
+
+def _every_title(subject: Catalog) -> set[tuple[str, str]]:
+    """Each pair standard_title gives: every role at every listed grade and with none."""
+    grades = [None, *(row.grade for row in subject.grade_levels)]
+    titles = (
+        catalog.standard_title(subject, role, grade) for role in subject.roles for grade in grades
+    )
+    return {(title.long_title, title.short_title) for title in titles}
+
+
+def test_every_title_the_naming_rule_gives_is_a_catalog_title(mini_catalog: Catalog):
+    titles = _every_title(mini_catalog)
+    assert len(titles) == 14 * (5 + 1)  # every role, generic or not, at five levels and at none
+    for long_title, short_title in sorted(titles):
+        assert catalog.is_catalog_title(mini_catalog, long_title, short_title)
+
+
+@pytest.mark.parametrize(
+    ("long_title", "short_title"),
+    [
+        # legacy titles as received, and after cleaning
+        ("Sr. Acct Mgr - NYC", "Sr. Acct Mgr - NYC"),
+        ("ACCT MGR II", "ACCT MGR II"),
+        ("senior account manager", "sr acct mgr"),
+        ("SENIOR ACCOUNT MANAGER", "SR ACCT MGR"),
+        # one real title in both columns, or the two the wrong way round
+        ("Senior Account Manager", "Senior Account Manager"),
+        ("Sr Acct Mgr", "Sr Acct Mgr"),
+        ("Sr Acct Mgr", "Senior Account Manager"),
+        # the two titles of different levels, or of different roles
+        ("Senior Account Manager", "Jr Acct Mgr"),
+        ("Senior Account Manager", "Acct Mgr"),
+        ("Account Manager", "Sr Acct Mgr"),
+        ("Senior Account Manager", "Sr Sales Rep"),
+        ("Account Manager", "Sales Rep"),
+        ("Senior Account Manager", "Sr Fin Analyst"),
+        ("Senior Sales", "Sr Finance"),
+        # the short level word on the long name, and the reverse
+        ("Sr Account Manager", "Senior Acct Mgr"),
+        # a level or a role the catalog does not hold
+        ("Chief Account Manager", "Chf Acct Mgr"),
+        ("Senior Account Director", "Sr Acct Dir"),
+        ("Senior Senior Account Manager", "Sr Sr Acct Mgr"),
+        ("Senior", "Sr"),
+        # spacing
+        ("Senior  Account Manager", "Sr Acct Mgr"),
+        (" Senior Account Manager", "Sr Acct Mgr"),
+        ("Senior Account Manager", "Sr Acct Mgr "),
+        ("SeniorAccount Manager", "SrAcct Mgr"),
+        # other things a catalog row holds
+        ("SAL-01", "SAL-01"),
+        ("Manages a portfolio of customer accounts and renews their contracts.", "Acct Mgr"),
+        ("SAL", "SAL"),
+        # nothing at all
+        ("", ""),
+        ("Senior Account Manager", ""),
+        ("", "Sr Acct Mgr"),
+    ],
+)
+def test_a_title_outside_the_catalog_is_refused(mini_catalog: Catalog, long_title, short_title):
+    assert not catalog.is_catalog_title(mini_catalog, long_title, short_title)
+
+
+def test_the_two_titles_must_come_from_one_role_at_one_level(mini_catalog: Catalog):
+    # Of every pairing of a real Long Title with a real Short Title in one
+    # family, only the pairs the naming rule gives are let through.
+    sales = dataclasses.replace(
+        mini_catalog, roles=tuple(r for r in mini_catalog.roles if r.family_code == "SAL")
+    )
+    titles = _every_title(sales)
+    longs = sorted({long_title for long_title, _ in titles})
+    shorts = sorted({short_title for _, short_title in titles})
+    assert len(longs) == len(shorts) == len(titles) == 7 * 6
+    let_through = {
+        (long_title, short_title)
+        for long_title in longs
+        for short_title in shorts
+        if catalog.is_catalog_title(mini_catalog, long_title, short_title)
+    }
+    assert let_through == titles
+
+
+def test_the_title_of_a_role_that_is_not_in_the_catalog_is_refused(mini_catalog: Catalog):
+    invented = _role("SAL-99", "SAL", "Revenue Wizard", "Rev Wiz")
+    title = catalog.standard_title(mini_catalog, invented, 7)
+    assert title == StandardTitle("Senior", "Senior Revenue Wizard", "Sr Rev Wiz")
+    assert not catalog.is_catalog_title(mini_catalog, title.long_title, title.short_title)
+    assert not catalog.is_catalog_title(mini_catalog, "Revenue Wizard", "Rev Wiz")
+
+
+def test_the_guard_reads_the_catalog_it_is_given(mini_catalog: Catalog):
+    without = _with_roles(
+        mini_catalog, *(role for role in mini_catalog.roles if role.role_id != "SAL-01")
+    )
+    for long_title, short_title in [
+        ("Senior Account Manager", "Sr Acct Mgr"),
+        ("Account Manager", "Acct Mgr"),
+    ]:
+        assert catalog.is_catalog_title(mini_catalog, long_title, short_title)
+        assert not catalog.is_catalog_title(without, long_title, short_title)
+
+
+def test_the_title_of_a_generic_family_role_is_a_catalog_title(mini_catalog: Catalog):
+    # Only the close assigns it, and what it assigns is still a catalog title.
+    assert catalog.is_catalog_title(mini_catalog, "Senior Sales", "Sr Sales")
+    assert catalog.is_catalog_title(mini_catalog, "Finance", "Finance")
+
+
+def test_every_level_of_the_ladder_counts_whether_or_not_a_grade_leads_to_it():
+    assert "L3" not in {row.level for row in ODD.grade_levels}
+    assert catalog.is_catalog_title(ODD, "Principal Planner", "Prin Plnr")
+    assert not catalog.is_catalog_title(ODD, "L3 Planner", "L3 Plnr")

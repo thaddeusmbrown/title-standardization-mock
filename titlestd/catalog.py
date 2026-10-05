@@ -30,6 +30,9 @@ Decided here, where the record is silent:
   the ladder is a CatalogError, not a title with a guessed word; the readers
   refuse such a catalog.
 - A generic family role is named like any other role: "Senior Sales".
+- is_catalog_title compares byte for byte, and the two titles must come from
+  one role at one level. Every role counts, generic or not, and every level of
+  the ladder, whether or not a grade leads to it.
 """
 
 from __future__ import annotations
@@ -37,8 +40,6 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from titlestd.contracts import Catalog, CatalogRole, LadderLevel, StandardTitle, TitlestdError
-
-_NOT_BUILT = "titlestd.catalog is built by feat/catalog-naming"
 
 
 class CatalogError(TitlestdError):
@@ -131,4 +132,6 @@ def standard_title(catalog: Catalog, role: CatalogRole, grade: int | None) -> St
 def is_catalog_title(catalog: Catalog, long_title: str, short_title: str) -> bool:
     """True when the naming rule can produce this pair from some role and level,
     or from some role with no level word. The release guard uses it."""
-    raise NotImplementedError(_NOT_BUILT)
+    wanted = (long_title, short_title)
+    titles = (_name(role, rung) for role in catalog.roles for rung in (None, *catalog.ladder))
+    return any((title.long_title, title.short_title) == wanted for title in titles)

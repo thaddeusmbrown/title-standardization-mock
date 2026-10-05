@@ -1,15 +1,18 @@
 """The committed mock data in data/, put through the real modules of stage 1.
 
 The files are read by the real readers (titlestd.datafiles, titlestd.people),
-grouped by the real prepare step, named by the catalog's real naming rule and
-labeled by the real simulated people.
+grouped by the real prepare step, named by the catalog's real naming rule,
+labeled by the real simulated people and shown to the real stand-in LLM. The
+last tests tie the data to the mini data set, which the earlier stages were
+built against.
 
 docs/design.md 2.1 and 2.3; docs/build-decisions.md Q03 (every title has a
 truth row), Q06 (byte-for-byte regeneration), Q09 (raw titles, one true role
 per row, the seed look-up), Q11 (descriptions), Q13 (seed titles in the long
-tail), Q14 (the reference lists share no word with the data), Q23 (three
-flagged roles in three families), Q24 (the Wave 1 list), Q26 (no usable family
-code), Q35 (the counts), Q36 (the grade table and the worked example).
+tail), Q14 (the reference lists share no word with the data), Q17 (titles
+built for "no match" and "insufficient data"), Q23 (three flagged roles in
+three families), Q24 (the Wave 1 list), Q26 (no usable family code), Q35 (the
+counts), Q36 (the grade table and the worked example).
 
 Not here: the run shape of Q23, which feat/pipeline-report-cli measures in
 stage 4. That branch may change the difficulty knobs of titlestd.mockdata and
@@ -18,6 +21,7 @@ regenerate data/; every test in this file must still pass then.
 
 from __future__ import annotations
 
+import math
 import os
 import re
 import subprocess
@@ -28,12 +32,15 @@ from pathlib import Path
 import pytest
 
 from titlestd import catalog as naming
-from titlestd import datafiles, mockdata, people, prepare, reference
+from titlestd import datafiles, mockdata, people, prepare, reference, switch
 from titlestd.contracts import (
     EMAIL_MASK,
     NAME_MASK,
+    ChooseKind,
     HumanAnswer,
     InputData,
+    Models,
+    NumberedRole,
     TitleKey,
     TitleRow,
 )
@@ -91,6 +98,11 @@ def wave1(rows) -> list[TitleRow]:
     """The Wave 1 list (Q24): the 40 rows with the highest headcount."""
     ordered = sorted(rows, key=lambda row: (-row.headcount, row.key))
     return ordered[: Settings().wave1_size]
+
+
+@pytest.fixture(scope="module")
+def models(inputs: InputData) -> Models:
+    return switch.build_models(Settings(), inputs.catalog.ladder, inputs.abbreviations)
 
 
 # --- The committed files (Q06, S01) --------------------------------------------------------------
@@ -487,3 +499,134 @@ def test_the_reference_lists_share_no_word_with_the_data(inputs: InputData):
         assert not used & NAMES, (name, sorted(used & NAMES))
         assert not used & LOCATIONS, (name, sorted(used & LOCATIONS))
     assert all(employee.department.strip() for employee in inputs.employees)
+
+
+# --- Titles built for the stand-in LLM (Q17, Q35) ------------------------------------------------
+
+
+def numbered(inputs: InputData) -> list[NumberedRole]:
+    """Every role a model may be shown, numbered: more than any shortlist of ten."""
+    visible = naming.model_visible_roles(inputs.catalog)
+    return [NumberedRole(number, role) for number, role in enumerate(visible, start=1)]
+
+
+def rows_titled(rows, titles) -> list[TitleRow]:
+    found = [row for row in rows if {title for title, *_ in titles} & set(row.raw_titles)]
+    assert len(found) == len(titles)
+    return found
+
+
+def test_about_four_titles_are_built_to_draw_no_match(inputs: InputData, rows, models):
+    # Worded like no role: shown the whole catalog the stand-in finds no match,
+    # so it finds none in whichever ten roles the ML model shortlists.
+    built = rows_titled(rows, mockdata.NO_MATCH_TITLES)
+    assert 3 <= len(built) <= 5  # Q35: about 4
+    for row in built:
+        assert row.model_eligible and row.record.description
+        answer = models.llm.chooser.choose(row.record, numbered(inputs))
+        assert answer.answer is ChooseKind.NO_MATCH, row.key
+        assert answer.quote == row.record.cleaned_title
+
+
+def test_about_four_bare_titles_draw_insufficient_data_and_no_other_title_does(
+    inputs: InputData, rows, models
+):
+    built = rows_titled(rows, mockdata.BARE_TITLES)
+    assert 3 <= len(built) <= 5  # Q35: about 4
+    drawn = [
+        row.key
+        for row in rows
+        if row.model_eligible
+        and models.llm.chooser.choose(row.record, numbered(inputs)).answer
+        is ChooseKind.INSUFFICIENT_DATA
+    ]
+    assert drawn == [row.key for row in built]
+    for row in built:
+        assert len(row.key.cleaned_title.split()) == 1 and not row.record.description
+
+
+def test_the_special_titles_sit_in_the_long_tail(rows, wave1):
+    special = {title for title, *_ in mockdata.SPECIAL_TITLES}
+    listed = {raw for row in wave1 for raw in row.raw_titles}
+    assert not special & listed
+    assert len(rows_titled(rows, mockdata.SPECIAL_TITLES)) == 16
+
+
+# --- The two models can read the data ------------------------------------------------------------
+
+
+def test_the_stand_in_llm_knows_a_title_that_is_a_roles_name(inputs, rows, true_roles, models):
+    # The plainest rows, a role's own name: the stand-in picks that role from the
+    # whole catalog, whatever the description says.
+    by_key = {row.key: row for row in rows}
+    shown = numbered(inputs)
+    for role in naming.model_visible_roles(inputs.catalog):
+        row = by_key[TitleKey(role.family_code, role.role_name.lower())]
+        assert true_roles[row.key] == {role.role_id}
+        answer = models.llm.chooser.choose(row.record, shown)
+        assert answer.answer is ChooseKind.ROLE, row.key
+        assert shown[answer.number - 1].role == role, row.key
+
+
+def test_the_offline_embedder_puts_a_roles_own_name_nearest_that_role(inputs, models):
+    # The other opinion, by another calculation (Q12): cosine of hashed
+    # character n-grams between a title and each role's name and definition.
+    # Not every time: "data analyst" lies nearer the privacy role, whose
+    # definition says "data" twice. Such titles are what the agent is for.
+    roles = naming.model_visible_roles(inputs.catalog)
+    role_vectors = models.embedder.embed([f"{r.role_name}. {r.definition}" for r in roles])
+    titles = [prepare.clean_title(role.role_name, inputs.abbreviations).text for role in roles]
+    right = 0
+    for role, query in zip(roles, models.embedder.embed(titles), strict=True):
+        scores = [
+            math.fsum(weight * vector.get(index, 0.0) for index, weight in query.items())
+            for vector in role_vectors
+        ]
+        right += roles[max(range(len(roles)), key=scores.__getitem__)] == role
+    assert right >= 0.9 * len(roles)
+
+
+# --- The mini data set ---------------------------------------------------------------------------
+
+
+def test_the_ladder_and_the_grade_table_are_those_of_the_mini_data_set(inputs, mini_inputs):
+    assert inputs.catalog.ladder == mini_inputs.catalog.ladder
+    assert inputs.catalog.grade_levels == mini_inputs.catalog.grade_levels
+
+
+def test_the_abbreviations_clean_the_mini_data_set_to_its_hand_written_rows(
+    inputs: InputData, mini_inputs: InputData, mini_rows
+):
+    assert set(mini_inputs.abbreviations) <= set(inputs.abbreviations)
+    families = naming.family_codes(mini_inputs.catalog)
+    assert prepare.prepare(mini_inputs.employees, inputs.abbreviations, families) == mini_rows
+
+
+def test_the_mini_catalog_is_a_part_of_the_catalog(inputs: InputData, mini_inputs: InputData):
+    by_id = {role.role_id: role for role in inputs.catalog.roles}
+    for mini_role in mini_inputs.catalog.roles:
+        role = by_id[mini_role.role_id]
+        assert (role.family_code, role.role_name, role.short_name, role.is_generic) == (
+            mini_role.family_code,
+            mini_role.role_name,
+            mini_role.short_name,
+            mini_role.is_generic,
+        )
+
+
+def test_the_mini_truth_and_seed_look_up_hold_against_the_catalog(
+    inputs: InputData, mini_inputs: InputData, mini_dir: Path, mini_rows
+):
+    # Whoever swaps the mini catalog for this one, as a later test might, keeps
+    # the people and the look-up of the mini data set.
+    mini_truth = people.read_truth(mini_dir)
+    people.validate_truth(mini_truth, inputs.catalog)
+    datafiles.check_decided_roles(
+        datafiles.SEED_LOOKUP_FILE,
+        inputs.catalog,
+        ((s.job_title, s.job_family_code, s.role_id) for s in mini_inputs.seed_lookup),
+    )
+    on_mini = people.SimulatedPeople(mini_truth, mini_inputs.catalog, Settings(sme_error_rate=0.0))
+    on_default = people.SimulatedPeople(mini_truth, inputs.catalog, Settings(sme_error_rate=0.0))
+    for row in mini_rows:
+        assert on_default.blind_label(row) == on_mini.blind_label(row), row.key

@@ -123,7 +123,8 @@ WORDING_WEIGHTS = {"name": 5, "near": 3, "far": 2}
 
 # How much a description says about the job, for the rows that have one:
 # "close" restates the catalog definition, "partial" keeps half of it, "loose"
-# describes the job in other words, "vague" says nothing about the job.
+# describes the job in other words, "vague" says nothing about the job. The
+# less the descriptions say, the fewer titles the two models agree on.
 DESCRIPTION_WEIGHTS = {"close": 5, "partial": 3, "loose": 1, "vague": 1}
 
 # The three compliance-flagged roles, in three different families (Q23). A

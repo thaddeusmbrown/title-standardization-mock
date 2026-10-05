@@ -7,12 +7,14 @@ S09; every answer is written by the real recorder into a temporary folder.
 Replay of that recording is then an ordinary run, built by the switch like any
 other: it gives the same decisions and files apart from the answer label, and
 with one input changed it stops at the first miss with a non-zero exit and no
-output file.
+output file. A live run that the client cuts short keeps its answers, writes
+no output file and leaves nothing that replay takes for a recording (Q29,
+Q39).
 
-Nothing here reaches the network, reads a key or needs the SDK, so the tests
+Nothing here reaches the network, uses a key or needs the SDK, so the tests
 run in every environment of the gate. No recording made here is committed:
 each is written by the program, about a model that does not exist, under
-pytest's temporary folder.
+pytest's temporary folder, and never under recordings/.
 
 Decided here, where the record leaves the detail open:
 

@@ -1,13 +1,15 @@
-"""The random audit: its two lines, the sample and the three outcomes.
+"""The random audit: its two lines, the sample, the three outcomes and the statuses.
 
 docs/design.md 1.9 and 2.4 ("Audit at mock scale", "Wrong");
-docs/build-decisions.md Q23 (the three outcomes and the path of 60 or fewer,
-on constructed counts), S02 (the lines for 200 are tested beside those for 60)
-and S04 (the audit stream).
+docs/build-decisions.md Q16 (what a path row counts), Q21 (audited titles take
+the SME's label), Q23 (the three outcomes, the path of 60 or fewer and the
+stopped-path release setting, on constructed counts) and S02 (the lines for
+200 are tested beside those for 60).
 """
 
 from __future__ import annotations
 
+import dataclasses
 import math
 from fractions import Fraction
 
@@ -17,11 +19,17 @@ from titlestd import audit, contracts, seeding
 from titlestd.contracts import (
     AuditOutcome,
     AuditResult,
+    Decision,
+    DecisionSource,
+    ExceptionReason,
     HumanAnswer,
     HumanDecision,
     MachinePath,
+    Status,
+    TableRow,
     TitleKey,
 )
+from titlestd.settings import Settings
 
 SEED = 20260101
 SME = "SME 2 (simulated)"
@@ -58,6 +66,11 @@ def _audited_path(
         for position, key in enumerate(sample)
     }
     return machine, labels, audit.audit_path(path, machine, labels)
+
+
+def _decide(size: int, wrong: int, **settings) -> tuple[tuple[Decision, ...], AuditResult]:
+    machine, labels, result = _audited_path(size, wrong)
+    return audit.path_decisions(result, machine, labels, Settings(**settings)), result
 
 
 def _chance_of_at_most(wrong: int, sample_size: int, right: Fraction) -> Fraction:
@@ -365,3 +378,251 @@ def test_a_blind_label_that_could_not_decide_is_refused():
     labels[key] = HumanDecision(key, HumanAnswer.UNDECIDED, None, "Reviewer (simulated)", True)
     with pytest.raises(ValueError, match="a blind label is never 'could not decide'"):
         audit.audit_path(MachinePath.MODELS_AGREE, machine, labels)
+
+
+# --- The statuses of an audited path (1.9, Q21) ------------------------------------------
+
+
+def _check_every_decision_is_whole(decisions: tuple[Decision, ...]) -> None:
+    """What contracts.Decision promises of every decision."""
+    for decision in decisions:
+        on_legacy = decision.row is TableRow.LEGACY
+        assert (decision.role_id is None) == on_legacy
+        assert (decision.status is None) == on_legacy
+        assert (decision.legacy_reason is not None) == on_legacy
+        by_person = decision.source is DecisionSource.PERSON
+        assert bool(decision.decided_by) == by_person
+        assert decision.simulated == by_person
+        assert (decision.status is Status.APPROVED) == by_person
+        if decision.error_rate is not None:
+            assert decision.status is Status.PROVISIONAL
+
+
+@pytest.mark.parametrize("wrong", CONFIRMED_COUNTS)
+def test_a_confirmed_path_approves_the_audited_and_confirms_the_rest(wrong):
+    decisions, result = _decide(200, wrong)
+    _check_every_decision_is_whole(decisions)
+    audited = [d for d in decisions if d.key in result.audited_keys]
+    rest = [d for d in decisions if d.key not in result.audited_keys]
+    assert (len(audited), len(rest)) == (60, 140)
+    for decision in audited:
+        assert decision.source is DecisionSource.PERSON
+        assert decision.status is Status.APPROVED
+        assert decision.decided_by == SME and decision.simulated is True
+    for decision in rest:
+        assert decision.source is DecisionSource.MACHINE
+        assert decision.status is Status.CONFIRMED  # 1.9: no person read it
+        assert decision.role_id == MACHINE_ROLE
+        assert decision.decided_by == "" and decision.simulated is False
+    assert all(d.row is TableRow.MODELS_AGREE and d.error_rate is None for d in decisions)
+
+
+def test_an_audited_title_takes_the_smes_label_whether_or_not_the_machine_agreed():
+    # Q21: the label is released, right or wrong for the machine.
+    machine, labels, result = _audited_path(200, 2)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    by_key = {decision.key: decision for decision in decisions}
+    disagreed = [key for key in labels if labels[key].role_id != machine[key]]
+    assert len(disagreed) == 2
+    for key, label in labels.items():
+        assert by_key[key].role_id == label.role_id
+        assert by_key[key].status is Status.APPROVED
+    assert {by_key[key].role_id for key in disagreed} == {OTHER_ROLE}
+
+
+@pytest.mark.parametrize("wrong", PROVISIONAL_COUNTS)
+def test_a_provisional_path_marks_the_rest_provisional_with_the_measured_error_rate(wrong):
+    decisions, result = _decide(200, wrong)
+    _check_every_decision_is_whole(decisions)
+    rest = [d for d in decisions if d.key not in result.audited_keys]
+    assert len(rest) == 140
+    for decision in rest:
+        assert decision.source is DecisionSource.MACHINE
+        assert decision.status is Status.PROVISIONAL
+        assert decision.error_rate == wrong / 60
+        assert decision.role_id == MACHINE_ROLE
+        assert decision.row is TableRow.MODELS_AGREE
+    audited = [d for d in decisions if d.key in result.audited_keys]
+    assert all(d.status is Status.APPROVED and d.error_rate is None for d in audited)
+
+
+@pytest.mark.parametrize("wrong", STOPPED_COUNTS)
+def test_a_stopped_path_leaves_the_rest_on_legacy_titles(wrong):
+    # 2.4: "A stopped path is left on legacy titles unless a setting releases it."
+    decisions, result = _decide(200, wrong)
+    _check_every_decision_is_whole(decisions)
+    assert Settings().release_stopped_paths is False
+    rest = [d for d in decisions if d.key not in result.audited_keys]
+    assert len(rest) == 140
+    for decision in rest:
+        assert decision.row is TableRow.LEGACY  # Q16: counted in the legacy row
+        assert decision.source is DecisionSource.NONE
+        assert decision.role_id is None and decision.status is None
+        assert decision.legacy_reason is ExceptionReason.STOPPED_PATH
+        assert decision.error_rate is None
+
+
+@pytest.mark.parametrize("wrong", STOPPED_COUNTS)
+def test_a_stopped_path_still_releases_its_audited_titles_as_approved(wrong):
+    # Q21: in a stopped path the 60 are released as Approved; Q16: the path's
+    # row keeps them.
+    machine, labels, result = _audited_path(200, wrong)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    audited = [d for d in decisions if d.key in labels]
+    assert len(audited) == 60
+    for decision in audited:
+        assert decision.row is TableRow.MODELS_AGREE
+        assert decision.source is DecisionSource.PERSON
+        assert decision.status is Status.APPROVED
+        assert decision.role_id == labels[decision.key].role_id
+    assert sum(d.row is TableRow.MODELS_AGREE for d in decisions) == 60
+    assert sum(d.row is TableRow.LEGACY for d in decisions) == 140
+
+
+@pytest.mark.parametrize("wrong", STOPPED_COUNTS)
+def test_the_setting_releases_a_stopped_path_as_provisional(wrong):
+    decisions, result = _decide(200, wrong, release_stopped_paths=True)
+    _check_every_decision_is_whole(decisions)
+    assert result.outcome is AuditOutcome.STOPPED  # the outcome is still Stopped (Q16)
+    rest = [d for d in decisions if d.key not in result.audited_keys]
+    assert len(rest) == 140
+    for decision in rest:
+        assert decision.row is TableRow.MODELS_AGREE
+        assert decision.source is DecisionSource.MACHINE
+        assert decision.status is Status.PROVISIONAL
+        assert decision.error_rate == wrong / 60
+        assert decision.role_id == MACHINE_ROLE
+        assert decision.legacy_reason is None
+    assert not [d for d in decisions if d.row is TableRow.LEGACY]
+
+
+@pytest.mark.parametrize(("size", "wrong"), [(200, 0), (200, 7), (60, 0), (60, 30), (12, 12)])
+def test_the_release_setting_changes_nothing_on_a_path_that_is_not_stopped(size, wrong):
+    kept, _ = _decide(size, wrong)
+    released, _ = _decide(size, wrong, release_stopped_paths=True)
+    assert released == kept
+
+
+@pytest.mark.parametrize(
+    ("size", "wrong"), [(60, 0), (60, 2), (60, 13), (60, 60), (37, 20), (1, 0)]
+)
+def test_every_title_of_a_small_path_takes_its_label_with_status_approved(size, wrong):
+    # 2.4: "each takes its label with status Approved, and the path gets no status".
+    machine, labels, result = _audited_path(size, wrong)
+    for settings in (Settings(), Settings(release_stopped_paths=True)):
+        decisions = audit.path_decisions(result, machine, labels, settings)
+        _check_every_decision_is_whole(decisions)
+        assert len(decisions) == size
+        for decision in decisions:
+            assert decision.source is DecisionSource.PERSON
+            assert decision.status is Status.APPROVED
+            assert decision.role_id == labels[decision.key].role_id
+            assert decision.row is TableRow.MODELS_AGREE
+            assert decision.error_rate is None and decision.legacy_reason is None
+        assert sum(d.role_id != machine[d.key] for d in decisions) == wrong
+
+
+@pytest.mark.parametrize(
+    ("size", "wrong", "release"),
+    [(200, 1, False), (200, 9, False), (200, 20, False), (200, 20, True), (45, 5, False)],
+)
+def test_there_is_one_decision_for_every_title_of_the_path_sorted_by_key(size, wrong, release):
+    machine, labels, result = _audited_path(size, wrong)
+    shuffled = dict(reversed(list(machine.items())))
+    decisions = audit.path_decisions(
+        result, shuffled, labels, Settings(release_stopped_paths=release)
+    )
+    assert [decision.key for decision in decisions] == sorted(machine)
+
+
+@pytest.mark.parametrize(
+    ("path", "row"),
+    [
+        (MachinePath.MODELS_AGREE, TableRow.MODELS_AGREE),
+        (MachinePath.AGENT_SETTLED, TableRow.AGENT_SETTLED),
+    ],
+)
+@pytest.mark.parametrize(("size", "wrong"), [(200, 0), (200, 6), (30, 3)])
+def test_each_machine_path_is_counted_in_its_own_row(path, row, size, wrong):
+    machine, labels, result = _audited_path(size, wrong, path)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    assert {decision.row for decision in decisions} == {row}
+
+
+def test_a_decision_carries_the_persona_and_the_simulated_mark_of_its_label():
+    keys = _keys(3)
+    machine = dict.fromkeys(keys, MACHINE_ROLE)
+    labels = {
+        keys[0]: _label(keys[0], MACHINE_ROLE, "SME 1 (simulated)"),
+        keys[1]: _label(keys[1], OTHER_ROLE, "SME 3 (simulated)"),
+        keys[2]: HumanDecision(keys[2], HumanAnswer.ROLE, MACHINE_ROLE, "A named person", False),
+    }
+    result = audit.audit_path(MachinePath.AGENT_SETTLED, machine, labels)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    assert [(d.decided_by, d.simulated, d.role_id) for d in decisions] == [
+        ("SME 1 (simulated)", True, MACHINE_ROLE),
+        ("SME 3 (simulated)", True, OTHER_ROLE),
+        ("A named person", False, MACHINE_ROLE),
+    ]
+
+
+def test_the_decisions_do_not_depend_on_the_order_the_titles_and_labels_come_in():
+    machine, labels, result = _audited_path(150, 5)
+    backwards = dict(reversed(list(labels.items())))
+    turned = dict(reversed(list(machine.items())))
+    assert audit.path_decisions(result, turned, backwards, Settings()) == audit.path_decisions(
+        result, machine, labels, Settings()
+    )
+
+
+def test_a_path_with_no_title_has_no_decisions():
+    result = audit.audit_path(MachinePath.AGENT_SETTLED, {}, {})
+    assert audit.path_decisions(result, {}, {}, Settings()) == ()
+
+
+# --- "No suitable role" as a blind label (Q03) -------------------------------------------
+
+
+@pytest.mark.parametrize("size", [200, 20])
+def test_a_title_marked_no_suitable_role_stays_on_its_legacy_title(size):
+    # Q03: it waits for the catalog owner and is counted in the legacy row. It
+    # is never released on the machine's role.
+    machine, labels, _ = _audited_path(size, 0)
+    marked = sorted(labels)[0]
+    labels[marked] = _no_suitable_role(marked)
+    result = audit.audit_path(MachinePath.MODELS_AGREE, machine, labels)
+    decisions = audit.path_decisions(result, machine, labels, Settings())
+    _check_every_decision_is_whole(decisions)
+    (decision,) = [d for d in decisions if d.key == marked]
+    assert decision == Decision(
+        marked,
+        TableRow.LEGACY,
+        DecisionSource.NONE,
+        legacy_reason=ExceptionReason.NO_SUITABLE_ROLE,
+    )
+    assert sum(d.row is TableRow.LEGACY for d in decisions) == 1
+
+
+# --- The result must be the audit of the path (Q23) --------------------------------------
+
+
+def test_a_status_always_follows_from_the_audited_and_wrong_counts():
+    # Q23. A result that is not the audit of the titles and labels handed in
+    # with it gives no decisions: a stopped path cannot be passed off as
+    # confirmed, nor a wrong count changed.
+    machine, labels, result = _audited_path(200, 20)
+    assert result.outcome is AuditOutcome.STOPPED
+    other_machine, other_labels, other_result = _audited_path(200, 0)
+    forged = (
+        dataclasses.replace(result, outcome=AuditOutcome.CONFIRMED),
+        dataclasses.replace(result, outcome=AuditOutcome.ALL_LABELED),
+        dataclasses.replace(result, wrong=0),
+        dataclasses.replace(result, path_size=199),
+        dataclasses.replace(result, audited_keys=result.audited_keys[:-1]),
+        other_result,
+    )
+    for not_this_audit in forged:
+        with pytest.raises(ValueError, match="is not the audit of the titles and labels"):
+            audit.path_decisions(not_this_audit, machine, labels, Settings())
+    assert len(audit.path_decisions(result, machine, labels, Settings())) == 200
+    assert len(audit.path_decisions(other_result, other_machine, other_labels, Settings())) == 200

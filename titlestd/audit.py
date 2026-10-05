@@ -42,8 +42,18 @@ Decided on this branch, where the record says nothing:
   is a label "could not decide", which a blind label never is (Q01).
 - An audited title the SME marked "no suitable role" (Q03; only a title with
   no truth row) counts as wrong: the machine named a role and the SME says
-  none suits.
+  none suits. It is not released on the machine's role. It stays on its legacy
+  title with ExceptionReason.NO_SUITABLE_ROLE, counted in the legacy row, and
+  waits for the catalog owner like any other title so marked. Listing it in
+  the review-queue file, as Q03 asks, is left to the caller.
+- A stopped path that the setting releases: its unaudited titles stay in the
+  path's row with source MACHINE and status Provisional, carry the measured
+  error rate like those of a provisional path, and name no persona, because
+  the release is a setting of the run and not a decision on one title.
 - A path with no title is "all labeled", with nothing audited.
+- path_decisions takes the audit result and checks that it is the audit of
+  the titles and labels it is given, so a status always follows from the
+  audited and wrong counts (Q23).
 """
 
 from __future__ import annotations
@@ -61,14 +71,22 @@ from titlestd.contracts import (
     AuditOutcome,
     AuditResult,
     Decision,
+    DecisionSource,
+    ExceptionReason,
     HumanAnswer,
     HumanDecision,
     MachinePath,
+    Status,
+    TableRow,
     TitleKey,
 )
 from titlestd.settings import Settings
 
-_NOT_BUILT = "titlestd.audit is built by feat/golden-audit-status"
+# The table row a machine path is counted in (Q16).
+_PATH_ROW = {
+    MachinePath.MODELS_AGREE: TableRow.MODELS_AGREE,
+    MachinePath.AGENT_SETTLED: TableRow.AGENT_SETTLED,
+}
 
 
 def _exact(share: float) -> Fraction:
@@ -150,9 +168,23 @@ def path_decisions(
 
     An audited title is counted in the path's row with source PERSON and status
     Approved. An unaudited title of a stopped path that is not released is
-    counted in the legacy row with ExceptionReason.STOPPED_PATH (Q16).
+    counted in the legacy row with ExceptionReason.STOPPED_PATH (Q16), and an
+    audited title marked "no suitable role" with ExceptionReason.NO_SUITABLE_ROLE.
+
+    Raises ValueError when result is not the audit of these titles and labels.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    if result != audit_path(result.path, machine_roles, labels):
+        raise ValueError(
+            f"the audit result of the path {result.path.value!r} is not the audit of the "
+            "titles and labels given with it"
+        )
+    row = _PATH_ROW[result.path]
+    return tuple(
+        _audited(key, row, labels[key])
+        if key in labels
+        else _unaudited(key, row, machine_roles[key], result, settings)
+        for key in sorted(machine_roles)
+    )
 
 
 def _check_labels(
@@ -184,3 +216,53 @@ def _outcome(path_size: int, audited: int, wrong: int) -> AuditOutcome:
     if wrong > stop_limit(audited):
         return AuditOutcome.STOPPED
     return AuditOutcome.PROVISIONAL
+
+
+def _audited(key: TitleKey, row: TableRow, label: HumanDecision) -> Decision:
+    """An audited title takes the SME's label, whatever the machine chose (Q21)."""
+    if label.answer is HumanAnswer.NO_SUITABLE_ROLE:
+        return Decision(
+            key=key,
+            row=TableRow.LEGACY,
+            source=DecisionSource.NONE,
+            legacy_reason=ExceptionReason.NO_SUITABLE_ROLE,
+        )
+    return Decision(
+        key=key,
+        row=row,
+        source=DecisionSource.PERSON,
+        role_id=label.role_id,
+        status=Status.APPROVED,
+        decided_by=label.decided_by,
+        simulated=label.simulated,
+    )
+
+
+def _unaudited(
+    key: TitleKey, row: TableRow, role_id: str, result: AuditResult, settings: Settings
+) -> Decision:
+    """An unaudited title keeps the machine's role and takes its path's outcome (Q21)."""
+    if result.outcome is AuditOutcome.CONFIRMED:
+        return Decision(
+            key=key,
+            row=row,
+            source=DecisionSource.MACHINE,
+            role_id=role_id,
+            status=Status.CONFIRMED,
+        )
+    if result.outcome is AuditOutcome.STOPPED and not settings.release_stopped_paths:
+        return Decision(
+            key=key,
+            row=TableRow.LEGACY,
+            source=DecisionSource.NONE,
+            legacy_reason=ExceptionReason.STOPPED_PATH,
+        )
+    # A provisional path, or a stopped one that the setting releases.
+    return Decision(
+        key=key,
+        row=row,
+        source=DecisionSource.MACHINE,
+        role_id=role_id,
+        status=Status.PROVISIONAL,
+        error_rate=result.error_rate,
+    )

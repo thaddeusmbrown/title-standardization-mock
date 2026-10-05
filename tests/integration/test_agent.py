@@ -783,3 +783,65 @@ def test_another_process_shows_the_agent_the_same_and_gets_the_same_answers(
     ]
     assert outputs[0] == json.loads(json.dumps(here))
     assert len(here) == 13
+
+
+# --- One turn at a time: a turn can be recorded and replayed (Q20) -----------------------
+
+
+def shown_so_far(transcript: AgentTranscript) -> str:
+    """Everything a backend is shown before a turn: the case, then each search
+    with its request and its result text. A recording keys a turn on this (Q33)."""
+    parts = [agent.render_case(transcript.case)]
+    for step in transcript.steps:
+        parts += [f"{step.request.tool.value}: {step.request.query}", agent.render_step(step)]
+    return "\n\n".join(parts)
+
+
+class Recording:
+    """A backend in miniature that keeps each turn of another under what it was shown."""
+
+    def __init__(self, reviewer) -> None:
+        self._reviewer = reviewer
+        self.turns: dict[str, SearchRequest | ReviewAnswer] = {}
+
+    def next_turn(self, transcript: AgentTranscript) -> SearchRequest | ReviewAnswer:
+        turn = self._reviewer.next_turn(transcript)
+        assert self.turns.setdefault(shown_so_far(transcript), turn) is turn  # one entry per turn
+        return turn
+
+
+class Replaying:
+    """A backend in miniature that only looks turns up. A turn it was not
+    recorded for is a KeyError: it never falls back."""
+
+    def __init__(self, turns: dict[str, SearchRequest | ReviewAnswer]) -> None:
+        self._turns = turns
+
+    def next_turn(self, transcript: AgentTranscript) -> SearchRequest | ReviewAnswer:
+        return self._turns[shown_so_far(transcript)]
+
+
+def test_recorded_turns_replay_to_the_same_result_with_the_searches_run_again(
+    scored, results, models, cat, knowledge, mini_inputs, rows
+):
+    # Q20: one entry per model turn; replay looks each turn up and re-runs the
+    # searches for real. The transcript and the two renderers are all it needs.
+    recording = Recording(models.llm.reviewer)
+    first = agent.SearchTools(cat, knowledge, models.embedder, SETTINGS)
+    recorded = {key: agent.review(each.case(), first, recording) for key, each in scored.items()}
+    assert recorded == results
+    assert len(recording.turns) == sum(len(r.transcript.steps) + 1 for r in recorded.values())
+
+    again = agent.SearchTools(cat, knowledge, models.embedder, SETTINGS)
+    replaying = Replaying(recording.turns)
+    replayed = {key: agent.review(each.case(), again, replaying) for key, each in scored.items()}
+    assert replayed == recorded
+
+    # With one more title approved, a search returns something else: the turn
+    # after it was never recorded, and the replay stops instead of answering.
+    more = Knowledge()
+    load_seed(more, mini_inputs.seed_lookup, rows, mini_inputs.abbreviations)
+    more.learn(scored[TREASURY_IN_SALES.key].row, "SAL-03")
+    changed = agent.SearchTools(cat, more, models.embedder, SETTINGS)
+    with pytest.raises(KeyError):
+        agent.review(scored[SUCCESS_REPRESENTATIVE.key].case(), changed, replaying)

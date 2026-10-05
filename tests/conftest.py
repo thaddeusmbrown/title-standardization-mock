@@ -1,8 +1,7 @@
 """Shared test scaffolding.
 
-This file belongs to the scaffold branch. A later branch that needs more
-fixtures defines them in its own test files, not here, so branches built in
-parallel never edit the same file.
+The fixtures here are the ones several test files share. A fixture that one
+test file needs is defined in that file, not here.
 
 tests/fixtures/mini is a tiny hand-written data set in the seven-file format of
 docs/design.md 2.3: two families with six roles each plus their generic roles,
@@ -14,8 +13,8 @@ a blank family code and a padded one ("FIN ", which is family FIN: S05).
 Everything in it is invented. Tests read it and never write into it.
 
 MINI_ROWS is what the prepare step must produce from it, written out by hand
-(Q11, Q14, Q26), so branches can test against real title rows before the
-prepare step exists.
+(Q11, Q14, Q26), so a test can use real title rows without running the
+prepare step.
 """
 
 from __future__ import annotations

@@ -54,8 +54,8 @@ print(json.dumps({
 }))
 """
 
-# After the import guard: stand recorders in for the three providers built by
-# later branches, choose them, and report what was loaded and what was called.
+# After the import guard: stand recorders in for the three providers that are
+# not the default, choose them, and report what was loaded and what was called.
 OTHER_SETTINGS = """
 import json, types
 
@@ -131,7 +131,7 @@ def test_the_default_models_answer_the_worked_example(
     mini_inputs: InputData, mini_rows: tuple[TitleRow, ...], mini_settings: Settings
 ):
     # 1.3: "ACCT MGR II" and "Senior Account Manager" are both Sales x Account
-    # Manager. The switch is given what the pipeline will give it: the settings,
+    # Manager. The switch is given what the pipeline gives it: the settings,
     # the ladder and the abbreviations as read, and a fingerprint of the inputs.
     models = switch.build_models(
         mini_settings,

@@ -2,7 +2,7 @@
 
 docs/design.md 2.5: "Import the SDK and the embedding library lazily, so the
 default run installs nothing." These tests start a fresh interpreter from the
-repository root and stay valid as the components are built.
+repository root.
 """
 
 from __future__ import annotations

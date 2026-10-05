@@ -4,8 +4,9 @@ Every title row a model may see goes the way a run takes it: the real readers
 and prepare step, the seed look-up, the ML match on the offline embedder, the
 seeded numbering, choose, the rules of 1.7, the agent's case and the shared
 loop with its two searches, and the agent's answer back through the rules. The
-pipeline is built beside this branch, so the steps are put together here; it
-is test-only code and does not bind the pipeline.
+pipeline is left out of these tests and the steps are put together here; it
+is test-only code and does not bind the pipeline. A whole run is recorded and
+replayed in tests/integration/test_recordings_round_trip.py.
 
 What answers is a hosted model in miniature: it is handed one Messages
 request, as the data the API would receive, and gives back one message. It

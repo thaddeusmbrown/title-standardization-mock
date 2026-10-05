@@ -24,7 +24,7 @@ KNOBS = ("WORDING_WEIGHTS", "DESCRIPTION_WEIGHTS", "FLAGGED_ROLE_IDS")
 
 # Two settings of each knob, far apart, as a tuning round might try them (Q23).
 # The tests of the knobs compare these with each other and never with the
-# values in force, so they hold whatever stage 4 sets the knobs to.
+# values in force, so they hold whatever the knobs are set to.
 KNOB_SETTINGS = {
     "WORDING_WEIGHTS": ({"name": 1}, {"name": 1, "near": 2, "far": 7}),
     "DESCRIPTION_WEIGHTS": ({"close": 1}, {"loose": 1, "vague": 3}),
@@ -65,7 +65,7 @@ def rows(data: InputData) -> tuple[TitleRow, ...]:
 
 
 def test_the_difficulty_knobs_are_the_first_constants_of_the_module():
-    # "How the build is cut": stage 4 tunes named constants at the top.
+    # "How the build is cut": a tuning round changes named constants at the top.
     tree = ast.parse(inspect.getsource(mockdata))
     assigned = [
         target.id

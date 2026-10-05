@@ -183,7 +183,7 @@ def record_text(record: Record) -> str:
 
 
 def build(settings: Settings, data: InputData):
-    """The models as the pipeline will ask for them."""
+    """The models as the pipeline asks for them."""
     return switch.build_models(
         settings,
         data.catalog.ladder,

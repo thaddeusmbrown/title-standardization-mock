@@ -5,11 +5,11 @@ roles always show most of a family. The generated data has 48 roles in eight
 families: a shortlist may hold one role of the recorded family or none, and
 the roles the agent may pick are then numbered by its searches.
 
-The shape of the default run is tuned in stage 4 by changing the generator's
-difficulty constants (Q23), so nothing here counts titles or names one. Each
-assertion is a rule of docs/design.md 1.6 step 6 and 1.7 or of
-docs/build-decisions.md Q10, Q19 and Q20, and holds whatever the data. Nothing
-here reads the truth file.
+The shape of the default run follows from the generator's difficulty
+constants, which a tuning round may change (Q23), so nothing here counts
+titles or names one. Each assertion is a rule of docs/design.md 1.6 step 6 and
+1.7 or of docs/build-decisions.md Q10, Q19 and Q20, and holds whatever the
+data. Nothing here reads the truth file.
 """
 
 from __future__ import annotations

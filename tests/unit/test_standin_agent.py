@@ -1,8 +1,8 @@
 """The stand-in agent: a fixed script, one turn at a time (Q19, Q20).
 
-The loop, the searches and the numbering are shared code built later
+The loop, the searches and the numbering are shared code with tests of its own
 (titlestd.agent). Here the transcripts are written out by hand, as that code
-will hand them over: the case, then every search that ran with its hits.
+hands them over: the case, then every search that ran with its hits.
 """
 
 from __future__ import annotations

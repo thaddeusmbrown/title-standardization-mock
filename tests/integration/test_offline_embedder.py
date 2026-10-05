@@ -1,7 +1,7 @@
 """The offline embedder on the mini data set: meaningful and repeatable (1.5, Q12).
 
-The nearest-neighbour match itself is built later (titlestd.matcher). Here the
-texts are put together by hand, the way 1.6 step 3 describes them: a role's
+The nearest-neighbour match itself (titlestd.matcher) has its own tests. Here
+the texts are put together by hand, the way 1.6 step 3 describes them: a role's
 name and one-line definition, a title row's cleaned title and description.
 """
 

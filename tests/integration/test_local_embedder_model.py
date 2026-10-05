@@ -18,7 +18,7 @@ real cache, so the hub library has no copy of the list it keeps there and
 would fetch it as soon as its download call ran; and every connection the
 process tries to open is recorded and refused. It must have tried none.
 
-The nearest-neighbour match is built beside this branch (titlestd.matcher), so
+The nearest-neighbour match (titlestd.matcher) is left out of this test, so
 the texts are put together by hand, the way 1.6 step 3 describes them: a
 role's name and one-line definition, a row's cleaned title and description.
 """
@@ -155,7 +155,7 @@ def test_the_local_model_embeds_the_titles_of_the_mini_data_set(
     if not asked and not model_is_cached():
         pytest.skip(f"{MODEL_NAME} is not in the Hugging Face cache; pytest -m {MARKER} fetches it")
 
-    # Through the switch, as the pipeline will build it.
+    # Through the switch, as the pipeline builds it.
     settings = dataclasses.replace(mini_settings, embedder="local")
     models = switch.build_models(settings, mini_inputs.catalog.ladder, mini_inputs.abbreviations)
     embedder = models.embedder

@@ -5,10 +5,10 @@ look-up from the real reader, and the decisions from the real simulated
 people. docs/design.md 1.6 steps 2 and 10; docs/build-decisions.md Q07, Q09,
 Q13, Q14, Q26.
 
-The golden set is drawn by titlestd.golden, which is built beside this
-component, so the golden keys here are picked by hand from the frame of Q08:
-long-tail titles that miss the seed look-up, have a usable family code and
-carry no person's name.
+The golden set is drawn by titlestd.golden, which these tests leave out: the
+golden keys here are picked by hand from the frame of Q08, long-tail titles
+that miss the seed look-up, have a usable family code and carry no person's
+name.
 """
 
 from __future__ import annotations

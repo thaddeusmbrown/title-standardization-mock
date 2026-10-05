@@ -388,6 +388,29 @@ def test_the_simulated_mark_is_on_every_simulated_persons_decision_and_nothing_e
     }
 
 
+def test_a_persons_decision_that_is_not_simulated_carries_no_mark_in_the_load_file(
+    tmp_path: Path, mini_catalog: Catalog
+):
+    # The mark is the decision's own, not read off who decided: a person who is
+    # not simulated is named and has no mark.
+    def by_a_real_person(row: TitleRow) -> Decision:
+        return Decision(
+            row.key,
+            TableRow.REVIEW_QUEUE,
+            DecisionSource.PERSON,
+            "FIN-06",
+            Status.APPROVED,
+            "Catalog owner",
+            simulated=False,
+        )
+
+    employee = _employee("X1", "Treasury Analyst", "FIN", 5)
+    load, _, _ = _release_one(tmp_path, mini_catalog, by_a_real_person, employee)
+    assert [(row["status"], row["decided_by"], row["simulated"]) for row in load] == [
+        ("Approved", "Catalog owner", "0")
+    ]
+
+
 @pytest.mark.parametrize(
     ("wrong", "written"), [(5, "0.0833"), (3, "0.0500"), (12, "0.2000"), (13, "0.2167")]
 )
@@ -493,15 +516,25 @@ def test_an_employee_left_on_a_legacy_title_is_listed_with_the_reason(
     ]
 
 
-def test_the_exceptions_list_keeps_the_family_code_as_received(
-    tmp_path: Path, mini_catalog: Catalog
+@pytest.mark.parametrize(
+    ("decision_for", "line_end"),
+    [
+        (_confirmed("FIN-06"), "no grade,1"),
+        (lambda row: _on_legacy(row, ExceptionReason.STOPPED_PATH), "stopped path,0"),
+    ],
+    ids=["released with no grade", "left on the legacy title"],
+)
+def test_the_exceptions_list_keeps_the_title_and_the_family_code_as_received(
+    tmp_path: Path, mini_catalog: Catalog, decision_for, line_end: str
 ):
-    # Like the legacy title beside it: a padded code stays padded, a blank one blank.
-    padded = _employee("X1", "Treasury Analyst", " FIN ", None)
-    _, _, exceptions = _release_one(tmp_path, mini_catalog, _confirmed("FIN-06"), padded)
-    assert [row["job_family_code"] for row in exceptions] == [" FIN "]
+    # Byte for byte, as in the reverse file: what is padded stays padded.
+    padded = _employee("X1", "  Treasury Analyst ", " FIN ", None)
+    _, _, exceptions = _release_one(tmp_path, mini_catalog, decision_for, padded)
+    assert [(row["legacy_job_title"], row["job_family_code"]) for row in exceptions] == [
+        ("  Treasury Analyst ", " FIN ")
+    ]
     assert (tmp_path / "exceptions.csv").read_text(encoding="utf-8").splitlines()[1] == (
-        "X1,Treasury Analyst, FIN ,no grade,1"
+        f"X1,  Treasury Analyst , FIN ,{line_end}"
     )
 
 

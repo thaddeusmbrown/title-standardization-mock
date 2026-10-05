@@ -18,12 +18,27 @@ score appears in a rendered text.
 
 These functions are used by every llm setting, so a prompt is the same string
 whoever answers it; a recording's key depends on that (Q18, Q33).
+
+Decided here, where the record leaves the detail open:
+
+- The record block is four lines, "Title: ", "Family: ", "Department: " and
+  "Description: ", each followed by the field exactly as the record holds it.
+  An empty field leaves its label alone on the line, with nothing written in
+  its place, so the block never holds a word that the record does not. The
+  labels are part of the block that Q15 checks a quote against, so a quote
+  may run across them ("Family: SAL").
+- The numbered list is one line per role: "3. Account Manager (family SAL):
+  the definition". A role with no number starts with "-" instead.
+- A generic family role is refused with ValueError, by number_roles and again
+  by render_roles: a list that holds one is a fault in the calling code, and
+  render_roles is the last thing a role passes before a model reads it.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 
+from titlestd import seeding
 from titlestd.contracts import CatalogRole, NumberedRole, Record, TitleKey
 
 _NOT_BUILT = "titlestd.fallback is built by feat/llm-fallback-rules"
@@ -31,7 +46,13 @@ _NOT_BUILT = "titlestd.fallback is built by feat/llm-fallback-rules"
 
 def render_record(record: Record) -> str:
     """The record block: the masked record exactly as a model is shown it."""
-    raise NotImplementedError(_NOT_BUILT)
+    fields = (
+        ("Title", record.cleaned_title),
+        ("Family", record.family_code),
+        ("Department", record.department),
+        ("Description", record.description),
+    )
+    return "\n".join(f"{label}: {value}" if value else f"{label}:" for label, value in fields)
 
 
 def number_roles(
@@ -43,13 +64,23 @@ def number_roles(
     number from 1. The order depends only on the seed and the title. A generic
     family role in roles is an error.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    ordered = sorted(roles, key=lambda role: role.role_id)
+    for role in ordered:
+        _refuse_generic(role)
+    seeding.rng(seed, seeding.STREAM_SHUFFLE, *key).shuffle(ordered)
+    return tuple(NumberedRole(number, role) for number, role in enumerate(ordered, start=1))
 
 
 def render_roles(roles: Sequence[NumberedRole]) -> str:
     """The numbered list as a model is shown it: number, role name, family
     code and definition. A role with no number is shown unnumbered."""
-    raise NotImplementedError(_NOT_BUILT)
+    lines = []
+    for shown in roles:
+        role = shown.role
+        _refuse_generic(role)
+        mark = "-" if shown.number is None else f"{shown.number}."
+        lines.append(f"{mark} {role.role_name} (family {role.family_code}): {role.definition}")
+    return "\n".join(lines)
 
 
 def role_for_number(number: int | None, roles: Sequence[NumberedRole]) -> CatalogRole | None:
@@ -67,3 +98,10 @@ def quote_in_record(quote: str, record_block: str) -> bool:
     most contracts.QUOTE_MAX_WORDS words. An empty quote fails.
     """
     raise NotImplementedError(_NOT_BUILT)
+
+
+def _refuse_generic(role: CatalogRole) -> None:
+    if role.is_generic:
+        raise ValueError(
+            f"generic family role {role.role_id} must never be shown to a model (design 1.2)"
+        )

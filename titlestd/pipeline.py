@@ -51,6 +51,16 @@ Decided here, where the record is silent:
   first and the load file last. Llm.finish is called last of all, after the
   files and the state are written; if it fails the output files are removed
   like on any other error.
+- An output folder that cannot be used. When the file system or SQLite
+  refuses while the run empties the folder, makes the state file or writes
+  into either (the folder is a file, it may not be written, the disk is
+  full), the run stops with an OutputError that names the folder and
+  repeats the refusal, so the command line prints one line and exits with
+  status 1, as it does for a data folder that cannot be read. An OSError
+  counts where the run touches the folder itself, and of SQLite's errors
+  only an OperationalError, which is what a file that cannot be opened or
+  written raises; while the titles are scored only SQLite's counts, since
+  an OSError there could be a model's.
 - The data fingerprint is the SHA-256 of the fingerprint of the six input
   files, a line feed and the fingerprint of the truth file (S09).
 - A Wave 1 title no model may see (a person's name, no usable family code)
@@ -117,10 +127,11 @@ branch left them.
 
 from __future__ import annotations
 
+import contextlib
 import dataclasses
 import hashlib
 import sqlite3
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -189,6 +200,10 @@ OUTPUT_FILES = (
 )
 
 
+class OutputError(TitlestdError):
+    """The output folder cannot be emptied or written into."""
+
+
 def data_fingerprint(data_dir: Path) -> str:
     """The fingerprint of the seven data files, as a recording's manifest holds it.
 
@@ -209,23 +224,29 @@ def run_pipeline(settings: Settings, models: Models | None = None) -> RunResult:
     called once, after everything else succeeded (Q29).
     """
     out_dir = settings.out_dir
-    _remove(out_dir, (*OUTPUT_FILES, store.STATE_FILE))
+    with _using(out_dir, OSError):
+        _remove(out_dir, (*OUTPUT_FILES, store.STATE_FILE))
     data = datafiles.read_inputs(settings.data_dir)
     simulated = load_people(settings, data.catalog)
     if models is None:
         fingerprint = data_fingerprint(settings.data_dir)
         models = switch.build_models(settings, data.catalog.ladder, data.abbreviations, fingerprint)
-    connection = store.create_store(out_dir / store.STATE_FILE)
+    with _using(out_dir, OSError, sqlite3.OperationalError):
+        connection = store.create_store(out_dir / store.STATE_FILE)
     try:
-        result = _Run(settings, data, simulated, models, connection).result()
-        release.write_review_queue(out_dir, result.queue)
-        release.write_release_files(
-            out_dir, result.decisions, result.rows, data.employees, data.catalog
-        )
-        store.save_run(connection, result)
+        # Only the state file is SQLite's; an OSError here could be a model's.
+        with _using(out_dir, sqlite3.OperationalError):
+            result = _Run(settings, data, simulated, models, connection).result()
+        with _using(out_dir, OSError, sqlite3.OperationalError):
+            release.write_review_queue(out_dir, result.queue)
+            release.write_release_files(
+                out_dir, result.decisions, result.rows, data.employees, data.catalog
+            )
+            store.save_run(connection, result)
         models.llm.finish()
     except BaseException:
-        _remove(out_dir, OUTPUT_FILES)
+        with _using(out_dir, OSError):
+            _remove(out_dir, OUTPUT_FILES)
         raise
     finally:
         connection.close()
@@ -244,6 +265,19 @@ def run_command(settings: Settings) -> int:
 def _remove(folder: Path, names: Iterable[str]) -> None:
     for name in names:
         (Path(folder) / name).unlink(missing_ok=True)
+
+
+@contextlib.contextmanager
+def _using(out_dir: Path, *failures: type[Exception]) -> Iterator[None]:
+    """Report one of these failures, met while the output folder is emptied or
+    written into, as an OutputError that names the folder."""
+    try:
+        yield
+    except failures as error:
+        raise OutputError(
+            f"the output folder {out_dir} cannot be used: {error}. "
+            "Name a folder the run can write into with --out-dir."
+        ) from error
 
 
 @dataclass(frozen=True, slots=True)

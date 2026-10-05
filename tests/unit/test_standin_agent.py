@@ -58,6 +58,9 @@ SALES_ANALYST = role("SAL-03", "Sales Operations Analyst", "Maintains sales fore
 FIN_ANALYST = role(
     "FIN-01", "Financial Analyst", "Builds budgets, forecasts and variance reports.", "FIN"
 )
+TREASURY_ANALYST = role(
+    "FIN-06", "Treasury Analyst", "Manages cash positions and bank accounts.", "FIN"
+)
 
 RECORD = Record(
     "account manager ii",
@@ -126,6 +129,48 @@ def test_with_fewer_than_two_it_searches_the_catalog_with_the_description():
             SearchTool.CATALOG, " ".join(f"word{n}" for n in range(1, DESCRIPTION_QUERY_WORDS + 1))
         )
     assert DESCRIPTION_QUERY_WORDS == 12
+
+
+MISFILED = Record(
+    "financial analyst",
+    "SAL",
+    "Sales Operations",
+    "Builds budgets and forecasts for the sales teams.",
+)
+OUTSIDE = (NumberedRole(None, FIN_ANALYST), NumberedRole(None, TREASURY_ANALYST))
+
+
+@pytest.mark.parametrize(
+    "inside", [(), (NumberedRole(1, SALES_ANALYST),)], ids=["none of the family", "one"]
+)
+def test_only_roles_of_the_family_count_toward_the_two(inside):
+    # Q19 counts the in-family roles shown, and those are the numbered ones.
+    # Two roles of another family were shown as well, without a number, so
+    # three roles are on the table and still fewer than two can be picked.
+    third = SearchRequest(SearchTool.CATALOG, MISFILED.description)
+    stand_in = make()
+    in_the_case = transcript(MISFILED, (*OUTSIDE, *inside), catalog(), approved())
+    assert stand_in.next_turn(in_the_case) == third
+    by_the_searches = transcript(MISFILED, inside, catalog(*OUTSIDE), approved(*OUTSIDE))
+    assert stand_in.next_turn(by_the_searches) == third
+    by_both = transcript(MISFILED, (*OUTSIDE, *inside), catalog(*OUTSIDE), approved(OUTSIDE[0]))
+    assert stand_in.next_turn(by_both) == third
+
+
+def test_a_role_of_the_family_shown_again_is_still_one_role():
+    # The searches often return a role the case already holds: it keeps its
+    # number and is one role however often it is shown.
+    one = NumberedRole(1, SALES_ANALYST)
+    again = transcript(MISFILED, (one,), catalog(one, OUTSIDE[0]), approved(one, one))
+    assert make().next_turn(again) == SearchRequest(SearchTool.CATALOG, MISFILED.description)
+    # A second role of the family, in the case or found by a search, ends it.
+    two = NumberedRole(2, ACCOUNT_MANAGER)
+    for enough in (
+        transcript(MISFILED, (*OUTSIDE, one, two), catalog(), approved()),
+        transcript(MISFILED, (*OUTSIDE, one), catalog(one, two), approved()),
+        transcript(MISFILED, (*OUTSIDE, one), catalog(), approved(two)),
+    ):
+        assert isinstance(make().next_turn(enough), ReviewAnswer)
 
 
 def test_the_description_query_is_its_first_words_as_written():

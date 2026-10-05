@@ -1,4 +1,4 @@
-"""The mock data generator: what it builds and how it draws.
+"""The mock data generator: what it builds, how it draws, what its knobs change.
 
 docs/design.md 2.1 and 2.3; docs/build-decisions.md Q06, Q09, Q23, Q24, Q35.
 These tests build the data in memory and never read data/: the committed files
@@ -8,6 +8,7 @@ are tested in tests/integration/test_mockdata.py.
 from __future__ import annotations
 
 import ast
+import dataclasses
 import inspect
 from collections import Counter
 from pathlib import Path
@@ -21,7 +22,23 @@ from titlestd.settings import Settings
 
 KNOBS = ("WORDING_WEIGHTS", "DESCRIPTION_WEIGHTS", "FLAGGED_ROLE_IDS")
 
+# Two settings of each knob, far apart, as a tuning round might try them (Q23).
+# The tests of the knobs compare these with each other and never with the
+# values in force, so they hold whatever stage 4 sets the knobs to.
+KNOB_SETTINGS = {
+    "WORDING_WEIGHTS": ({"name": 1}, {"name": 1, "near": 2, "far": 7}),
+    "DESCRIPTION_WEIGHTS": ({"close": 1}, {"loose": 1, "vague": 3}),
+    "FLAGGED_ROLE_IDS": (("FIN-04", "LEG-03", "OPS-06"), ("SAL-03", "TEC-05", "CUS-04")),
+}
+
 Built = tuple[InputData, tuple[people.TruthRow, ...]]
+
+
+def build_with(knob: str, value: object) -> Built:
+    """The data as it would be built with one knob set to another value."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(mockdata, knob, value)
+        return mockdata.build()
 
 
 def rows_of(data: InputData) -> tuple[TitleRow, ...]:
@@ -483,6 +500,104 @@ def test_departments_are_those_of_the_true_roles_family(data, built):
         assert employee.department in mockdata._DEPARTMENTS[family], employee.employee_id
     main = Counter(e.department for e in data.employees)
     assert len(main) == sum(len(names) for names in mockdata._DEPARTMENTS.values())
+
+
+# --- What a knob changes, and what it leaves alone (Q23) -----------------------------------------
+
+
+@pytest.fixture(scope="module", params=sorted(KNOB_SETTINGS))
+def tuned(request) -> tuple[str, Built, Built]:
+    """A knob and the data built with each of its two settings."""
+    one, other = KNOB_SETTINGS[request.param]
+    return request.param, build_with(request.param, one), build_with(request.param, other)
+
+
+def test_whatever_the_knobs_say_the_data_keeps_its_sizes_and_its_rules(tuned):
+    for data, truth in tuned[1:]:
+        rows = rows_of(data)
+        assert len(data.employees) == mockdata.EMPLOYEES and len(rows) == 400
+        assert sum(1 for row in rows if not row.record.description) == mockdata.NO_DESCRIPTION_ROWS
+        assert sum(1 for e in data.employees if e.grade is None) == mockdata.NO_GRADE_EMPLOYEES
+        assert sum(1 for row in rows if row.has_person_name) == len(mockdata.PERSON_NAME_TITLES)
+        assert sum(1 for row in rows if not row.family_usable) == len(mockdata.NO_FAMILY_TITLES)
+        held = sorted((row.headcount for row in rows), reverse=True)
+        assert held[mockdata.WAVE1_SIZE - 1] > held[mockdata.WAVE1_SIZE]
+        assert 0.35 <= sum(held[: mockdata.WAVE1_SIZE]) / mockdata.EMPLOYEES <= 0.45
+        assert len(data.seed_lookup) == 8
+        assert len([role for role in data.catalog.roles if role.compliance_flag]) == 3
+        datafiles.validate_inputs(data)
+        people.validate_truth(truth, data.catalog)
+
+
+def test_a_knob_changes_what_it_governs_and_nothing_else(tuned):
+    knob, (one, one_truth), (other, other_truth) = tuned
+    assert one != other
+    if knob == "FLAGGED_ROLE_IDS":
+        # Only the flag column of the catalog.
+        assert (one.employees, one.seed_lookup, one_truth) == (
+            other.employees,
+            other.seed_lookup,
+            other_truth,
+        )
+        assert [dataclasses.replace(role, compliance_flag=False) for role in one.catalog.roles] == [
+            dataclasses.replace(role, compliance_flag=False) for role in other.catalog.roles
+        ]
+    if knob == "DESCRIPTION_WEIGHTS":
+        # Only the descriptions: the same employees on the same titles and grades.
+        assert (one.catalog, one.seed_lookup, one_truth) == (
+            other.catalog,
+            other.seed_lookup,
+            other_truth,
+        )
+        assert [dataclasses.replace(e, job_description="") for e in one.employees] == [
+            dataclasses.replace(e, job_description="") for e in other.employees
+        ]
+    if knob == "WORDING_WEIGHTS":
+        # The titles, and so the employees and the truth, but never the catalog.
+        assert one.catalog == other.catalog
+        assert one_truth != other_truth
+
+
+def test_the_wording_knob_sets_how_many_titles_are_worded_like_no_role():
+    def far_rows(data: InputData) -> int:
+        far = [
+            prepare.clean_title(job.far, data.abbreviations).text for job in mockdata._JOBS.values()
+        ]
+        return sum(1 for row in rows_of(data) if any(text in row.key.cleaned_title for text in far))
+
+    plain, far_fetched = KNOB_SETTINGS["WORDING_WEIGHTS"]
+    assert far_rows(build_with("WORDING_WEIGHTS", plain)[0]) == 0
+    assert far_rows(build_with("WORDING_WEIGHTS", far_fetched)[0]) > 2 * 48
+
+
+def test_the_description_knob_sets_how_much_descriptions_say():
+    def vague_share(data: InputData) -> float:
+        described = [e for e in data.employees if e.job_description]
+        return sum(1 for e in described if e.job_description in mockdata._VAGUE) / len(described)
+
+    close, vague = KNOB_SETTINGS["DESCRIPTION_WEIGHTS"]
+    assert vague_share(build_with("DESCRIPTION_WEIGHTS", close)[0]) == 0
+    assert vague_share(build_with("DESCRIPTION_WEIGHTS", vague)[0]) > 0.5
+
+
+@pytest.mark.parametrize(
+    ("knob", "value", "message"),
+    [
+        ("FLAGGED_ROLE_IDS", ("FIN-04", "FIN-01", "OPS-06"), "three different families"),
+        ("FLAGGED_ROLE_IDS", ("FIN-04", "LEG-03"), "three different families"),
+        ("FLAGGED_ROLE_IDS", ("FIN-04", "LEG-03", "OPS-99"), "three different families"),
+        ("FLAGGED_ROLE_IDS", ("FIN-04", "LEG-03", "OPS-GEN"), "three different families"),
+        ("WORDING_WEIGHTS", {"name": 1, "exotic": 2}, "WORDING_WEIGHTS"),
+        ("WORDING_WEIGHTS", {}, "WORDING_WEIGHTS"),
+        ("WORDING_WEIGHTS", {"name": 0, "near": 0}, "WORDING_WEIGHTS"),
+        ("DESCRIPTION_WEIGHTS", {"close": -1, "vague": 2}, "DESCRIPTION_WEIGHTS"),
+        ("DESCRIPTION_WEIGHTS", {"wordy": 1}, "DESCRIPTION_WEIGHTS"),
+    ],
+)
+def test_a_knob_that_breaks_a_rule_is_refused_with_its_name(monkeypatch, knob, value, message):
+    monkeypatch.setattr(mockdata, knob, value)
+    with pytest.raises(mockdata.MockDataError, match=message):
+        mockdata.build()
 
 
 # --- Writing the files and the command -----------------------------------------------------------

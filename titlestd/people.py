@@ -152,7 +152,10 @@ class SimulatedPeople:
     role.
     """
 
-    def __init__(self, truth: Sequence[TruthRow], catalog: Catalog, settings: Settings) -> None:
+    def __init__(self, truth: Iterable[TruthRow], catalog: Catalog, settings: Settings) -> None:
+        # Read once and kept: the truth is gone through twice below, and an
+        # iterator used up by the check would leave the people with no truth.
+        truth = tuple(truth)
         validate_truth(truth, catalog)
         self._seed = settings.seed
         self._error_rate = settings.sme_error_rate

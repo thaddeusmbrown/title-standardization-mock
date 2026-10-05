@@ -162,6 +162,22 @@ def test_labels_do_not_depend_on_the_order_of_the_truth_rows(mini_catalog, mini_
         assert forward.blind_label(row) == backward.blind_label(row)
 
 
+def test_the_truth_may_be_an_iterable_that_can_be_read_only_once(
+    mini_catalog, mini_truth, mini_rows
+):
+    # The people go through the truth twice, to check it and to index it. An
+    # iterator used up by the check would leave them with no truth at all, and
+    # every title marked "no suitable role" without an error.
+    rates = {"sme_error_rate": 0.0, "undecided_rate": 0.0}
+    from_list = _people(list(mini_truth), mini_catalog, **rates)
+    from_iterator = _people(iter(mini_truth), mini_catalog, **rates)
+    for row in mini_rows:
+        for occasion in OCCASIONS:
+            decision = getattr(from_iterator, occasion)(row)
+            assert decision.role_id == MINI_TRUE_ROLES[row.key]
+            assert decision == getattr(from_list, occasion)(row)
+
+
 def test_a_label_depends_on_the_key_and_not_on_the_rest_of_the_row(mini_catalog):
     truth = [TruthRow("Sales Rep", "SAL", "SAL-02"), TruthRow("SALES REP.", "SAL", "SAL-02")]
     plain = _row("SAL", "sales representative", "Sales Rep")

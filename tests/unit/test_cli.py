@@ -6,6 +6,7 @@ components behind the commands are built.
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -38,8 +39,9 @@ def test_help_lists_the_three_commands(capsys):
         cli.main(["--help"])
     assert exit_info.value.code == 0
     output = capsys.readouterr().out
+    # Only the names: argparse lays the lines out by the width of the terminal.
     for command in ("run", "generate-data", "record"):
-        assert f"\n    {command} " in output
+        assert re.search(rf"^ +{re.escape(command)}\b", output, re.MULTILINE), command
 
 
 def test_the_commands_are_exactly_the_decided_ones():

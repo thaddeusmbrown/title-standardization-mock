@@ -187,6 +187,12 @@ def _role(role_id: str, family: str = "SAL") -> CatalogRole:
     return CatalogRole(role_id, family, f"Role {role_id}", f"R {role_id}", "A definition.")
 
 
+def test_a_catalog_role_is_neither_flagged_nor_generic_unless_said():
+    role = _role("SAL-01")
+    assert role.compliance_flag is False
+    assert role.is_generic is False
+
+
 def test_title_keys_sort_by_family_then_title():
     keys = [TitleKey("SAL", "b"), TitleKey("FIN", "z"), TitleKey("SAL", "a"), TitleKey("", "m")]
     assert sorted(keys) == [

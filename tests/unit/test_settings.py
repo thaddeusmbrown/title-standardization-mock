@@ -102,7 +102,7 @@ def test_replace_is_checked_too():
     ("name", "value"),
     [
         ("embedder", "hosted"),
-        ("llm", "openai"),
+        ("llm", "telepathy"),
         ("llm", None),
         ("llm_model", ""),
         ("llm_model", " claude-haiku-4-5"),
@@ -142,6 +142,25 @@ def test_bad_values_are_refused_by_name(name, value):
 @pytest.mark.parametrize("value", [0, 0.0, 1, 1.0])
 def test_rates_may_be_zero_or_one(name, value):
     assert getattr(Settings(**{name: value}), name) == float(value)
+
+
+@pytest.mark.parametrize(
+    ("name", "lowest"),
+    [
+        ("request_cap", 1),
+        ("embed_dim", 1),
+        ("agent_search_k", 1),
+        ("wave1_size", 0),
+        ("golden_size", 0),
+        ("ml_min_examples", 0),
+        ("ml_margin_cutoff", 0.0),
+        ("standin_min_title_words", 0),
+        ("standin_no_match_below", 0),
+    ],
+)
+def test_each_size_accepts_its_lowest_value(name, lowest):
+    # The values just below these are in the list of refused values above.
+    assert getattr(Settings(**{name: lowest}), name) == lowest
 
 
 def test_load_without_anything_gives_the_defaults():

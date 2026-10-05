@@ -31,6 +31,22 @@ Decided here, where the record is silent:
 - A statement of 2.4 is in the README when one paragraph or list item holds
   its key words. The README says it in its own words, so this is the most a
   test can ask.
+
+Decided for the README itself, which has no docstring to hold it:
+
+- It shows everything the default run prints, not the table alone, so the
+  block is the frozen file byte for byte and one comparison covers it.
+- On the second statement of 2.4 it gives what was measured in place of
+  "provisional is the usual result": the models-agree path is Confirmed on
+  the default seed and, in runs made for this branch with --seed 1 to 10, on
+  seven of those seeds and Provisional on three. No test repeats those runs.
+  Whoever changes what the default run prints re-pastes the block from the
+  frozen file and measures these numbers again.
+- The file the record command takes the key from is an example path in the
+  home folder, outside any repository (Q39).
+- The replay command, and the sentence that the recording is under
+  recordings/, rest on the recording the other branch of this stage commits.
+  Replay and record were not run for this branch.
 """
 
 from __future__ import annotations

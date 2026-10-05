@@ -146,6 +146,32 @@ def test_answer_labels():
     )
 
 
+def test_the_command_for_an_optional_extra_is_fixed():
+    # One text for both providers' error messages and the README (S09).
+    assert contracts.run_with_extra("live") == "uv run --extra live python -m titlestd"
+    assert contracts.run_with_extra("local") == "uv run --extra local python -m titlestd"
+
+
+def test_a_lookup_hit_names_the_seed_file_as_its_decider():
+    assert contracts.LOOKUP_DECIDED_BY == "Seed look-up (mock data)"
+
+
+def test_the_run_result_carries_what_the_report_prints():
+    names = [field.name for field in dataclasses.fields(contracts.RunResult)]
+    assert names == [
+        "rows",
+        "employee_count",
+        "no_grade_employees",
+        "wave1_keys",
+        "decisions",
+        "audits",
+        "golden_keys",
+        "golden_scores",
+        "queue",
+        "answer_labels",
+    ]
+
+
 # --- The module itself ---------------------------------------------------------
 
 

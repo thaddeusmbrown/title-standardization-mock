@@ -189,15 +189,18 @@ provisional mark, its error rate and the simulated mark are in the load file; an
   `long_title`, `short_title`, `level` (blank when there is no grade), `status` (Approved,
   Confirmed or Provisional only), `path` (the 2.6 row that released it), `error_rate` (the
   path's wrong/audited, filled only when Provisional comes from an audited path), `no_grade`
-  (0/1), `decided_by` (reviewer id on Approved rows), `simulated` (1 on every person
-  decision). A no-grade employee is in `load.csv` with the catalog's no-level title.
+  (0/1), `decided_by` (on every Approved row: the persona who decided it during the run, or
+  the fixed label of S11 on a look-up hit), `simulated` (1 on every decision a simulated
+  person made during the run). A no-grade employee is in `load.csv` with the catalog's
+  no-level title.
 - `reverse.csv` holds `employee_id` and `legacy_job_title` for exactly the same employees:
   the `job_title` as received, byte for byte.
 - `exceptions.csv` (`employee_id`, `legacy_job_title`, `job_family_code`, `reason`,
   `released`) lists every employee left on a legacy title (`released` = 0; reason: stopped
   path, over the generic cap, undecided widely held or flagged title, no suitable role) and
-  every no-grade employee (`released` = 1, reason "no grade"). Both counts are printed under
-  the table.
+  every no-grade employee who received a new title (`released` = 1, reason "no grade"); an
+  employee is listed once, so one with no grade who stays on a legacy title has the
+  `released` = 0 row only. Both counts are printed under the table.
 
 The footer's coverage by status prints the three statuses plus "left on legacy title" (the
 existing table row), which together sum to 100%. One function
@@ -546,10 +549,10 @@ rate; Stopped with the number of titles moved to legacy (or "Stopped, released a
 when the setting is on); "all labeled" for a path of 60 or fewer. On other rows it is the
 status of the row's titles (Approved; Provisional for generic; none for legacy).
 
-Footer: coverage by status is by employee (Approved, Confirmed, Provisional, not released) and
-sums to 100%. "Sent to a person" = Wave 1 list titles plus titles routed to the review queue,
-over all titles; blind audit and golden-set labels are given as a separate count on the same
-line.
+Footer: coverage by status is by employee (Approved, Confirmed, Provisional, and "left on
+legacy title" as in Q05) and sums to 100%. "Sent to a person" = Wave 1 list titles plus titles
+routed to the review queue, over all titles; blind audit and golden-set labels are given as a
+separate count on the same line.
 
 Review-queue file: one row per title that entered the queue (the queue as it stood after Wave
 2) with cleaned title, family, headcount, reasons, ML first choice, LLM pick, agent
@@ -714,9 +717,10 @@ Approved, whether or not the label matches the machine's role, and joins the loo
 the examples; the path outcome (Confirmed, Provisional or Stopped) applies only to the
 unaudited remainder. Wrong is still counted against the machine's original role. In a stopped
 path the 60 are released as Approved and the rest stay on legacy titles unless the release
-setting is on. Table: the path row counts the whole path, shows audited and wrong, and its
-status cell shows the path outcome; the footer's coverage by status counts the 60 under
-Approved. A golden-set title must not reach the look-up table or the examples through the
+setting is on. Table: the path row counts the titles released through the path, audited and
+unaudited together, shows audited and wrong, and its status cell shows the path outcome; the
+unaudited titles of a stopped path that the setting did not release are counted in the legacy
+row instead (Q16). The footer's coverage by status counts the 60 under Approved. A golden-set title must not reach the look-up table or the examples through the
 audit: golden titles stay in the audit sampling frame (Q07), an audited golden title takes its
 label and status Approved for release like any other, and the learning guard of Q07 refuses to
 record it.
@@ -896,9 +900,11 @@ keyed SHA-256 draw decides whether it is wrong, and if so picks a different non-
 in the true role's family; the same label is returned on every occasion in the run (golden
 set, audit, Wave 1, review queue). Personas are role labels, not invented human names: "SME 1
 (simulated)" to "SME 3 (simulated)", "Reviewer (simulated)", "Catalog owner (simulated)", "HR
-lead (simulated)", "CIO (simulated)". Every decision row in the state carries simulated = true
-and the persona; the load file has a `decided_by` column carrying the persona for Approved
-rows; the review-queue file and the table footer say that people were simulated.
+lead (simulated)", "CIO (simulated)". Every decision a simulated person makes carries
+simulated = true and the persona in the state; the load file has a `decided_by` column
+carrying the persona on the rows a person decided during the run (a look-up hit carries the
+fixed label of S11 instead); the review-queue file and the table footer say that people were
+simulated.
 
 **Basis.** 2.4: "People are simulated from the truth file, with a small seeded error rate, and
 every simulated decision is marked as simulated." and "the machine's role differs from the
@@ -973,7 +979,8 @@ it is tested.
 `bf8b056651a2c21b8d2565580b8569da283cab23`, declared as the optional extra `local` and
 imported only inside the `local` embedder. Weights download on the first `embedder = local`
 run into the user's Hugging Face cache, never into the repository; a missing extra or a failed
-download stops with a clear message and never falls back to `offline`. Unit tests cover the
+download stops with a clear message (for a missing extra, the command of S09) and never falls
+back to `offline`. Unit tests cover the
 switch and the lazy import with a stub. One smoke test, marked `local_model` and excluded from
 the merge gate, may install the extra and embed a few titles once during the build, time-boxed
 to 15 minutes; if it fails or times out, that is noted in the README and the build moves on.
@@ -1181,7 +1188,7 @@ generated at run time, or whether "under a minute" is a tested limit.
 `generate-data` and `record`. `pyproject.toml` with no runtime dependencies and two optional
 extras, `live` = `anthropic>=1.11,<2` and `local` = `model2vec>=0.9,<0.10`; pytest and ruff
 are dev-only, fetched by uv. A missing extra gives an error containing the exact install
-command. `requires-python` is `>=3.12` with no upper bound; the merge gate runs on 3.12
+command, whose text S09 fixes. `requires-python` is `>=3.12` with no upper bound; the merge gate runs on 3.12
 (`.python-version`), and the suite also runs on 3.13 and 3.14 (`make check-all`, S14).
 Exact-output comparison only on 3.12. Settings are one immutable dataclass with defaults, overridden by an optional TOML file
 given with `--config` and then by command-line flags generated from its fields (`--embedder`,
@@ -1388,6 +1395,21 @@ recording's manifest (Q18, Q29) is a SHA-256 over the six input files, combined 
 pipeline with a SHA-256 of the truth file, because simulated decisions feed the examples and
 so shape later prompts.
 
+**A missing optional library.** The command that Q30 and Q38 ask for is one text,
+`contracts.run_with_extra(extra)`:
+
+    uv run --extra live python -m titlestd <command> ...
+    uv run --extra local python -m titlestd <command> ...
+
+It installs the extra into the project environment and runs the program there, in one step;
+both extras are given as `--extra live --extra local`. A provider whose library cannot be
+imported raises a `TitlestdError` whose message holds that text; the switch lets it through,
+and the README gives the same command. Two other forms were ruled out. The project is not an
+installable distribution (`package = false`, no build system), so there is no `pip install`
+of an extra. And `uv sync --extra <name>` only installs: the `python3 -m titlestd` of a bare
+run still cannot import the library, because it does not use `.venv`, and the exact sync
+removes the other extra.
+
 ### S10. An answer that is not usable
 
 `choose` and `review` answers have one more kind beside those of Q15: `invalid`, with a detail
@@ -1411,9 +1433,19 @@ leftover that Q25 and Q26 bar from a generic role without their being widely hel
 There is exactly one final decision per title row. It carries the table row it is counted in
 (Q16), who chose the role (look-up, person, machine, code, or nobody), the role, the status,
 the persona and the simulated mark, the path's error rate where Q05 asks for it, and the
-exception reason when the title stays on its legacy title. A look-up hit has status Approved
-(Q13) but no persona and no simulated mark: the seed file names no person, and it is input
-data, not a decision simulated during the run.
+exception reason when the title stays on its legacy title.
+
+A look-up hit has status Approved (Q13). Approved means "A named person decided it" (1.9), so
+its `decided_by` is not left empty: it carries the fixed label "Seed look-up (mock data)"
+(`contracts.LOOKUP_DECIDED_BY`) in place of a persona. Within one run only a seed entry can
+be hit, because every title row is decided once, and the seed file names no person. It has no
+simulated mark: it is input data, not a decision simulated during the run. This is the one
+case in which an Approved row carries no persona, as Q05 and Q27 say.
+
+The result of a run (`RunResult`) carries, beside the decisions, the two things the report
+prints that the decisions do not hold: the Wave 1 list, for the "sent to a person" line of
+Q16, and the number of employees with no grade who received a new title, the second count of
+Q05. The report reads no data file.
 
 ### S12. The review-queue file
 

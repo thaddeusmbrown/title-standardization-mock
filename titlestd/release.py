@@ -15,8 +15,9 @@ time: two runs give the same bytes (Q06).
 load.csv has one row per employee who receives a new title; reverse.csv has
 the same employees with the job title as received, byte for byte;
 exceptions.csv lists every employee left on a legacy title (released = 0) and
-every employee with no grade (released = 1, reason "no grade"). load.csv plus
-the released = 0 exceptions cover every employee exactly once (Q05).
+every employee with no grade who received a new title (released = 1, reason
+"no grade"), one row per employee. load.csv plus the released = 0 exceptions
+cover every employee exactly once (Q05).
 
 The writer refuses any title that titlestd.catalog.is_catalog_title rejects.
 """
@@ -41,7 +42,7 @@ LOAD_COLUMNS = (
     "path",  # the table row that released the title
     "error_rate",  # wrong/audited of the path; only for Provisional from an audited path
     "no_grade",  # 1 or 0
-    "decided_by",  # the persona, on a person's decision
+    "decided_by",  # the persona on a person's decision; LOOKUP_DECIDED_BY on a look-up hit
     "simulated",  # 1 on every simulated person's decision, otherwise 0
 )
 REVERSE_FILE = "reverse.csv"

@@ -44,6 +44,20 @@ def recorded_label(date: str, model: str) -> str:
     return f"recorded {date}, {model}"
 
 
+# --- Optional libraries (2.5, Q38, S09) ---------------------------------------
+
+
+def run_with_extra(extra: str) -> str:
+    """The command that installs an optional extra and runs the program with it.
+
+    extra is "live" or "local". A provider whose library is missing stops with
+    a message holding this text, followed by the command and settings to run.
+    The package is not installed and a bare python3 never sees what uv puts
+    in .venv, so the command has to install and run in one step (S09).
+    """
+    return f"uv run --extra {extra} python -m titlestd"
+
+
 class TitlestdError(Exception):
     """An error whose message is meant for the person running the program.
 
@@ -573,6 +587,11 @@ class TableRow(StrEnum):
     LEGACY = "left on legacy title"
 
 
+# Who decided a look-up hit, in place of a persona (S11). Within one run only
+# the seed look-up can be hit, and that file names no person.
+LOOKUP_DECIDED_BY = "Seed look-up (mock data)"
+
+
 class DecisionSource(StrEnum):
     """Who or what chose the role of a decision."""
 
@@ -600,10 +619,12 @@ class Decision:
 
     row says where the title is counted in the table. role_id and status are
     None exactly when row is LEGACY, and legacy_reason is set exactly then.
-    decided_by names the persona when source is PERSON and is empty otherwise.
-    simulated is True on every simulated person's decision. error_rate is the
-    path's wrong/audited share and is set only when status is PROVISIONAL
-    because an audited path missed the bar.
+    decided_by names the persona when source is PERSON, is LOOKUP_DECIDED_BY
+    when source is LOOKUP and is empty otherwise, so every Approved decision
+    says who decided it (1.9, S11). simulated is True on every simulated
+    person's decision and on nothing else. error_rate is the path's
+    wrong/audited share and is set only when status is PROVISIONAL because an
+    audited path missed the bar.
     """
 
     key: TitleKey
@@ -686,10 +707,19 @@ class QueueEntry:
 
 @dataclass(frozen=True, slots=True)
 class RunResult:
-    """Everything a finished run produced, for the report, the state file and tests."""
+    """Everything a finished run produced, for the report, the state file and tests.
+
+    The report is rendered from this alone. It reads no data file, so the two
+    things it prints that the decisions do not hold are carried here: the
+    Wave 1 list and the count of employees with no grade (Q05, Q16).
+    """
 
     rows: tuple[TitleRow, ...]
     employee_count: int
+    # Employees with no grade who received a new title, with no level word:
+    # the released = 1 rows of the exceptions list (2.4, Q05).
+    no_grade_employees: int
+    wave1_keys: tuple[TitleKey, ...]  # the Wave 1 list, sorted (Q24)
     decisions: tuple[Decision, ...]  # exactly one per title row, sorted by key
     audits: tuple[AuditResult, ...]  # one per machine path
     golden_keys: tuple[TitleKey, ...]

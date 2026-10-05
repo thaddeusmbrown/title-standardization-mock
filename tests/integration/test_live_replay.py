@@ -913,24 +913,22 @@ def test_no_key_reaches_a_recording(sdk, world, settings, miniature):
 
 
 def test_what_the_api_reports_as_the_model_is_kept_for_information_only(sdk, world, tmp_path):
-    # Owner decision 8: the alias reports a dated ID; the key and the label
-    # use the configured string.
+    # Owner decision 8: the API reports its own ID for an alias. It is kept as
+    # information; the key and the label use the configured string.
+    as_reported = "claude-haiku-4-5-as-the-api-reports-it"
     chosen = Settings(
         llm="anthropic", llm_model="claude-haiku-4-5", recording_dir=tmp_path / "recordings"
     )
     fields = {"answer": "no_match", "number": None, "quote": "treasury analyst"}
     said = message([{"type": "text", "text": json.dumps(fields)}], "end_turn")
-    said["model"] = "claude-haiku-4-5-20251001"
+    said["model"] = as_reported
     llm = live.build_llm(chosen, FINGERPRINT, client=sdk.client(lambda body: said))
     record, roles = TREASURY_IN_SALES.record, ()
     assert llm.chooser.choose(record, roles).answer is ChooseKind.NO_MATCH
     llm.finish()
     folder = chosen.recording_dir / "claude-haiku-4-5" / "offline"
     (entry,) = lines(folder / CHOOSE_FILE)
-    assert (entry["model"], entry["reported_model"]) == (
-        "claude-haiku-4-5",
-        "claude-haiku-4-5-20251001",
-    )
+    assert (entry["model"], entry["reported_model"]) == ("claude-haiku-4-5", as_reported)
     assert entry["key"] == recording.request_key(
         "choose", "claude-haiku-4-5", recording.choose_request(record, roles)
     )

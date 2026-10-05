@@ -402,9 +402,10 @@ def test_everything_the_program_sets_is_in_the_key(path, value):
 def test_the_step_the_model_and_the_key_version_are_in_the_key(monkeypatch):
     key = request_key(STEP_REVIEW, MODEL, REVIEW)
     assert request_key(STEP_CHOOSE, MODEL, REVIEW) != key
-    # The model as configured: an alias and its dated id are two models here (Q33).
+    # The model exactly as configured (Q33): any other spelling is another key.
+    assert request_key(STEP_REVIEW, "claude-haiku-4-5", REVIEW) != key
     assert request_key(STEP_REVIEW, "claude-haiku-4-5", REVIEW) != request_key(
-        STEP_REVIEW, "claude-haiku-4-5-20251001", REVIEW
+        STEP_REVIEW, "Claude-Haiku-4-5", REVIEW
     )
     monkeypatch.setattr(recording, "KEY_VERSION", recording.KEY_VERSION + 1)
     assert request_key(STEP_REVIEW, MODEL, REVIEW) != key

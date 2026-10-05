@@ -245,8 +245,16 @@ def test_the_module_imports_the_two_libraries_only_inside_a_function():
                 names.add(node.module)
         return names
 
-    # At module level: the standard library, the contracts and the settings.
-    assert imported(tree.body) == {
+    def outside_functions(node):
+        """Everything that runs when the module is imported: all but the
+        bodies of functions. An import under try or if is among it (S15)."""
+        for child in ast.iter_child_nodes(node):
+            if not isinstance(child, ast.FunctionDef | ast.AsyncFunctionDef | ast.Lambda):
+                yield child
+                yield from outside_functions(child)
+
+    # On import: the standard library, the contracts and the settings.
+    assert imported(outside_functions(tree)) == {
         "__future__",
         "collections.abc",
         "math",

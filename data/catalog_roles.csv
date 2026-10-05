@@ -1,0 +1,57 @@
+role_id,family_code,role_name,short_name,definition,compliance_flag,is_generic
+SAL-01,SAL,Account Manager,Acct Mgr,Manages a portfolio of customer accounts and renews customer contracts.,0,0
+SAL-02,SAL,Sales Representative,Sales Rep,Sells products to new customers and closes deals.,0,0
+SAL-03,SAL,Sales Operations Analyst,Sales Ops Analyst,Maintains sales forecasts and territories and prepares pipeline reports.,0,0
+SAL-04,SAL,Sales Engineer,Sales Eng,Explains the technical side of products during a sale and runs product demonstrations.,0,0
+SAL-05,SAL,Business Development Representative,Biz Dev Rep,Finds new sales leads by outreach and qualifies leads for the sales team.,0,0
+SAL-06,SAL,Customer Success Manager,Cust Success Mgr,Helps existing customers adopt products and keeps customers satisfied after the sale.,0,0
+SAL-GEN,SAL,Sales,Sales,Generic role for the Sales family.,0,1
+FIN-01,FIN,Financial Analyst,Fin Analyst,Builds budgets and forecasts and explains variances against plan.,0,0
+FIN-02,FIN,Accountant,Accountant,Keeps the general ledger and prepares monthly accounts.,0,0
+FIN-03,FIN,Payroll Specialist,Payroll Spec,Runs payroll and resolves pay queries.,0,0
+FIN-04,FIN,Internal Auditor,Int Auditor,Tests internal controls and reports findings to the audit committee.,1,0
+FIN-05,FIN,Accounts Payable Clerk,AP Clerk,Processes supplier invoices and schedules payments.,0,0
+FIN-06,FIN,Treasury Analyst,Treasury Analyst,Manages cash positions and bank accounts and arranges short-term funding.,0,0
+FIN-GEN,FIN,Finance,Finance,Generic role for the Finance family.,0,1
+HRS-01,HRS,Recruiter,Recruiter,Sources candidates and fills open positions.,0,0
+HRS-02,HRS,Human Resources Business Partner,HR Business Partner,Advises managers on staffing and performance and handles employee relations cases.,0,0
+HRS-03,HRS,Compensation Analyst,Comp Analyst,Benchmarks pay against the market and maintains salary bands.,0,0
+HRS-04,HRS,Benefits Administrator,Benefits Admin,Enrols employees in health and retirement plans and answers benefits questions.,0,0
+HRS-05,HRS,Training Specialist,Training Spec,Designs training courses and delivers courses to employees.,0,0
+HRS-06,HRS,Human Resources Coordinator,HR Coord,Keeps employee records and schedules onboarding for new hires.,0,0
+HRS-GEN,HRS,Human Resources,HR,Generic role for the Human Resources family.,0,1
+TEC-01,TEC,Software Engineer,Software Eng,Designs and writes application code and reviews changes before release.,0,0
+TEC-02,TEC,Data Analyst,Data Analyst,Queries data and builds dashboards and explains trends to the business.,0,0
+TEC-03,TEC,Systems Administrator,Sys Admin,Runs servers and networks and manages user accounts.,0,0
+TEC-04,TEC,Help Desk Technician,Help Desk Tech,Resolves hardware and software problems for employees and sets up laptops and phones.,0,0
+TEC-05,TEC,Security Analyst,Security Analyst,Monitors systems for threats and investigates security incidents.,0,0
+TEC-06,TEC,Quality Assurance Engineer,QA Eng,Writes test plans and verifies releases before launch.,0,0
+TEC-GEN,TEC,Technology,Technology,Generic role for the Technology family.,0,1
+OPS-01,OPS,Operations Manager,Ops Mgr,Runs daily site operations and improves processes.,0,0
+OPS-02,OPS,Supply Chain Analyst,Supply Chain Analyst,Plans inventory levels and analyses supplier performance.,0,0
+OPS-03,OPS,Warehouse Operator,Whse Operator,Picks and packs orders and loads goods for shipment.,0,0
+OPS-04,OPS,Logistics Coordinator,Logistics Coord,Schedules shipments and tracks deliveries with carriers.,0,0
+OPS-05,OPS,Procurement Specialist,Procurement Spec,Sources suppliers and negotiates prices and issues purchase orders.,0,0
+OPS-06,OPS,Safety Inspector,Safety Insp,Inspects sites for hazards and enforces safety regulations.,1,0
+OPS-GEN,OPS,Operations,Ops,Generic role for the Operations family.,0,1
+MKT-01,MKT,Marketing Manager,Mktg Mgr,Plans campaigns and manages the marketing budget.,0,0
+MKT-02,MKT,Content Writer,Content Writer,Writes articles and web pages and edits product copy.,0,0
+MKT-03,MKT,Graphic Designer,Graphic Designer,Creates visual designs for campaigns and maintains brand materials.,0,0
+MKT-04,MKT,Digital Marketing Specialist,Digital Mktg Spec,Runs paid search and email campaigns and manages social media channels.,0,0
+MKT-05,MKT,Market Research Analyst,Mkt Research Analyst,Surveys customers and analyses market trends and competitors.,0,0
+MKT-06,MKT,Communications Specialist,Comms Spec,Prepares press releases and writes internal announcements.,0,0
+MKT-GEN,MKT,Marketing,Mktg,Generic role for the Marketing family.,0,1
+LEG-01,LEG,Corporate Counsel,Corp Counsel,Advises the business on contracts and disputes and interprets corporate law.,0,0
+LEG-02,LEG,Paralegal,Paralegal,Prepares legal documents and supports counsel on filings.,0,0
+LEG-03,LEG,Compliance Officer,Compliance Officer,Monitors adherence to regulations and reports breaches to regulators.,1,0
+LEG-04,LEG,Contracts Administrator,Contracts Admin,Drafts commercial contracts and tracks renewal dates.,0,0
+LEG-05,LEG,Privacy Analyst,Privacy Analyst,Assesses how personal data is handled and answers data subject requests.,0,0
+LEG-06,LEG,Risk Analyst,Risk Analyst,Assesses operational and regulatory risks and maintains the risk register.,0,0
+LEG-GEN,LEG,Legal,Legal,Generic role for the Legal family.,0,1
+CUS-01,CUS,Customer Service Representative,Cust Svc Rep,"Answers customer questions by phone, email and chat and logs each contact.",0,0
+CUS-02,CUS,Product Support Specialist,Product Support Spec,Troubleshoots product problems reported by customers and documents fixes.,0,0
+CUS-03,CUS,Call Center Supervisor,Call Ctr Supv,Supervises a team of agents and monitors call quality.,0,0
+CUS-04,CUS,Billing Specialist,Billing Spec,Resolves invoice disputes and adjusts customer bills.,0,0
+CUS-05,CUS,Customer Experience Analyst,Cust Experience Analyst,Analyses satisfaction surveys and reports complaint trends.,0,0
+CUS-06,CUS,Returns Coordinator,Returns Coord,Processes product returns and arranges refunds and exchanges.,0,0
+CUS-GEN,CUS,Customer Service,Cust Svc,Generic role for the Customer Service family.,0,1

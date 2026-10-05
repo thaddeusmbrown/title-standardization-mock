@@ -1,0 +1,1501 @@
+employee_id,job_title,job_family_code,department,grade,job_description
+E0001,Associate Human Resources Coord.,HRS,People Operations,5,
+E0002,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0003,Senior Product Support Specialist,CUS,Product Support,7,Troubleshoots product problems reported by customers and documents fixes.
+E0004,crm administrator,SAL,Sales Operations,6,Maintains sales forecasts and territories and prepares pipeline reports.
+E0005,Senior Compliance Analyst - CHI,LEG,Compliance,9,Reports breaches to regulators and monitors adherence to regulations.
+E0006,Office Manager,ADM,Site Operations,4,Runs the front office and orders supplies.
+E0007,Compliance Officer,LEG,Compliance,10,Trains staff on the code of conduct and reviews policies each year.
+E0008,Sr. Acct. Mgr.,SAL,Enterprise Sales,7,Full-time position based at the main office.
+E0009,RISK ANALYST #16838 (BOS),LEG,Compliance,6,Assesses operational and regulatory risks and reports exposures to the board.
+E0010,Graphic Artist,MKT,Brand,4,Lays out presentations and prepares artwork for print and web.
+E0011,Payroll Specialist,FIN,Accounting,5,Runs payroll and checks timesheets and deductions.
+E0012,Software Engineer - CHI,TEC,Engineering,5,Duties vary with the needs of the department.
+E0013,ACCOUNTANT #53601,FIN,Accounting,8,Prepares monthly accounts and keeps the general ledger.
+E0014,Data Entry Clerk,TBD,People Operations,5,
+E0015,Call Center Supv. - ATL,CUS,Contact Center,1,Supervises a team of agents and monitors call quality.
+E0016,Key Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0017,Graphic Designer II (#530503),MKT,Brand,8,Creates visual designs for campaigns and prepares artwork for print and web.
+E0018,GRAPHIC DESIGNER,MKT,Brand,9,
+E0019,Sr Help Desk Tech,TEC,Data,8,
+E0020,Account Manager,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E0021,Jr. Logistics Coord.,OPS,Distribution,2,Tracks deliveries with carriers and schedules shipments.
+E0022,"Software Engineer, SGP",TEC,Engineering,9,Duties vary with the needs of the department.
+E0023,"Junior Systems Engineer, NYC",TEC,Information Security,3,Runs servers and networks and manages user accounts.
+E0024,CUSTOMER SVC REP,CUS,Contact Center,9,
+E0025,Biz Dev Rep,SAL,Inside Sales,6,Qualifies leads for the sales team and books first meetings with prospects.
+E0026,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0027,SR CUST SUCCESS MGR,SAL,Customer Success,7,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0028,Payroll Specialist,FIN,Accounting,10,Runs payroll and checks timesheets and deductions.
+E0029,Cust Svc Rep II,CUS,Service Quality,4,"Answers customer questions by phone, email and chat and logs each contact."
+E0030,Warehouse Operator,OPS,Distribution,10,Picks and packs orders and loads goods for shipment.
+E0031,Product Support Specialist III (SEA),CUS,Product Support,8,Documents fixes and troubleshoots product problems reported by customers.
+E0032,Corp Recruiter,HRS,Talent Acquisition,7,Sources candidates and fills open positions.
+E0033,SENIOR PROCUREMENT SPECIALIST - NYC #981300,OPS,Purchasing,2,Sources suppliers and negotiates prices and runs tenders.
+E0034,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E0035,Cash Mgr. II - SGP REQ-931453,FIN,Treasury,5,Manages cash positions and bank accounts and arranges short-term funding.
+E0036,CUSTOMER SVC REP,CUS,Contact Center,10,
+E0037,Customer Success Manager,SAL,Customer Success,10,Runs onboarding and regular check-ins and works to reduce churn.
+E0038,"Senior Accounts Payable Clerk, SEA",FIN,Accounting,7,Matches invoices to purchase orders and answers vendor questions about remittances.
+E0039,In-House Lawyer - DEN,LEG,Legal Affairs,5,Interprets corporate law and advises the business on contracts and disputes.
+E0040,JUNIOR PRIVACY ANALYST,LEG,Privacy Office,3,Checks new systems for privacy gaps and keeps the record of processing.
+E0041,Cyber Threat Specialist,TEC,Information Security,2,Monitors systems for threats and investigates security incidents.
+E0042,Presales Eng II,SAL,Enterprise Sales,6,Runs product demonstrations and explains the technical side of products during a sale.
+E0043,Senior Compliance Analyst - CHI,LEG,Compliance,8,Reports breaches to regulators and monitors adherence to regulations.
+E0044,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0045,Paralegal - NYC REQ-716874,LEG,Legal Affairs,3,Prepares legal documents and keeps case files in order.
+E0046,Corporate Counsel III - LDN,LEG,Contracts,7,Advises the business on contracts and disputes and interprets corporate law.
+E0047,LOGISTICS COORDINATOR,OPS,Distribution,4,Schedules shipments and resolves delays with transport partners.
+E0048,"TRAINING SPECIALIST, SGP",HRS,Learning,8,Delivers courses to employees and designs training courses.
+E0049,Customer Experience Analyst II REQ-544870 (ATL),CUS,Service Quality,6,Analyses satisfaction surveys and reports complaint trends.
+E0050,Senior Mkt. Research Analyst,MKT,Market Insights,5,Analyses market trends and competitors and surveys customers.
+E0051,Help Desk Technician #700837 (SGP),TEC,Service Desk,8,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0052,Senior Training Specialist,HRS,Talent Acquisition,8,Designs training courses and delivers courses to employees.
+E0053,Operations Manager III (NYC),OPS,Site Operations,7,Runs daily site operations and improves processes.
+E0054,Senior Billing Specialist - DEN REQ-579865,CUS,Billing Services,7,Adjusts customer bills and issues credit notes.
+E0055,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,7,Runs onboarding and regular check-ins and works to reduce churn.
+E0056,Prin Payroll Spec - ATL,FIN,Accounting,10,Resolves pay queries and checks timesheets and deductions.
+E0057,MKT. ANALYST (SEA),MKT,Market Insights,8,
+E0058,Sales Dev Rep III,SAL,Inside Sales,7,Qualifies leads for the sales team and books first meetings with prospects.
+E0059,Logistics Coord.,OPS,Distribution,3,Schedules shipments and resolves delays with transport partners.
+E0060,SENIOR RETURNS COORDINATOR,CUS,Billing Services,8,Arranges refunds and exchanges and checks returned goods.
+E0061,Associate Account Manager,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E0062,Systems Administrator,TEC,Infrastructure,9,
+E0063,business development representative,SAL,Inside Sales,3,Qualifies leads for the sales team and books first meetings with prospects.
+E0064,Senior Market Research Analyst,MKT,Market Insights,7,Analyses market trends and competitors and surveys customers.
+E0065,Warehouse Operator,OPS,Distribution,2,Picks and packs orders and loads goods for shipment.
+E0066,Sr HR Business Partner,HRS,People Operations,3,Handles employee relations cases and supports reorganisations.
+E0067,COMPENSATION ANALYST 2 REQ-669926,HRS,Talent Acquisition,4,Maintains salary bands and prepares the annual bonus cycle.
+E0068,prin programmer #33452 (LDN),TEC,Engineering,10,Designs and writes application code and reviews changes before release.
+E0069,Sr. Sys. Admin. - SGP,TEC,Infrastructure,8,Runs servers and networks and manages user accounts.
+E0070,jr acct mgr,SAL,Inside Sales,2,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0071,"Human Resources Partner I, SEA",HRS,People Operations,1,Assists the group and takes on other tasks as assigned.
+E0072,Paralegal REQ-61535,LEG,Legal Affairs,7,Prepares legal documents and keeps case files in order.
+E0073,Client Onboarding Advisor,SAL,Customer Success,1,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0074,Lead Compliance Officer,LEG,Privacy Office,9,Monitors adherence to regulations and reports breaches to regulators.
+E0075,senior sales representative - BOS,SAL,Customer Success,7,Meets a monthly quota and works an assigned territory by phone and in person.
+E0076,senior digital marketing specialist,MKT,Digital Marketing,8,Manages social media channels and tracks clicks and conversions.
+E0077,Communications Specialist,MKT,Digital Marketing,10,Prepares press releases and writes internal announcements.
+E0078,SENIOR BUSINESS DEVELOPMENT SPECIALIST,SAL,Inside Sales,8,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0079,"TRAINING SPECIALIST, SGP",HRS,Learning,5,Delivers courses to employees and designs training courses.
+E0080,Senior Procurement Officer #780919 (SEA),OPS,Purchasing,8,Sources suppliers and negotiates prices and issues purchase orders.
+E0081,Sales Representative - BOS #726618,SAL,Inside Sales,1,Sells products to new customers and works an assigned territory by phone and in person.
+E0082,Junior Refunds Administrator,CUS,Billing Services,3,Processes product returns and arranges refunds and exchanges.
+E0083,Returns Coord,CUS,Billing Services,5,
+E0084,Systems Administrator - LDN,TEC,Infrastructure,4,
+E0085,Safety Insp II REQ-255555,OPS,Health and Safety,6,Inspects sites for hazards and enforces safety regulations.
+E0086,CUSTOMER SERVICE REPRESENTATIVE II,CUS,Contact Center,5,"Answers customer questions by phone, email and chat and logs each contact."
+E0087,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0088,DATA ANALYST,TEC,Data,6,Explains trends to the business and cleans and joins data sets.
+E0089,CUSTOMER SVC REP,CUS,Contact Center,10,
+E0090,Contracts Specialist (BOS),LEG,Compliance,7,Drafts commercial contracts and tracks renewal dates.
+E0091,operations manager #230189,OPS,Site Operations,9,
+E0092,senior data specialist - BOS,TEC,Data,8,Contributes to departmental objectives and ad hoc projects.
+E0093,Technical Presales Consultant II - BOS #949408,SAL,Sales Operations,8,
+E0094,DIGITAL MARKETING COORDINATOR III - Remote,MKT,Digital Marketing,7,
+E0095,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E0096,Contracts Administrator II,LEG,Contracts,9,Tracks renewal dates and drafts commercial contracts.
+E0097,Billing Spec 1,CUS,Billing Services,3,Resolves invoice disputes and issues credit notes.
+E0098,SR. SALES ENGINEER,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E0099,LEAD ACCOUNTS PAYABLE CLERK #137257,FIN,Internal Audit,9,Matches invoices to purchase orders and answers vendor questions about remittances.
+E0100,SR. CUSTOMER SERVICE REPRESENTATIVE - SEA,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat."
+E0101,JR LOGISTICS COORDINATOR,OPS,Distribution,5,Tracks deliveries with carriers and schedules shipments.
+E0102,Sales Rep,SAL,Inside Sales,1,Sells products to new customers and works an assigned territory by phone and in person.
+E0103,Contracts Specialist (BOS),LEG,Compliance,5,Drafts commercial contracts and tracks renewal dates.
+E0104,"RISK ANALYST II, SYD",LEG,Privacy Office,6,Assesses operational and regulatory risks and maintains the risk register.
+E0105,senior sales representative - BOS,SAL,Customer Success,7,Meets a monthly quota and works an assigned territory by phone and in person.
+E0106,Senior Security Analyst,TEC,Engineering,5,Investigates security incidents and reviews access rights.
+E0107,marketing manager #104097 (Remote),MKT,Brand,7,Presents results to leadership and plans campaigns.
+E0108,Compliance Officer,LEG,Compliance,8,Trains staff on the code of conduct and reviews policies each year.
+E0109,Warehouse Operator II,OPS,Distribution,6,Loads goods for shipment and drives a forklift.
+E0110,lead sales rep,SAL,Inside Sales,9,
+E0111,DATA ANALYST,TEC,Data,9,Explains trends to the business and cleans and joins data sets.
+E0112,Mkt Research Analyst II - Remote,MKT,Market Insights,5,Analyses market trends and competitors and surveys customers.
+E0113,Buyer REQ-683283 (SGP),OPS,Purchasing,4,Issues purchase orders and sources suppliers and negotiates prices.
+E0114,Billing Specialist - SYD,CUS,Service Quality,1,Resolves invoice disputes and adjusts customer bills.
+E0115,Call Center Supv. - ATL,CUS,Contact Center,3,Supervises a team of agents and monitors call quality.
+E0116,Systems Administrator,TEC,Infrastructure,2,
+E0117,COMPENSATION ANALYST II REQ-594705,HRS,Total Rewards,6,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0118,Treasury Analyst,FIN,Treasury,5,Executes currency trades and manages cash positions and bank accounts.
+E0119,Sr Payroll Spec,FIN,Accounting,8,Files wage tax returns and checks timesheets and deductions.
+E0120,senior security analyst - BOS,TEC,Information Security,8,
+E0121,CONTRACTS ADMIN - SYD,LEG,Contracts,8,Drafts commercial contracts and tracks renewal dates.
+E0122,Consumer Insights Specialist - SEA,MKT,Market Insights,1,
+E0123,SALES ENGINEER (BOS),SAL,Sales Operations,9,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0124,CUSTOMER SVC REP,CUS,Contact Center,6,
+E0125,Paralegal II,LEG,Legal Affairs,3,Supports counsel on filings and prepares legal documents.
+E0126,Transport Coord II,OPS,Distribution,6,Schedules shipments and tracks deliveries with carriers.
+E0127,Account Executive,SAL,Enterprise Sales,4,Renews customer contracts and manages a portfolio of customer accounts.
+E0128,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,1,Schedules payments and processes supplier invoices.
+E0129,training specialist i,HRS,Learning,1,Designs training courses and delivers courses to employees.
+E0130,LEAD SALES REPRESENTATIVE,SAL,Enterprise Sales,9,
+E0131,Junior Sales Operations Analyst,SAL,Sales Operations,3,
+E0132,Senior Customer Service Agent - CHI,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat. Questions to liora.merriweather@example.com."
+E0133,SITE HAZARD ADVISOR II (REQ-466878),OPS,Health and Safety,6,Inspects sites for hazards and enforces safety regulations.
+E0134,Procurement Spec,OPS,Purchasing,5,Sources suppliers and negotiates prices and issues purchase orders.
+E0135,Content Writer,MKT,Digital Marketing,2,Writes articles and web pages and interviews experts for stories.
+E0136,Key Acct Mgr,SAL,Inside Sales,7,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0137,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0138,Sr Comp Analyst,HRS,Total Rewards,7,Benchmarks pay against the market and maintains salary bands.
+E0139,Compliance Officer,LEG,Compliance,8,Trains staff on the code of conduct and reviews policies each year.
+E0140,Corporate Counsel,LEG,Legal Affairs,1,Interprets corporate law and reviews board papers. Reports to Odalys Larkspur.
+E0141,"TRAINING SPECIALIST, SGP",HRS,Learning,3,Delivers courses to employees and designs training courses.
+E0142,SENIOR CORPORATE COUNSEL - LDN,LEG,Legal Affairs,8,Advises the business on contracts and disputes and interprets corporate law.
+E0143,GRAPHIC DESIGNER,MKT,Brand,9,
+E0144,Jr Call Ctr Supv,CUS,Contact Center,3,Monitors call quality and supervises a team of agents.
+E0145,Senior Copywriter,MKT,Digital Marketing,8,Writes articles and web pages and keeps a publishing calendar.
+E0146,GRAPHIC ARTIST,MKT,Brand,3,Lays out presentations and prepares artwork for print and web.
+E0147,Systems Administrator II,TEC,Infrastructure,6,Runs servers and networks and automates backups.
+E0148,Shift Supv - Remote,OPS,Health and Safety,1,Improves processes and sets shift plans and staffing.
+E0149,Principal Data Protection Advisor - SYD REQ-787181,LEG,Legal Affairs,10,Assesses how personal data is handled and keeps the record of processing.
+E0150,Corp Recruiter,HRS,Talent Acquisition,8,Sources candidates and fills open positions.
+E0151,Payroll Specialist,FIN,Accounting,7,Runs payroll and checks timesheets and deductions.
+E0152,Controls Assurance Specialist III,FIN,Corporate Finance,8,Plans audit fieldwork and follows up on agreed actions.
+E0153,Sales Rep,SAL,Inside Sales,10,Sells products to new customers and works an assigned territory by phone and in person.
+E0154,QA. Eng. II,TEC,Engineering,6,Writes test plans and automates regression tests.
+E0155,Payroll Specialist 3,FIN,Accounting,4,Contributes to departmental objectives and ad hoc projects.
+E0156,SALES ENGINEER (BOS),SAL,Sales Operations,8,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0157,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E0158,Procurement Spec II,OPS,Purchasing,5,Runs tenders and reviews supplier agreements.
+E0159,"RETURNS COORDINATOR, SENIOR",CUS,Billing Services,7,Processes product returns and arranges refunds and exchanges.
+E0160,Warehouse Operator I - DEN,OPS,Distribution,2,Picks and packs orders and loads goods for shipment.
+E0161,WHSE PICKER II,OPS,Distribution,5,
+E0162,"Marketing Campaign Manager, Senior",MKT,Brand,8,
+E0163,Site Operations Manager,OPS,Site Operations,7,Improves processes and runs daily site operations.
+E0164,SECURITY ANALYST II (REQ-462411),TEC,Data,4,Duties vary with the needs of the department. Reports to Kasimir Quillfeather.
+E0165,Risk Analyst III (#317246),LEG,Compliance,7,Assesses operational and regulatory risks and maintains the risk register.
+E0166,SALES ENG,SAL,Enterprise Sales,,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0167,"Software Tester, Sr.",TEC,Engineering,7,
+E0168,Legal Assistant,LEG,Contracts,4,Supports counsel on filings and prepares legal documents.
+E0169,Sales Rep II,SAL,Inside Sales,5,Closes deals and sells products to new customers.
+E0170,BUSINESS DEVELOPMENT REPRESENTATIVE II,SAL,Inside Sales,5,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0171,People Biz Partner II,HRS,People Operations,5,Handles employee relations cases and supports reorganisations.
+E0172,Solutions Engineer III,SAL,Enterprise Sales,8,
+E0173,Jr. Social Media Coord.,MKT,Digital Marketing,1,
+E0174,"Software Eng 1, BOS",TEC,Engineering,2,Designs and writes application code and reviews changes before release.
+E0175,QA Eng,TEC,Engineering,4,Verifies releases before launch and writes test plans.
+E0176,CUSTOMER SVC REP,CUS,Contact Center,6,
+E0177,Corporate Recruiter,HRS,Talent Acquisition,3,Sources candidates and fills open positions.
+E0178,Account Manager,SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0179,Controls Assurance Specialist,FIN,Corporate Finance,10,Tests internal controls and follows up on agreed actions.
+E0180,Warehouse Operator,OPS,Distribution,4,Picks and packs orders and loads goods for shipment.
+E0181,Paralegal REQ-61535,LEG,Legal Affairs,9,Prepares legal documents and keeps case files in order.
+E0182,Analyst,FIN,Corporate Finance,1,
+E0183,HUMAN RESOURCES BUSINESS PARTNER - NYC #838400,HRS,People Operations,8,Advises managers on staffing and performance and handles employee relations cases.
+E0184,"Field Svc. Tech., Sr.",CUS,Product Support,8,Documents fixes and troubleshoots product problems reported by customers.
+E0185,Senior Logistics Coordinator,OPS,Distribution,8,
+E0186,Paralegal 2,LEG,Legal Affairs,6,Supports counsel on filings and prepares legal documents.
+E0187,Accounts Payable Administrator,FIN,Accounting,1,Carries out the duties of the post as directed.
+E0188,Returns Coordinator,CUS,Billing Services,10,
+E0189,senior benefits coordinator,HRS,Total Rewards,7,
+E0190,Site Operations Manager,OPS,Site Operations,7,Improves processes and runs daily site operations.
+E0191,"corporate counsel ii, BOS",LEG,Legal Affairs,4,Interprets corporate law and advises the business on contracts and disputes.
+E0192,digital mktg. spec.,MKT,Digital Marketing,6,Runs paid search and email campaigns and tracks clicks and conversions.
+E0193,Sr Corp Recruiter,HRS,Talent Acquisition,7,Sources candidates and fills open positions.
+E0194,JR. SUPPLY CHAIN ANALYST,OPS,Supply Chain,2,Analyses supplier performance and plans inventory levels.
+E0195,Software Eng. II - SYD #321188,TEC,Engineering,5,
+E0196,benefits administrator ii REQ-510317,HRS,Total Rewards,4,Processes leave requests and enrols employees in health and retirement plans.
+E0197,Whse. Operator #953660 (ATL),OPS,Distribution,3,Picks and packs orders and loads goods for shipment.
+E0198,LEAD COPYWRITER,MKT,Digital Marketing,9,Carries out the duties of the post as directed. Questions to bramwell.fennimore@example.com.
+E0199,training spec,HRS,Learning,9,Delivers courses to employees and designs training courses.
+E0200,principal financial analyst REQ-73070 (SGP),FIN,Accounting,1,Builds budgets and forecasts and models revenue and cost scenarios.
+E0201,Billing Specialist,CUS,Billing Services,2,Resolves invoice disputes and adjusts customer bills.
+E0202,Operator,OPS,Distribution,3,
+E0203,Sr Cust Success Mgr (#333210),SAL,Customer Success,3,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0204,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,5,Closes deals and sells products to new customers.
+E0205,"Financial Analyst, Senior",FIN,Corporate Finance,7,
+E0206,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E0207,Biz Dev Rep,SAL,Inside Sales,9,Qualifies leads for the sales team and books first meetings with prospects.
+E0208,Help Desk Technician,TEC,Service Desk,10,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0209,Billing Spec 2,CUS,Billing Services,4,Adjusts customer bills and explains charges to callers.
+E0210,Senior Corporate Recruiter - CHI,HRS,Talent Acquisition,7,Sources candidates and fills open positions.
+E0211,Account Manager,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E0212,Customer Svc Rep - SYD,CUS,Service Quality,7,
+E0213,TRAINING SPECIALIST 1,HRS,Learning,3,Measures course completion and maintains the learning platform.
+E0214,Payroll Specialist - LDN,FIN,Accounting,6,Runs payroll and checks timesheets and deductions.
+E0215,Account Manager (#749705),SAL,Enterprise Sales,3,Manages a portfolio of customer accounts and renews customer contracts.
+E0216,SENIOR CORPORATE COUNSEL,LEG,Legal Affairs,8,Advises the business on contracts and disputes and interprets corporate law.
+E0217,Billing Specialist,CUS,Billing Services,9,Resolves invoice disputes and adjusts customer bills.
+E0218,BRAND DIRECTOR 1,MKT,Brand,1,Manages the marketing budget and sets brand priorities with agencies.
+E0219,"Senior Sales Representative, SYD",SAL,Inside Sales,8,Meets a monthly quota and works an assigned territory by phone and in person.
+E0220,Compensation Analyst (SGP),HRS,Total Rewards,6,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0221,Ops. Mgr.,OPS,Site Operations,5,
+E0222,Key Acct Mgr,SAL,Inside Sales,1,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0223,Sr Copywriter - DEN REQ-998108,MKT,Digital Marketing,8,Writes articles and web pages and keeps a publishing calendar.
+E0224,Senior Financial Analyst REQ-703720 (SGP),FIN,Corporate Finance,8,Explains variances against plan and prepares the monthly management pack.
+E0225,content writer - ATL #560729,MKT,Digital Marketing,8,Writes articles and web pages and interviews experts for stories.
+E0226,PRODUCT SUPPORT SPECIALIST,CUS,Product Support,5,Guides users through installation and reproduces faults and raises defects.
+E0227,Software Engineer - CHI,TEC,Engineering,5,Duties vary with the needs of the department.
+E0228,crm administrator,SAL,Sales Operations,1,Maintains sales forecasts and territories and prepares pipeline reports.
+E0229,Procurement Spec,OPS,Purchasing,5,Sources suppliers and negotiates prices and issues purchase orders.
+E0230,Brand Director - CHI REQ-898978,MKT,Communications,4,Plans campaigns and presents results to leadership.
+E0231,"QA Analyst, Sr",TEC,Service Desk,7,Verifies releases before launch and automates regression tests.
+E0232,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,7,
+E0233,SYS ADMIN II #257935 (Remote),TEC,Infrastructure,5,Runs servers and networks and automates backups.
+E0234,"Satisfaction Survey Coordinator, ATL",CUS,Service Quality,8,Reports complaint trends and analyses satisfaction surveys.
+E0235,SALES ENG,SAL,Enterprise Sales,4,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0236,DATA ANALYST,TEC,Data,1,Explains trends to the business and cleans and joins data sets.
+E0237,Billing Specialist,CUS,Billing Services,9,Resolves invoice disputes and adjusts customer bills.
+E0238,"Billing Specialist 1, SYD",CUS,Product Support,3,Resolves invoice disputes and issues credit notes.
+E0239,Whse. Operator #953660 (ATL),OPS,Distribution,6,Picks and packs orders and loads goods for shipment.
+E0240,Warehouse Operator,OPS,Distribution,3,Picks and packs orders and loads goods for shipment.
+E0241,training coordinator,HRS,Learning,3,
+E0242,Jr. Backend Eng.,TEC,Data,1,Fixes defects found in production and builds services and interfaces.
+E0243,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0244,People Biz Partner II,HRS,People Operations,4,Handles employee relations cases and supports reorganisations.
+E0245,Cust. Care Rep. 2 (REQ-617058),CUS,Contact Center,6,"Logs each contact and answers customer questions by phone, email and chat."
+E0246,senior marketing mgr (LDN),MKT,Brand,8,Manages the marketing budget and presents results to leadership.
+E0247,Payroll Specialist,FIN,Accounting,6,Runs payroll and checks timesheets and deductions.
+E0248,Account Manager,SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E0249,Lead Data Spec. REQ-627524,TEC,Data,9,Explains trends to the business and queries data and builds dashboards.
+E0250,Content Writer 1,MKT,Digital Marketing,1,See the attached profile for details of this post.
+E0251,CUSTOMER SVC REP,CUS,Contact Center,1,
+E0252,OPERATIONS MANAGER II,OPS,Site Operations,4,Runs daily site operations and improves processes.
+E0253,Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0254,PRODUCT SUPPORT SPECIALIST,CUS,Product Support,4,Guides users through installation and reproduces faults and raises defects.
+E0255,Junior Contact Center Supervisor,CUS,Contact Center,9,Monitors call quality and sets rosters and breaks.
+E0256,Senior Shift Supervisor,OPS,Site Operations,7,Improves processes and runs daily site operations.
+E0257,Accounts Payable Clerk II,FIN,Accounting,5,Processes supplier invoices and schedules payments.
+E0258,Bookkeeper - ATL,FIN,Accounting,8,Works with colleagues across the company to meet agreed goals.
+E0259,SR PROCUREMENT SPEC - ATL,OPS,Purchasing,8,Sources suppliers and negotiates prices and runs tenders.
+E0260,Software Engineer - CHI,TEC,Engineering,10,Duties vary with the needs of the department.
+E0261,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E0262,Systems Administrator,TEC,Infrastructure,9,
+E0263,content writer - ATL #560729,MKT,Digital Marketing,6,Writes articles and web pages and interviews experts for stories.
+E0264,Safety Insp,OPS,Health and Safety,6,Enforces safety regulations and inspects sites for hazards.
+E0265,ACCOUNTANT #53601,FIN,Accounting,1,Prepares monthly accounts and keeps the general ledger.
+E0266,Data Analyst III - DEN REQ-628266,TEC,Data,8,
+E0267,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0268,BUDGET PLANNER (BOS),FIN,Corporate Finance,1,Prepares the monthly management pack and models revenue and cost scenarios.
+E0269,Desktop Support Technician (REQ-789397),TEC,Service Desk,1,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0270,Security Analyst,TEC,Information Security,3,Runs vulnerability scans and reviews access rights.
+E0271,Recruiter,HRS,Talent Acquisition,7,Sources candidates and fills open positions.
+E0272,Sales Engineer II,SAL,Enterprise Sales,,Runs product demonstrations and answers detailed questions from prospects.
+E0273,Ops. Mgr.,OPS,Site Operations,10,
+E0274,FINANCE ANALYST III - LDN,FIN,Treasury,6,
+E0275,SENIOR OPERATIONS MGR,OPS,Site Operations,8,Improves processes and tracks output against targets.
+E0276,Sr. Acct. Mgr.,SAL,Enterprise Sales,8,Full-time position based at the main office.
+E0277,Senior Accountant,FIN,Treasury,10,Prepares monthly accounts and reconciles balance sheet items.
+E0278,Customer Svc Rep - SYD,CUS,Service Quality,9,
+E0279,digital mktg. spec.,MKT,Digital Marketing,1,Runs paid search and email campaigns and tracks clicks and conversions.
+E0280,Senior Contracts Administrator (REQ-345244),LEG,Contracts,8,
+E0281,Paralegal REQ-61535,LEG,Legal Affairs,6,Prepares legal documents and keeps case files in order.
+E0282,SALES OPERATIONS ANALYST,SAL,Sales Operations,5,Maintains sales forecasts and territories and prepares pipeline reports.
+E0283,GRAPHIC DESIGNER III - SYD,MKT,Brand,8,
+E0284,Senior Product Support Specialist,CUS,Product Support,8,Troubleshoots product problems reported by customers and documents fixes.
+E0285,Customer Success Mgr II - SGP REQ-554746,SAL,Customer Success,6,
+E0286,associate content writer,MKT,Digital Marketing,6,Writes articles and web pages and edits product copy.
+E0287,Customer Svc Rep - SYD,CUS,Service Quality,1,
+E0288,Bookkeeper - ATL,FIN,Accounting,7,Works with colleagues across the company to meet agreed goals.
+E0289,"Senior Warehouse Operator, ATL",OPS,Distribution,7,
+E0290,Contracts Specialist II,LEG,Contracts,6,
+E0291,Recruiter,HRS,Talent Acquisition,10,Sources candidates and fills open positions.
+E0292,Demand Planner II (#985333),OPS,Supply Chain,4,Analyses supplier performance and reports on stock turns.
+E0293,CUSTOMER SVC REP,CUS,Contact Center,1,
+E0294,Graphic Designer II (#530503),MKT,Brand,6,Creates visual designs for campaigns and prepares artwork for print and web.
+E0295,Lead Technical Recruiter,HRS,Talent Acquisition,9,Fills open positions and sources candidates.
+E0296,CUSTOMER SVC REP,CUS,Contact Center,8,
+E0297,"Accountant, SGP",FIN,Accounting,4,Prepares monthly accounts and keeps the general ledger.
+E0298,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,10,Schedules payments and processes supplier invoices.
+E0299,Communications Specialist III,MKT,Communications,8,See the attached profile for details of this post.
+E0300,SENIOR RESEARCH ANALYST,MKT,Communications,2,Sizes new segments and runs focus groups.
+E0301,Returns Coordinator,CUS,Billing Services,8,
+E0302,Logistics Coordinator II - LDN,OPS,Distribution,4,Tracks deliveries with carriers and resolves delays with transport partners.
+E0303,GRAPHIC DESIGNER 2,MKT,Digital Marketing,5,Maintains brand materials and lays out presentations.
+E0304,Assoc HR Assistant REQ-359422,HRS,Total Rewards,6,Keeps employee records and prepares employment letters.
+E0305,BENEFITS ADMINISTRATOR I - DEN,HRS,Total Rewards,6,
+E0306,Recruiter,HRS,Talent Acquisition,4,Sources candidates and fills open positions.
+E0307,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,7,Queries data and builds dashboards and explains trends to the business.
+E0308,RECRUITER 1,HRS,Talent Acquisition,3,Extends job offers and screens applications and schedules interviews.
+E0309,Returns Coord II,CUS,Product Support,6,Arranges refunds and exchanges and processes product returns.
+E0310,Senior Recruiter - LDN,HRS,Talent Acquisition,8,Sources candidates and fills open positions.
+E0311,SR ACCT MGR (#334916),SAL,Enterprise Sales,10,Full-time position based at the main office.
+E0312,Billing Specialist,CUS,Billing Services,8,Resolves invoice disputes and adjusts customer bills.
+E0313,PRODUCT SUPPORT SPEC III,CUS,Product Support,8,Documents fixes and troubleshoots product problems reported by customers.
+E0314,CONTRACTS ADMIN - SYD,LEG,Contracts,3,Drafts commercial contracts and tracks renewal dates.
+E0315,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E0316,Billing Specialist - SYD,CUS,Service Quality,5,Resolves invoice disputes and adjusts customer bills.
+E0317,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E0318,HR. Coord.,HRS,Total Rewards,8,Keeps employee records and prepares employment letters.
+E0319,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0320,Quality Assurance Engineer,TEC,Engineering,7,Verifies releases before launch and writes test plans.
+E0321,PRODUCT SUPPORT SPECIALIST,CUS,Product Support,6,Guides users through installation and reproduces faults and raises defects.
+E0322,"TRAINING SPECIALIST, SGP",HRS,Learning,4,Delivers courses to employees and designs training courses.
+E0323,Software Engineer - CHI,TEC,Engineering,10,Duties vary with the needs of the department.
+E0324,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0325,Data Analyst III,TEC,Data,7,
+E0326,Senior Customer Service Agent - CHI,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat. Questions to liora.merriweather@example.com."
+E0327,Jr AP Spec REQ-482641 (CHI),FIN,Accounting,1,Processes supplier invoices and matches invoices to purchase orders.
+E0328,"Software Engineer, Dariel's team",TEC,Engineering,6,Writes application code.
+E0329,BUDGET PLANNER (BOS),FIN,Corporate Finance,5,Prepares the monthly management pack and models revenue and cost scenarios.
+E0330,Junior Call Ctr Supervisor - CHI,CUS,Contact Center,3,Monitors call quality and supervises a team of agents.
+E0331,Call Center Supv II,CUS,Contact Center,6,Monitors call quality and supervises a team of agents.
+E0332,Risk Analyst,LEG,Compliance,3,Assesses operational and regulatory risks and reports exposures to the board.
+E0333,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0334,CUSTOMER SVC REP,CUS,Contact Center,1,
+E0335,Billing Specialist - SYD,CUS,Service Quality,6,Resolves invoice disputes and adjusts customer bills.
+E0336,Comms Spec II,MKT,Brand,3,Full-time position based at the main office.
+E0337,Associate Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0338,Shift Supv - Remote,OPS,Health and Safety,,Improves processes and sets shift plans and staffing.
+E0339,Principal Software Tester,TEC,Engineering,10,Full-time position based at the main office.
+E0340,Lead Sales Operations Analyst,SAL,Sales Operations,8,Keeps the customer database tidy and tracks quota attainment for leadership.
+E0341,Recruiter II,HRS,Talent Acquisition,6,Sources candidates and screens applications and schedules interviews.
+E0342,"Senior Sales Representative, SYD",SAL,Inside Sales,7,Meets a monthly quota and works an assigned territory by phone and in person.
+E0343,"Senior Sales Representative, SYD",SAL,Inside Sales,2,Meets a monthly quota and works an assigned territory by phone and in person.
+E0344,"infrastructure engineer 2, SGP",TEC,Data,10,Runs servers and networks and manages user accounts.
+E0345,mktg mgr iii,MKT,Brand,8,Manages the marketing budget and sets brand priorities with agencies.
+E0346,marketing manager #104097 (Remote),MKT,Brand,10,Manages the marketing budget and plans campaigns.
+E0347,training spec,HRS,Learning,5,Delivers courses to employees and designs training courses.
+E0348,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0349,Paralegal REQ-61535,LEG,Legal Affairs,10,Prepares legal documents and keeps case files in order.
+E0350,"Customer Service Representative, Sr REQ-926604",CUS,Contact Center,10,Logs each contact and passes complex cases to specialists.
+E0351,lead help desk tech. #839069 (CHI),TEC,Service Desk,10,Sets up laptops and phones and resets passwords.
+E0352,Systems Administrator - LDN,TEC,Infrastructure,4,
+E0353,Paralegal II,LEG,Legal Affairs,6,Supports counsel on filings and prepares legal documents.
+E0354,Senior Product Support Specialist,CUS,Product Support,7,Troubleshoots product problems reported by customers and documents fixes.
+E0355,Customer Svc Rep - SYD,CUS,Service Quality,8,
+E0356,Prin Payroll Spec - ATL,FIN,Accounting,10,Resolves pay queries and checks timesheets and deductions.
+E0357,Customer Svc Rep - SYD,CUS,Service Quality,5,
+E0358,Information Security Analyst III,TEC,Information Security,8,Investigates security incidents and monitors systems for threats.
+E0359,CUSTOMER SVC REP,CUS,Contact Center,2,
+E0360,Sr Legal Assistant,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0361,"Desktop Support Technician, NYC",TEC,Infrastructure,7,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0362,Comms Spec II - SYD,MKT,Digital Marketing,6,Full-time position based at the main office.
+E0363,CORP PARALEGAL,LEG,Legal Affairs,4,Supports counsel on filings and keeps case files in order. Questions to isolde.larkspur@example.com.
+E0364,Compliance Officer,LEG,Compliance,9,Trains staff on the code of conduct and reviews policies each year.
+E0365,SR. CUSTOMER SERVICE REPRESENTATIVE - SEA,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat."
+E0366,SENIOR CONTENT WRITER (CHI),MKT,Brand,8,Edits product copy and keeps a publishing calendar.
+E0367,Sr Security Eng,TEC,Information Security,7,See the attached profile for details of this post.
+E0368,SENIOR RETURNS COORDINATOR,CUS,Billing Services,7,Arranges refunds and exchanges and checks returned goods.
+E0369,Software Engineer - CHI,TEC,Engineering,1,Duties vary with the needs of the department.
+E0370,Human Resources Coordinator 3 (CHI),HRS,People Operations,8,Schedules onboarding for new hires and prepares employment letters.
+E0371,senior marketing mgr (LDN),MKT,Brand,8,Manages the marketing budget and presents results to leadership.
+E0372,Prin. Call Ctr. Supv.,CUS,Contact Center,7,Supervises a team of agents and monitors call quality.
+E0373,Recruiter 1,HRS,Talent Acquisition,2,Extends job offers and screens applications and schedules interviews.
+E0374,Human Resources Partner I,HRS,People Operations,2,Assists the group and takes on other tasks as assigned.
+E0375,CUST. CARE TEAM LEADER,CUS,Contact Center,10,
+E0376,Accounts Payable Clerk II,FIN,Accounting,6,Processes supplier invoices and schedules payments.
+E0377,CONTRACTS ADMIN - SYD,LEG,Contracts,2,Drafts commercial contracts and tracks renewal dates.
+E0378,CUSTOMER SVC REP,CUS,Contact Center,6,
+E0379,Digital Mktg. Spec. II,MKT,Digital Marketing,6,Tracks clicks and conversions and optimises landing pages.
+E0380,Senior Billing Specialist - DEN REQ-579865,CUS,Billing Services,7,Adjusts customer bills and issues credit notes.
+E0381,mkt research analyst,MKT,Market Insights,1,Analyses market trends and competitors and runs focus groups.
+E0382,Procurement Spec II,OPS,Purchasing,6,Runs tenders and reviews supplier agreements.
+E0383,SR. SALES ENGINEER,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E0384,Jr. Logistics Coord.,OPS,Distribution,3,Tracks deliveries with carriers and schedules shipments.
+E0385,Contracts Specialist (BOS),LEG,Compliance,8,Drafts commercial contracts and tracks renewal dates.
+E0386,CUSTOMER SVC REP,CUS,Contact Center,3,
+E0387,Systems Administrator - LDN,TEC,Infrastructure,1,
+E0388,Prin. Forklift Driver,OPS,Distribution,10,"Position within the wider group, working on shared priorities."
+E0389,Customer Svc Rep - SYD,CUS,Service Quality,9,
+E0390,Sr Payroll Spec,FIN,Accounting,7,Files wage tax returns and checks timesheets and deductions.
+E0391,BDR,SAL,Inside Sales,10,
+E0392,Biz Dev Rep,SAL,Inside Sales,6,Qualifies leads for the sales team and books first meetings with prospects.
+E0393,Account Manager,SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0394,Bookkeeper,FIN,Accounting,10,Works with colleagues across the company to meet agreed goals.
+E0395,SENIOR CUSTOMER EXPERIENCE ANALYST,CUS,Service Quality,7,
+E0396,Warehouse Operator,OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E0397,Solutions Engineer III,SAL,Enterprise Sales,8,
+E0398,Prin. Int. Auditor,FIN,Internal Audit,10,Reports findings to the audit committee and tests internal controls.
+E0399,prin refunds administrator,CUS,Billing Services,10,Processes product returns and arranges refunds and exchanges.
+E0400,Sr Legal Assistant,LEG,Legal Affairs,1,Prepares legal documents and supports counsel on filings.
+E0401,Senior Market Research Analyst,MKT,Market Insights,7,Analyses market trends and competitors and surveys customers.
+E0402,Senior Shift Supervisor,OPS,Site Operations,7,Improves processes and runs daily site operations.
+E0403,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E0404,Accountant,FIN,Internal Audit,10,Prepares monthly accounts and keeps the general ledger.
+E0405,Procurement Specialist,OPS,Purchasing,,Sources suppliers and negotiates prices and issues purchase orders.
+E0406,BUSINESS DEVELOPMENT REPRESENTATIVE III,SAL,Inside Sales,7,Qualifies leads for the sales team and finds new sales leads by outreach.
+E0407,Controls Assurance Specialist,FIN,Corporate Finance,4,Tests internal controls and follows up on agreed actions.
+E0408,Senior Business Development Representative,SAL,Inside Sales,3,
+E0409,Lead Copywriter,MKT,Digital Marketing,9,Carries out the duties of the post as directed. Questions to bramwell.fennimore@example.com.
+E0410,ACCOUNTS PAYABLE ADMINISTRATOR,FIN,Accounting,8,Carries out the duties of the post as directed.
+E0411,Communications Specialist,MKT,Digital Marketing,9,Prepares press releases and writes internal announcements.
+E0412,Whse. Operator #953660 (ATL),OPS,Distribution,4,Picks and packs orders and loads goods for shipment.
+E0413,Jr Sales Ops Analyst (#108664),SAL,Sales Operations,2,
+E0414,SENIOR OPERATIONS MGR,OPS,Site Operations,9,Improves processes and tracks output against targets.
+E0415,Quality Assurance Engineer,TEC,Engineering,8,Verifies releases before launch and writes test plans.
+E0416,Comms Coord REQ-85076,MKT,Communications,2,Writes internal announcements and briefs spokespeople.
+E0417,Jr HR Coord - LDN,HRS,Total Rewards,2,Keeps employee records and schedules onboarding for new hires.
+E0418,SR CUST SVC AGENT - CHI,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat. Questions to liora.merriweather@example.com."
+E0419,digital mktg. spec.,MKT,Digital Marketing,8,Runs paid search and email campaigns and tracks clicks and conversions.
+E0420,PAYROLL SPECIALIST II,FIN,Accounting,4,Runs payroll and resolves pay queries.
+E0421,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,4,Closes deals and sells products to new customers.
+E0422,Marketing Manager II (REQ-662905),MKT,Brand,6,Contributes to departmental objectives and ad hoc projects.
+E0423,whse operator,OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E0424,DIGITAL MARKETING SPECIALIST,MKT,Digital Marketing,3,Runs paid search and email campaigns and tracks clicks and conversions.
+E0425,Sr Cust Success Mgr (#333210),SAL,Customer Success,8,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0426,Human Resources Business Partner,HRS,People Operations,8,Advises managers on staffing and performance and handles employee relations cases.
+E0427,Senior Cust Accounts Clerk,CUS,Billing Services,8,Resolves invoice disputes and adjusts customer bills.
+E0428,Compliance Officer - ATL REQ-345736,LEG,Compliance,5,Trains staff on the code of conduct and reviews policies each year.
+E0429,CUSTOMER SVC REP,CUS,Contact Center,8,
+E0430,OPERATIONAL RISK ANALYST II (ATL),LEG,Compliance,5,Maintains the risk register and tests business continuity plans.
+E0431,Corporate Counsel III - LDN,LEG,Contracts,7,Advises the business on contracts and disputes and interprets corporate law.
+E0432,Compensation Specialist,HRS,Total Rewards,9,
+E0433,Returns Coordinator II,CUS,Service Quality,5,Arranges refunds and exchanges and processes product returns.
+E0434,Desktop Support Technician (REQ-789397),TEC,Service Desk,4,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0435,Cyber Threat Spec. #734559 (NYC),TEC,Information Security,6,Monitors systems for threats and investigates security incidents.
+E0436,billing specialist ii,CUS,Billing Services,5,Explains charges to callers and issues credit notes.
+E0437,Brand Director - CHI REQ-898978,MKT,Communications,10,Plans campaigns and presents results to leadership.
+E0438,Help Desk Technician II,TEC,Service Desk,6,Full-time position based at the main office.
+E0439,digital mktg. spec.,MKT,Digital Marketing,9,Runs paid search and email campaigns and tracks clicks and conversions.
+E0440,Junior Compliance Officer,LEG,Privacy Office,2,Reports breaches to regulators and reviews policies each year.
+E0441,Comms Spec II,MKT,Brand,4,Full-time position based at the main office.
+E0442,sr comms spec - LDN REQ-266927,MKT,Communications,7,Prepares press releases and edits the staff newsletter.
+E0443,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,6,Closes deals and sells products to new customers.
+E0444,Sr Int Auditor - LDN,FIN,Internal Audit,8,Plans audit fieldwork and follows up on agreed actions.
+E0445,Senior Infrastructure Engineer - SEA,TEC,Infrastructure,7,Manages user accounts and runs servers and networks.
+E0446,Culture Champion,HRS,People Operations,7,Looks after our values and company events.
+E0447,Bookkeeper,FIN,Accounting,7,Works with colleagues across the company to meet agreed goals.
+E0448,Key Acct Mgr,SAL,Inside Sales,10,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0449,Paralegal 2,LEG,Legal Affairs,5,Supports counsel on filings and prepares legal documents.
+E0450,"RISK ANALYST II, SYD",LEG,Privacy Office,5,Assesses operational and regulatory risks and maintains the risk register.
+E0451,Billing Spec II,CUS,Billing Services,6,Explains charges to callers and issues credit notes.
+E0452,Call Center Supv. - ATL,CUS,Contact Center,7,Supervises a team of agents and monitors call quality.
+E0453,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,2,
+E0454,Customer Svc Rep - SYD,CUS,Service Quality,7,
+E0455,content writer - ATL #560729,MKT,Digital Marketing,2,Writes articles and web pages and interviews experts for stories.
+E0456,Senior Infrastructure Engineer - SEA,TEC,Infrastructure,8,Manages user accounts and runs servers and networks.
+E0457,Cash Manager II - BOS,FIN,Treasury,6,Manages cash positions and bank accounts and arranges short-term funding.
+E0458,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,1,Models revenue and cost scenarios and prepares the monthly management pack.
+E0459,Customer Success Mgr II - SGP REQ-554746,SAL,Customer Success,4,
+E0460,Customer Svc Rep - SYD,CUS,Service Quality,3,
+E0461,Sr. Acct. Mgr.,SAL,Enterprise Sales,8,Full-time position based at the main office.
+E0462,Content Writer II,MKT,Communications,5,Keeps a publishing calendar and interviews experts for stories.
+E0463,Finance Analyst III,FIN,Corporate Finance,7,
+E0464,content writer - ATL #560729,MKT,Digital Marketing,8,Writes articles and web pages and interviews experts for stories.
+E0465,SENIOR CONTENT WRITER (CHI),MKT,Brand,7,Edits product copy and keeps a publishing calendar.
+E0466,"RETURNS COORDINATOR, SENIOR",CUS,Billing Services,10,Processes product returns and arranges refunds and exchanges.
+E0467,Digital Marketing Specialist 1,MKT,Digital Marketing,2,Manages social media channels and runs paid search and email campaigns.
+E0468,Assoc IT Support Spec,TEC,Service Desk,6,Resolves hardware and software problems for employees and sets up laptops and phones.
+E0469,Cust Svc Rep II,CUS,Service Quality,5,"Answers customer questions by phone, email and chat and logs each contact."
+E0470,Operations Mgr II (BOS),OPS,Site Operations,4,Runs daily site operations and improves processes.
+E0471,SALES ENG,SAL,Enterprise Sales,3,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0472,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,2,
+E0473,Sr Call Ctr Supv,CUS,Contact Center,8,Supervises a team of agents and monitors call quality.
+E0474,SR SECURITY ENGINEER,TEC,Information Security,1,See the attached profile for details of this post.
+E0475,Corp Counsel 2,LEG,Legal Affairs,6,Interprets corporate law and negotiates terms with outside lawyers.
+E0476,SR. TEST ENG. - CHI,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E0477,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,,Manages a portfolio of customer accounts and renews customer contracts.
+E0478,JR EMAIL MKTG SPEC,MKT,Digital Marketing,1,Runs paid search and email campaigns and manages social media channels.
+E0479,PRODUCT SUPPORT SPECIALIST 3,CUS,Product Support,7,Documents fixes and troubleshoots product problems reported by customers.
+E0480,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,8,Schedules payments and processes supplier invoices.
+E0481,"Junior Systems Engineer, NYC",TEC,Information Security,3,Runs servers and networks and manages user accounts.
+E0482,Mktg. Mgr.,MKT,Brand,6,Manages the marketing budget and plans campaigns.
+E0483,MARKETING MANAGER,MKT,Brand,9,Presents results to leadership and plans campaigns.
+E0484,INFRASTRUCTURE ENGINEER II (#801212),TEC,Infrastructure,4,
+E0485,"Software Engineer, SGP",TEC,Engineering,,Duties vary with the needs of the department.
+E0486,SR DIGITAL MKTG SPECIALIST (#488361),MKT,Digital Marketing,5,Manages social media channels and tracks clicks and conversions.
+E0487,Buyer,OPS,Purchasing,7,Issues purchase orders and sources suppliers and negotiates prices.
+E0488,Sales Representative,SAL,Inside Sales,10,Sells products to new customers and works an assigned territory by phone and in person.
+E0489,Sr HR Business Partner,HRS,People Operations,8,Handles employee relations cases and supports reorganisations.
+E0490,lead returns clerk #826885 (Remote),CUS,Billing Services,9,Processes product returns and books collections with couriers.
+E0491,"Jr Comms Spec, DEN",MKT,Brand,2,Writes internal announcements and prepares press releases.
+E0492,Senior Logistics Coordinator,OPS,Distribution,8,
+E0493,Corp Recruiter,HRS,Talent Acquisition,2,Sources candidates and fills open positions.
+E0494,CONTRACTS ADMIN - SYD,LEG,Contracts,7,Drafts commercial contracts and tracks renewal dates.
+E0495,CONTRACTS ADMIN - SYD,LEG,Contracts,1,Drafts commercial contracts and tracks renewal dates.
+E0496,SYS ADMIN II #257935 (Remote),TEC,Infrastructure,8,Runs servers and networks and automates backups.
+E0497,Treasury Analyst,FIN,Treasury,2,Arranges short-term funding and forecasts liquidity.
+E0498,CUSTOMER SVC REP,CUS,Contact Center,3,
+E0499,SALES ENG,SAL,Enterprise Sales,10,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0500,PRIN CORP COUNSEL,LEG,Legal Affairs,10,Advises the business on contracts and disputes and interprets corporate law.
+E0501,senior digital marketing specialist,MKT,Digital Marketing,8,Manages social media channels and tracks clicks and conversions.
+E0502,CUSTOMER SVC REP,CUS,Contact Center,10,
+E0503,Billing Specialist - SYD,CUS,Service Quality,9,Resolves invoice disputes and adjusts customer bills.
+E0504,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,9,Schedules payments and processes supplier invoices.
+E0505,"COMPENSATION ANALYST, SENIOR",HRS,Total Rewards,7,
+E0506,Internal Auditor II REQ-289070 (SGP),FIN,Internal Audit,4,Carries out the duties of the post as directed.
+E0507,Data Specialist,TEC,Infrastructure,7,
+E0508,Site Operations Manager,OPS,Site Operations,2,Improves processes and runs daily site operations.
+E0509,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0510,Software Engineer - CHI,TEC,Engineering,3,Duties vary with the needs of the department.
+E0511,Sr. Risk Analyst - SEA,LEG,Compliance,8,Assesses operational and regulatory risks and tests business continuity plans.
+E0512,CUSTOMER SVC REP,CUS,Contact Center,4,
+E0513,Sales Engineer,SAL,Enterprise Sales,2,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0514,In-House Lawyer,LEG,Compliance,10,Interprets corporate law and advises the business on contracts and disputes.
+E0515,CONTROLS ASSURANCE SPEC 3,FIN,Internal Audit,8,Reports findings to the audit committee and follows up on agreed actions.
+E0516,"Quality Assurance Analyst, Senior",TEC,Infrastructure,8,Verifies releases before launch and automates regression tests.
+E0517,content writer - ATL #560729,MKT,Digital Marketing,9,Writes articles and web pages and interviews experts for stories.
+E0518,Software Engineer - CHI,TEC,Engineering,9,Duties vary with the needs of the department.
+E0519,Junior Compliance Officer,LEG,Privacy Office,3,Reports breaches to regulators and reviews policies each year.
+E0520,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,4,Closes deals and sells products to new customers.
+E0521,"Logistics Specialist III, DEN",OPS,Distribution,8,Tracks deliveries with carriers and resolves delays with transport partners.
+E0522,HR. Coord.,HRS,Total Rewards,9,Keeps employee records and prepares employment letters.
+E0523,jr acct mgr,SAL,Inside Sales,3,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0524,"Employee Relations Advisor, Senior",HRS,People Operations,7,Handles employee relations cases and coaches leaders on people matters.
+E0525,Operations Mgr II (BOS),OPS,Site Operations,4,Runs daily site operations and improves processes.
+E0526,Warehouse Operator II #199707,OPS,Distribution,4,Loads goods for shipment and drives a forklift.
+E0527,Supply Chain Analyst II,OPS,Supply Chain,5,Forecasts demand by product and reports on stock turns.
+E0528,Paralegal REQ-61535,LEG,Legal Affairs,1,Prepares legal documents and keeps case files in order.
+E0529,Communications Specialist,MKT,Digital Marketing,7,Prepares press releases and writes internal announcements.
+E0530,Sr Privacy Analyst,LEG,Privacy Office,8,Assesses how personal data is handled and answers data subject requests.
+E0531,Jr. Backend Eng.,TEC,Data,1,Fixes defects found in production and builds services and interfaces.
+E0532,Assoc Security Eng - Remote,TEC,Information Security,4,
+E0533,Software Engineer - CHI,TEC,Engineering,2,Duties vary with the needs of the department.
+E0534,SENIOR DATA ANALYST,TEC,Data,8,Queries data and builds dashboards and explains trends to the business.
+E0535,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,10,Schedules payments and processes supplier invoices.
+E0536,Junior Digital Marketing Specialist (#414334),MKT,Digital Marketing,2,Carries out the duties of the post as directed.
+E0537,JUNIOR HUMAN RESOURCES COORDINATOR #717049,HRS,People Operations,8,Keeps employee records and schedules onboarding for new hires.
+E0538,BUSINESS DEVELOPMENT REPRESENTATIVE II,SAL,Inside Sales,6,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0539,lead sales rep,SAL,Inside Sales,6,
+E0540,Principal Financial Analyst,FIN,Corporate Finance,10,Builds budgets and forecasts and models revenue and cost scenarios.
+E0541,Biz Dev Rep,SAL,Inside Sales,4,Qualifies leads for the sales team and books first meetings with prospects.
+E0542,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,3,Manages a portfolio of customer accounts and renews customer contracts.
+E0543,"Satisfaction Survey Coordinator, ATL",CUS,Service Quality,6,Reports complaint trends and analyses satisfaction surveys.
+E0544,"Logistics Coordinator 1, SEA",OPS,Distribution,2,Tracks deliveries with carriers and prepares customs paperwork.
+E0545,HR. Biz. Partner II,HRS,People Operations,6,Advises managers on staffing and performance and handles employee relations cases.
+E0546,Paralegal REQ-61535,LEG,Legal Affairs,6,Prepares legal documents and keeps case files in order.
+E0547,DATA ANALYST II - NYC,TEC,Data,6,
+E0548,junior satisfaction survey coordinator - SGP REQ-446531,CUS,Service Quality,2,
+E0549,Site Hazard Advisor II,OPS,Health and Safety,4,Inspects sites for hazards and enforces safety regulations.
+E0550,Quality Assurance Engineer II,TEC,Engineering,4,Writes test plans and automates regression tests.
+E0551,Training Spec. 1,HRS,Learning,2,Measures course completion and maintains the learning platform.
+E0552,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E0553,digital mktg. spec.,MKT,Digital Marketing,8,Runs paid search and email campaigns and tracks clicks and conversions.
+E0554,Corp Recruiter,HRS,Talent Acquisition,9,Sources candidates and fills open positions.
+E0555,internal auditor,FIN,Internal Audit,4,"Position within the wider group, working on shared priorities."
+E0556,Principal Forklift Driver (REQ-269502),OPS,Distribution,10,"Position within the wider group, working on shared priorities."
+E0557,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,8,Queries data and builds dashboards and explains trends to the business.
+E0558,Senior Financial Analyst REQ-703720 (SGP),FIN,Corporate Finance,8,Explains variances against plan and prepares the monthly management pack.
+E0559,SENIOR OPERATIONS MGR,OPS,Site Operations,7,Improves processes and tracks output against targets.
+E0560,Customer Service Representative,CUS,Contact Center,3,
+E0561,PRIN RECRUITER,HRS,Talent Acquisition,10,Screens applications and schedules interviews and extends job offers.
+E0562,"Junior Quality Assurance Engineer, DEN",TEC,Engineering,2,Verifies releases before launch and tracks defects to closure.
+E0563,business development representative,SAL,Inside Sales,7,Qualifies leads for the sales team and books first meetings with prospects.
+E0564,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,3,
+E0565,Prin Returns Coord,CUS,Billing Services,10,Processes product returns and arranges refunds and exchanges. Reports to Dariel Brackenridge.
+E0566,SALES ENG,SAL,Enterprise Sales,2,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0567,Presales Engineer - CHI REQ-914343,SAL,Enterprise Sales,5,Explains the technical side of products during a sale and builds proofs of concept.
+E0568,sales development representative iii,SAL,Inside Sales,8,Qualifies leads for the sales team and books first meetings with prospects.
+E0569,Senior Software Engineer,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0570,Customer Svc Rep - SYD,CUS,Service Quality,9,
+E0571,Paralegal,LEG,Legal Affairs,3,Prepares legal documents and keeps case files in order.
+E0572,TECHNICAL PRESALES CONSULTANT III - SEA,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E0573,Office Manager,ADM,Site Operations,2,Runs the front office and orders supplies.
+E0574,Billing Specialist,CUS,Billing Services,2,Resolves invoice disputes and adjusts customer bills.
+E0575,HR. Coord.,HRS,Total Rewards,8,Keeps employee records and prepares employment letters.
+E0576,PRINCIPAL ACCOUNTANT,FIN,Accounting,10,Keeps the general ledger and prepares monthly accounts.
+E0577,Recruiter II #267923 (Remote),HRS,Talent Acquisition,4,Sources candidates and screens applications and schedules interviews.
+E0578,Senior Recruiter #221095,HRS,Talent Acquisition,8,Sources candidates and fills open positions.
+E0579,Senior Software Engineer,TEC,Engineering,7,Reviews changes before release and designs and writes application code.
+E0580,Account Manager II,SAL,Enterprise Sales,6,Assists the group and takes on other tasks as assigned.
+E0581,Sales Representative - BOS #726618,SAL,Inside Sales,5,Sells products to new customers and works an assigned territory by phone and in person.
+E0582,Content Writer,MKT,Digital Marketing,7,Writes articles and web pages and interviews experts for stories.
+E0583,Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0584,Account Manager,SAL,Enterprise Sales,3,Manages a portfolio of customer accounts and renews customer contracts.
+E0585,Billing Specialist - SYD,CUS,Service Quality,8,Resolves invoice disputes and adjusts customer bills.
+E0586,OPERATIONAL RISK ANALYST II (ATL),LEG,Compliance,6,Maintains the risk register and tests business continuity plans.
+E0587,CRM Admin 2,SAL,Sales Operations,5,Keeps the customer database tidy and tracks quota attainment for leadership.
+E0588,Billing Spec 2,CUS,Billing Services,6,Adjusts customer bills and explains charges to callers.
+E0589,WHSE WORKER 1 REQ-422879,OPS,Distribution,1,Loads goods for shipment and drives a forklift.
+E0590,digital mktg. spec.,MKT,Digital Marketing,9,Runs paid search and email campaigns and tracks clicks and conversions.
+E0591,Sr Payroll Spec,FIN,Accounting,3,Files wage tax returns and checks timesheets and deductions.
+E0592,Software Engineer,TEC,Engineering,7,Duties vary with the needs of the department.
+E0593,biz. development representative iii,SAL,Inside Sales,7,Qualifies leads for the sales team and finds new sales leads by outreach.
+E0594,Sr Sales Operations Analyst (REQ-572399),SAL,Sales Operations,7,Prepares pipeline reports and maintains sales forecasts and territories.
+E0595,mktg mgr ii (REQ-410132),MKT,Brand,5,Contributes to departmental objectives and ad hoc projects.
+E0596,GRAPHIC DESIGNER III - SYD,MKT,Brand,7,
+E0597,CUSTOMER SVC REP,CUS,Contact Center,2,
+E0598,content writer - ATL #560729,MKT,Digital Marketing,7,Writes articles and web pages and interviews experts for stories.
+E0599,Sr Software Eng - NYC,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0600,Principal Health and Safety Inspector,OPS,Health and Safety,10,Inspects sites for hazards and enforces safety regulations.
+E0601,CUSTOMER SVC REP,CUS,Contact Center,8,
+E0602,PRIVACY ANALYST,LEG,Privacy Office,9,Assesses how personal data is handled and answers data subject requests.
+E0603,CUSTOMER SVC REP,CUS,Contact Center,6,
+E0604,ACCOUNTS PAYABLE ADMINISTRATOR,FIN,Accounting,9,Carries out the duties of the post as directed.
+E0605,HR. Biz. Partner II,HRS,People Operations,10,Advises managers on staffing and performance and handles employee relations cases.
+E0606,PRODUCT SUPPORT SPEC II,CUS,Product Support,3,Documents fixes and troubleshoots product problems reported by customers.
+E0607,Senior Help Desk Technician,TEC,Service Desk,10,
+E0608,Key Account Manager - SYD,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0609,"Senior Sales Representative, SYD",SAL,Inside Sales,7,Meets a monthly quota and works an assigned territory by phone and in person.
+E0610,Sr. Sys. Admin. - SGP,TEC,Infrastructure,7,Runs servers and networks and manages user accounts.
+E0611,Graphic Designer REQ-734518,MKT,Brand,2,
+E0612,CONSUMER INSIGHTS SPECIALIST REQ-654776 (SGP),MKT,Market Insights,2,
+E0613,Jr Billing Spec,CUS,Billing Services,3,
+E0614,senior marketing mgr (LDN),MKT,Brand,8,Manages the marketing budget and presents results to leadership.
+E0615,Billing Specialist - SYD,CUS,Service Quality,3,Resolves invoice disputes and adjusts customer bills.
+E0616,senior paralegal #696501,LEG,Legal Affairs,8,Prepares legal documents and supports counsel on filings.
+E0617,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,1,Manages a portfolio of customer accounts and renews customer contracts.
+E0618,Senior Billing Specialist - DEN REQ-579865,CUS,Billing Services,8,Adjusts customer bills and issues credit notes.
+E0619,benefits administrator ii REQ-510317,HRS,Total Rewards,4,Enrols employees in health and retirement plans and answers benefits questions.
+E0620,"TRAINING SPECIALIST, SGP",HRS,Learning,2,Delivers courses to employees and designs training courses.
+E0621,SUPPLY CHAIN ANALYST II,OPS,Supply Chain,5,Forecasts demand by product and reports on stock turns.
+E0622,contracts specialist - BOS,LEG,Contracts,8,Drafts commercial contracts and tracks renewal dates.
+E0623,Senior Business Development Representative,SAL,Inside Sales,,
+E0624,Sr. Acct. Mgr.,SAL,Enterprise Sales,7,Full-time position based at the main office.
+E0625,Biz Dev Rep,SAL,Inside Sales,7,Qualifies leads for the sales team and books first meetings with prospects.
+E0626,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,5,Schedules payments and processes supplier invoices.
+E0627,Senior Logistics Coordinator,OPS,Distribution,8,
+E0628,Cust Success Mgr 3,SAL,Customer Success,7,Keeps customers satisfied after the sale and runs onboarding and regular check-ins.
+E0629,Sales Operations Analyst II,SAL,Sales Operations,5,Maintains sales forecasts and territories and tracks quota attainment for leadership.
+E0630,Assoc IT Support Spec,TEC,Service Desk,6,Resolves hardware and software problems for employees and sets up laptops and phones.
+E0631,Technical Presales Consultant II (REQ-672639),SAL,Enterprise Sales,5,
+E0632,Compensation Analyst (SGP),HRS,Total Rewards,10,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0633,AP Clerk II (SYD),FIN,Accounting,4,Processes supplier invoices and schedules payments.
+E0634,Contracts Admin. II,LEG,Contracts,4,Tracks renewal dates and drafts commercial contracts.
+E0635,Payroll Spec II,FIN,Accounting,5,Runs payroll and resolves pay queries.
+E0636,Payroll Specialist,FIN,Accounting,4,Runs payroll and checks timesheets and deductions.
+E0637,ACCOUNTS PAYABLE ADMINISTRATOR,FIN,Accounting,5,Carries out the duties of the post as directed.
+E0638,Paralegal REQ-61535,LEG,Legal Affairs,2,Prepares legal documents and keeps case files in order.
+E0639,ASSOCIATE HUMAN RESOURCES COORDINATOR,HRS,Talent Acquisition,4,
+E0640,content writer - ATL #560729,MKT,Digital Marketing,6,Writes articles and web pages and interviews experts for stories.
+E0641,SALES ENG,SAL,Enterprise Sales,1,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E0642,SECURITY ANALYST II (REQ-462411),TEC,Data,6,Duties vary with the needs of the department. Reports to Kasimir Quillfeather.
+E0643,Creative Artworker II,MKT,Brand,6,Creates visual designs for campaigns and maintains brand materials. Questions to kasimir.larkspur@example.com.
+E0644,mkt research analyst,MKT,Market Insights,8,Analyses market trends and competitors and runs focus groups.
+E0645,Lead Accounts Payable Clerk REQ-30562 (NYC),FIN,Accounting,9,Matches invoices to purchase orders and answers vendor questions about remittances.
+E0646,Sr. Sales Dev. Rep.,SAL,Inside Sales,4,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0647,Content Writer II REQ-939830,MKT,Digital Marketing,5,Keeps a publishing calendar and interviews experts for stories.
+E0648,Training Spec I,HRS,People Operations,5,Designs training courses and delivers courses to employees.
+E0649,GRAPHIC DESIGNER,MKT,Brand,4,
+E0650,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E0651,CUSTOMER SVC REP,CUS,Contact Center,2,
+E0652,Lead Product Support Specialist,CUS,Product Support,9,Troubleshoots product problems reported by customers and documents fixes.
+E0653,Software Engineer,TEC,Engineering,3,Duties vary with the needs of the department.
+E0654,SENIOR CUSTOMER EXPERIENCE ANALYST,CUS,Service Quality,7,
+E0655,"comp analyst i, CHI",HRS,Total Rewards,3,
+E0656,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E0657,"RETURNS COORDINATOR, SENIOR",CUS,Billing Services,2,Processes product returns and arranges refunds and exchanges.
+E0658,Infrastructure Eng. 2,TEC,Infrastructure,1,Runs servers and networks and manages user accounts.
+E0659,Procurement Spec II,OPS,Purchasing,5,Runs tenders and reviews supplier agreements.
+E0660,Senior Accountant,FIN,Treasury,8,Prepares monthly accounts and reconciles balance sheet items.
+E0661,Senior Billing Specialist - DEN REQ-579865,CUS,Billing Services,7,Adjusts customer bills and issues credit notes.
+E0662,People Business Partner 1,HRS,People Operations,2,Handles employee relations cases and advises managers on staffing and performance.
+E0663,Recruiter,HRS,Talent Acquisition,2,Sources candidates and fills open positions.
+E0664,BENEFITS ADMINISTRATOR I - DEN,HRS,Total Rewards,3,
+E0665,SALES OPERATIONS ANALYST,SAL,Sales Operations,6,Maintains sales forecasts and territories and prepares pipeline reports.
+E0666,BUSINESS DEVELOPMENT REPRESENTATIVE III,SAL,Inside Sales,8,Qualifies leads for the sales team and finds new sales leads by outreach.
+E0667,Contracts Admin.,LEG,Contracts,3,Drafts commercial contracts and tracks renewal dates.
+E0668,"Senior Warehouse Operator, ATL",OPS,Distribution,7,
+E0669,Sales Representative - BOS #726618,SAL,Inside Sales,2,Sells products to new customers and works an assigned territory by phone and in person.
+E0670,Sr Safety Insp,OPS,Health and Safety,7,Inspects sites for hazards and trains staff on safe working.
+E0671,"compliance officer, sr",LEG,Compliance,7,Monitors adherence to regulations and reports breaches to regulators.
+E0672,Acct Executive,SAL,Enterprise Sales,4,Renews customer contracts and manages a portfolio of customer accounts.
+E0673,Software Eng. II - SYD #321188,TEC,Engineering,6,
+E0674,junior procurement specialist,OPS,Purchasing,3,
+E0675,training coordinator,HRS,Learning,4,
+E0676,Communications Specialist III REQ-981419,MKT,Communications,8,See the attached profile for details of this post.
+E0677,TRAINING SPECIALIST 3,HRS,Learning,8,See the attached profile for details of this post.
+E0678,territory executive 3,SAL,Inside Sales,7,Sells products to new customers and works an assigned territory by phone and in person.
+E0679,Jr QA Eng,TEC,Engineering,1,Verifies releases before launch and tracks defects to closure.
+E0680,Senior IT Support Specialist,TEC,Service Desk,8,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0681,Billing Coord 1 #190047 (DEN),CUS,Billing Services,10,Duties vary with the needs of the department.
+E0682,Treasury Analyst II,FIN,Corporate Finance,6,Manages cash positions and bank accounts and forecasts liquidity.
+E0683,Junior Research Analyst - NYC,MKT,Market Insights,2,Surveys customers and analyses market trends and competitors. Reports to Bramwell Quillfeather.
+E0684,"TRAINING SPECIALIST, SGP",HRS,Learning,2,Delivers courses to employees and designs training courses.
+E0685,SR. CUSTOMER SERVICE REPRESENTATIVE - SEA,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat."
+E0686,Graphic Designer II (#530503),MKT,Brand,5,Creates visual designs for campaigns and prepares artwork for print and web.
+E0687,Senior Graphic Designer (#270737),MKT,Brand,7,
+E0688,Senior Accountant,FIN,Treasury,8,Prepares monthly accounts and reconciles balance sheet items.
+E0689,SALES OPERATIONS ANALYST,SAL,Sales Operations,3,Maintains sales forecasts and territories and prepares pipeline reports.
+E0690,DATA ANALYST,TEC,Data,2,Explains trends to the business and cleans and joins data sets.
+E0691,Software Engineer - CHI,TEC,Engineering,3,Duties vary with the needs of the department.
+E0692,CONTRACTS ADMIN - SYD,LEG,Contracts,7,Drafts commercial contracts and tracks renewal dates.
+E0693,"Field Service Technician, Senior (ATL)",CUS,Contact Center,7,Documents fixes and troubleshoots product problems reported by customers.
+E0694,Biz Dev Rep,SAL,Inside Sales,9,Qualifies leads for the sales team and books first meetings with prospects.
+E0695,PRIVACY ANALYST,LEG,Privacy Office,7,Assesses how personal data is handled and answers data subject requests.
+E0696,SENIOR OPERATIONS MGR,OPS,Site Operations,1,Improves processes and tracks output against targets.
+E0697,Associate Contact Center Agent - SYD,CUS,Contact Center,4,"Logs each contact and answers customer questions by phone, email and chat."
+E0698,senior contracts administrator,LEG,Contracts,8,
+E0699,billing specialist,CUS,Billing Services,10,Resolves invoice disputes and adjusts customer bills.
+E0700,Paralegal REQ-61535,LEG,Legal Affairs,9,Prepares legal documents and keeps case files in order.
+E0701,Senior Contracts Administrator (REQ-345244),LEG,Contracts,8,
+E0702,CRM ADMINISTRATOR REQ-78045,SAL,Sales Operations,5,Maintains sales forecasts and territories and prepares pipeline reports.
+E0703,content writer - ATL #560729,MKT,Digital Marketing,4,Writes articles and web pages and interviews experts for stories.
+E0704,Customer Svc Rep - SYD,CUS,Service Quality,6,
+E0705,Payroll Specialist,FIN,Accounting,6,Runs payroll and checks timesheets and deductions.
+E0706,Acct Executive,SAL,Enterprise Sales,2,Renews customer contracts and manages a portfolio of customer accounts.
+E0707,senior human resources coordinator #150653,HRS,People Operations,8,Schedules onboarding for new hires and keeps employee records.
+E0708,SENIOR BUSINESS DEVELOPMENT SPECIALIST,SAL,Inside Sales,7,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0709,Customer Service Representative,CUS,Contact Center,2,
+E0710,CONTRACTS ADMIN - SYD,LEG,Contracts,5,Drafts commercial contracts and tracks renewal dates.
+E0711,Customer Svc Rep - SYD,CUS,Service Quality,4,
+E0712,Procurement Specialist II,OPS,Purchasing,4,Runs tenders and reviews supplier agreements.
+E0713,Ops. Mgr.,OPS,Site Operations,5,
+E0714,PRIVACY SPECIALIST II,LEG,Privacy Office,4,
+E0715,"ACCOUNT MANAGER, SENIOR",SAL,Customer Success,7,
+E0716,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E0717,AP Clerk (Remote),FIN,Accounting,6,Schedules payments and processes supplier invoices.
+E0718,BUDGET PLANNER (BOS),FIN,Corporate Finance,6,Prepares the monthly management pack and models revenue and cost scenarios.
+E0719,Senior Supply Analyst,OPS,Supply Chain,1,Plans inventory levels and reports on stock turns.
+E0720,Jr Software Eng,TEC,Engineering,2,Reviews changes before release and fixes defects found in production.
+E0721,Business Data Analyst II,TEC,Data,6,Explains trends to the business and queries data and builds dashboards.
+E0722,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,8,Manages a portfolio of customer accounts and renews customer contracts.
+E0723,"Recruiter, NYC",HRS,Talent Acquisition,10,Sources candidates and fills open positions.
+E0724,Contracts Specialist (BOS),LEG,Compliance,3,Drafts commercial contracts and tracks renewal dates.
+E0725,Logistics Coord.,OPS,Distribution,7,Schedules shipments and resolves delays with transport partners.
+E0726,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,2,Schedules payments and processes supplier invoices.
+E0727,HR. Coord. II,HRS,People Operations,6,Schedules onboarding for new hires and keeps employee records.
+E0728,Paralegal - NYC REQ-716874,LEG,Legal Affairs,9,Prepares legal documents and keeps case files in order.
+E0729,AP Admin III,FIN,Accounting,7,
+E0730,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,5,Schedules payments and processes supplier invoices.
+E0731,Account Manager,SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E0732,Lead Client Onboarding Advisor,SAL,Customer Success,9,
+E0733,LOGISTICS COORDINATOR,OPS,Distribution,2,Schedules shipments and resolves delays with transport partners.
+E0734,account manager,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E0735,Treasury Analyst #253982,FIN,Treasury,2,Arranges short-term funding and forecasts liquidity.
+E0736,sr privacy analyst (DEN),LEG,Privacy Office,7,Assesses how personal data is handled and answers data subject requests.
+E0737,SENIOR TRAINING SPECIALIST,HRS,Learning,7,Designs training courses and delivers courses to employees.
+E0738,"CORP PARALEGAL, ATL",LEG,Legal Affairs,2,Supports counsel on filings and keeps case files in order. Questions to isolde.larkspur@example.com.
+E0739,Client Onboarding Advisor,SAL,Customer Success,6,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0740,Senior Benefits Administrator,HRS,Total Rewards,7,Enrols employees in health and retirement plans and answers benefits questions.
+E0741,Warehouse Operator,OPS,Distribution,1,Picks and packs orders and loads goods for shipment.
+E0742,CUSTOMER SVC REP,CUS,Contact Center,3,
+E0743,Paralegal REQ-61535,LEG,Legal Affairs,7,Prepares legal documents and keeps case files in order.
+E0744,RECRUITER,HRS,Talent Acquisition,6,Sources candidates and fills open positions.
+E0745,CUSTOMER SVC REP,CUS,Contact Center,7,
+E0746,Sr QA Eng,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E0747,Human Resources Assistant I,HRS,Total Rewards,1,Answers routine policy questions and prepares employment letters.
+E0748,Contracts Admin - DEN REQ-94630,LEG,Contracts,4,Drafts commercial contracts and tracks renewal dates.
+E0749,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,3,Models revenue and cost scenarios and prepares the monthly management pack.
+E0750,"Software Engineer, SGP",TEC,Engineering,2,Duties vary with the needs of the department.
+E0751,QA Eng,TEC,Engineering,4,Verifies releases before launch and writes test plans.
+E0752,training coordinator,HRS,Learning,2,
+E0753,BDR,SAL,Inside Sales,7,
+E0754,Junior Sales Operations Analyst,SAL,Sales Operations,3,
+E0755,Sales Operations Analyst II (SYD),SAL,Sales Operations,6,Maintains sales forecasts and territories and tracks quota attainment for leadership.
+E0756,Sr Business Development Specialist,SAL,Inside Sales,8,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0757,BUSINESS CONTINUITY PLANNER III,LEG,Compliance,8,Maintains the risk register and tests business continuity plans.
+E0758,SITE OPERATIONS MANAGER II,OPS,Site Operations,4,Runs daily site operations and improves processes.
+E0759,Account Manager II,SAL,Enterprise Sales,6,Assists the group and takes on other tasks as assigned.
+E0760,Senior Software Engineer,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0761,Help Desk Technician II,TEC,Service Desk,4,Full-time position based at the main office.
+E0762,Paralegal REQ-61535,LEG,Legal Affairs,10,Prepares legal documents and keeps case files in order.
+E0763,Acct Executive,SAL,Enterprise Sales,5,Renews customer contracts and manages a portfolio of customer accounts.
+E0764,Corporate Counsel,LEG,Legal Affairs,7,Interprets corporate law and reviews board papers. Reports to Odalys Larkspur.
+E0765,Senior Accountant,FIN,Treasury,8,Prepares monthly accounts and reconciles balance sheet items.
+E0766,Lead Site Hazard Advisor REQ-599834,OPS,Supply Chain,9,Inspects sites for hazards and enforces safety regulations.
+E0767,Senior IT Support Specialist,TEC,Service Desk,8,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0768,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,9,Runs onboarding and regular check-ins and works to reduce churn.
+E0769,SR INVOICE PROCESSOR - LDN,FIN,Accounting,7,Schedules payments and processes supplier invoices.
+E0770,Data Analyst III - DEN REQ-628266,TEC,Data,7,
+E0771,Copywriter II,MKT,Brand,6,Writes articles and web pages and interviews experts for stories.
+E0772,"Accountant, SGP",FIN,Accounting,5,Prepares monthly accounts and keeps the general ledger.
+E0773,MARKETING MANAGER,MKT,Brand,9,Manages the marketing budget and plans campaigns.
+E0774,ACCOUNTANT #53601,FIN,Accounting,8,Prepares monthly accounts and keeps the general ledger.
+E0775,Senior Consumer Insights Specialist (#134803),MKT,Market Insights,7,Analyses market trends and competitors and surveys customers.
+E0776,PRIN CORP COUNSEL,LEG,Legal Affairs,10,Advises the business on contracts and disputes and interprets corporate law.
+E0777,Jr. Visual Designer,MKT,Brand,1,Creates visual designs for campaigns and lays out presentations.
+E0778,PRODUCT SUPPORT SPEC II,CUS,Product Support,4,Documents fixes and troubleshoots product problems reported by customers.
+E0779,FIN ANALYST III,FIN,Corporate Finance,8,Builds budgets and forecasts and explains variances against plan.
+E0780,Sr Invoice Processor,FIN,Accounting,7,Schedules payments and processes supplier invoices.
+E0781,"Senior Accounts Payable Clerk, SEA",FIN,Accounting,8,Matches invoices to purchase orders and answers vendor questions about remittances.
+E0782,digital mktg. spec.,MKT,Digital Marketing,3,Runs paid search and email campaigns and tracks clicks and conversions.
+E0783,Marketing Manager III,MKT,Brand,8,Manages the marketing budget and sets brand priorities with agencies.
+E0784,"Senior Warehouse Operator, ATL",OPS,Distribution,7,
+E0785,Customer Experience Analyst II REQ-544870 (ATL),CUS,Service Quality,4,Analyses satisfaction surveys and reports complaint trends.
+E0786,"Sr Treasury Analyst, CHI",FIN,Treasury,6,Arranges short-term funding and manages cash positions and bank accounts. Questions to odalys.wrenfield@example.com.
+E0787,Sys Eng 2 (REQ-685924),TEC,Infrastructure,4,Manages user accounts and automates backups. Reports to Bramwell Brackenridge.
+E0788,Billing Specialist - SYD,CUS,Service Quality,6,Resolves invoice disputes and adjusts customer bills.
+E0789,Billing Specialist - SYD,CUS,Service Quality,7,Resolves invoice disputes and adjusts customer bills.
+E0790,mkt research analyst,MKT,Market Insights,2,Analyses market trends and competitors and runs focus groups.
+E0791,Sr Accountant,FIN,Accounting,2,Prepares monthly accounts and reconciles balance sheet items.
+E0792,Risk Analyst III (#317246),LEG,Compliance,2,Assesses operational and regulatory risks and maintains the risk register.
+E0793,associate content writer,MKT,Digital Marketing,5,Writes articles and web pages and edits product copy.
+E0794,Senior Customer Service Representative,CUS,Contact Center,7,"Logs each contact and answers customer questions by phone, email and chat."
+E0795,Growth Ninja,MKT,Digital Marketing,4,Tries new ideas to get the word out.
+E0796,Compensation Analyst (SGP),HRS,Total Rewards,9,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0797,Internal Auditor II REQ-289070 (SGP),FIN,Internal Audit,6,Carries out the duties of the post as directed.
+E0798,mktg mgr iii,MKT,Brand,8,Manages the marketing budget and sets brand priorities with agencies.
+E0799,Senior Logistics Coordinator,OPS,Distribution,8,
+E0800,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,1,Runs onboarding and regular check-ins and works to reduce churn.
+E0801,data protection advisor iii,LEG,Privacy Office,7,
+E0802,Special Projects,FIN,Internal Audit,6,Works on assignments set by the leadership team.
+E0803,Accountant II,FIN,Accounting,4,Prepares monthly accounts and keeps the general ledger.
+E0804,Sr Cust Experience Spec,CUS,Service Quality,7,Reports complaint trends and analyses satisfaction surveys.
+E0805,"Recruiter, NYC",HRS,Talent Acquisition,9,Sources candidates and fills open positions.
+E0806,Treasury Analyst,FIN,Treasury,10,Arranges short-term funding and forecasts liquidity.
+E0807,Jr Call Ctr Supv,CUS,Contact Center,2,Monitors call quality and supervises a team of agents.
+E0808,Sr Benefits Admin (#999209),HRS,Total Rewards,7,Enrols employees in health and retirement plans and answers benefits questions.
+E0809,Ops. Mgr.,OPS,Site Operations,6,
+E0810,PAYROLL SPECIALIST II,FIN,Accounting,4,Runs payroll and resolves pay queries.
+E0811,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,8,Queries data and builds dashboards and explains trends to the business.
+E0812,"Senior Dispatcher, ATL",OPS,Distribution,7,See the attached profile for details of this post.
+E0813,Principal Accountant,FIN,Accounting,10,Keeps the general ledger and prepares monthly accounts.
+E0814,digital mktg. spec.,MKT,Digital Marketing,10,Runs paid search and email campaigns and tracks clicks and conversions.
+E0815,Software Engineer,TEC,Engineering,10,Duties vary with the needs of the department.
+E0816,Senior Marketing Manager,MKT,Brand,8,Manages the marketing budget and presents results to leadership.
+E0817,"TRAINING SPECIALIST, SGP",HRS,Learning,1,Delivers courses to employees and designs training courses.
+E0818,Sr. Sales Ops. Analyst,SAL,Sales Operations,7,Prepares pipeline reports and maintains sales forecasts and territories.
+E0819,internal auditor,FIN,Internal Audit,1,"Position within the wider group, working on shared priorities."
+E0820,Cash Mgr. 1 (REQ-389922),FIN,Treasury,1,Manages cash positions and bank accounts and arranges short-term funding.
+E0821,benefits administrator ii REQ-510317,HRS,Total Rewards,4,Enrols employees in health and retirement plans and answers benefits questions.
+E0822,Internal Communications Specialist,MKT,Communications,8,Writes internal announcements and prepares press releases.
+E0823,Compensation Analyst (SGP),HRS,Total Rewards,1,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0824,CUSTOMER SVC REP,CUS,Contact Center,8,
+E0825,Staff Accountant,,Accounting,9,Keeps the general ledger and prepares monthly accounts.
+E0826,Graphic Designer 2,MKT,Digital Marketing,3,Maintains brand materials and lays out presentations.
+E0827,Help Desk Technician II - SGP REQ-558208,TEC,Service Desk,6,Full-time position based at the main office.
+E0828,Billing Spec,CUS,Billing Services,2,Resolves invoice disputes and adjusts customer bills.
+E0829,CUSTOMER SVC REP,CUS,Contact Center,9,
+E0830,Corp Recruiter,HRS,Talent Acquisition,8,Sources candidates and fills open positions.
+E0831,COMPLIANCE OFFICER II,LEG,Compliance,6,Monitors adherence to regulations and reviews policies each year.
+E0832,Contracts Admin. II,LEG,Contracts,6,Tracks renewal dates and drafts commercial contracts.
+E0833,MKT. ANALYST (SEA),MKT,Market Insights,7,
+E0834,Jr. Logistics Coord.,OPS,Distribution,1,Tracks deliveries with carriers and schedules shipments.
+E0835,Customer Svc Rep - SYD,CUS,Service Quality,3,
+E0836,Warehouse Worker 1,OPS,Distribution,2,Loads goods for shipment and drives a forklift.
+E0837,Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0838,"TRAINING SPECIALIST, SGP",HRS,Learning,8,Delivers courses to employees and designs training courses.
+E0839,graphic designer ii,MKT,Brand,5,Creates visual designs for campaigns and prepares artwork for print and web.
+E0840,Mkt Research Analyst II,MKT,Market Insights,5,Analyses market trends and competitors and surveys customers.
+E0841,"comp analyst i, CHI",HRS,Total Rewards,1,
+E0842,HR. Biz. Partner II,HRS,People Operations,9,Advises managers on staffing and performance and handles employee relations cases.
+E0843,Cust Success Mgr (Tavi Quillfeather),SAL,Customer Success,10,Helps existing customers adopt products after the sale.
+E0844,"Financial Analyst, Senior",FIN,Corporate Finance,8,
+E0845,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,8,Queries data and builds dashboards and explains trends to the business.
+E0846,Fin Analyst,FIN,Corporate Finance,6,Models revenue and cost scenarios and prepares the monthly management pack.
+E0847,internal auditor,FIN,Internal Audit,6,"Position within the wider group, working on shared priorities."
+E0848,SR. GRAPHIC DESIGNER,MKT,Brand,7,
+E0849,SR PROCUREMENT SPEC - ATL,OPS,Purchasing,8,Sources suppliers and negotiates prices and runs tenders.
+E0850,Shift Supervisor,OPS,Site Operations,5,Improves processes and sets shift plans and staffing.
+E0851,Key Acct Mgr,SAL,Inside Sales,9,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0852,Compliance Officer III,LEG,Compliance,7,Reports breaches to regulators and monitors adherence to regulations.
+E0853,Payroll Specialist - LDN,FIN,Accounting,3,Runs payroll and checks timesheets and deductions.
+E0854,SENIOR DATA ANALYST,TEC,Data,7,Queries data and builds dashboards and explains trends to the business.
+E0855,Systems Administrator - LDN,TEC,Infrastructure,4,
+E0856,Billing Coord 1 #190047 (DEN),CUS,Billing Services,3,Duties vary with the needs of the department.
+E0857,Jr Mktg Mgr,MKT,Brand,3,Manages the marketing budget and sets brand priorities with agencies.
+E0858,internal auditor,FIN,Internal Audit,5,"Position within the wider group, working on shared priorities."
+E0859,Sales Representative - BOS #726618,SAL,Inside Sales,1,Sells products to new customers and works an assigned territory by phone and in person.
+E0860,SENIOR OPERATIONS MGR,OPS,Site Operations,7,Improves processes and tracks output against targets.
+E0861,"Sr. Int. Comms. Spec., SYD",MKT,Communications,8,Edits the staff newsletter and briefs spokespeople.
+E0862,Senior Software Engineer,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0863,"Paralegal, BOS",LEG,Contracts,10,Prepares legal documents and keeps case files in order.
+E0864,Data Analyst III - DEN REQ-628266,TEC,Data,2,
+E0865,Warehouse Operator,OPS,Distribution,3,Picks and packs orders and loads goods for shipment.
+E0866,Senior Accountant,FIN,Treasury,10,Prepares monthly accounts and reconciles balance sheet items.
+E0867,Sales Dev Representative #563516,SAL,Sales Operations,2,Qualifies leads for the sales team and makes cold calls and sends introductory emails.
+E0868,Returns Coordinator,CUS,Billing Services,3,
+E0869,Desktop Support Technician (REQ-789397),TEC,Service Desk,10,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0870,COMPLIANCE OFFICER II,LEG,Compliance,7,Monitors adherence to regulations and reviews policies each year.
+E0871,Sales Dev Rep,SAL,Inside Sales,9,Qualifies leads for the sales team and makes cold calls and sends introductory emails.
+E0872,Operational Risk Analyst III - NYC,LEG,Compliance,8,Maintains the risk register and assesses operational and regulatory risks.
+E0873,Warehouse Operator,OPS,Distribution,7,Picks and packs orders and loads goods for shipment.
+E0874,Site Operations Manager,OPS,Site Operations,1,Improves processes and runs daily site operations.
+E0875,digital mktg. spec.,MKT,Digital Marketing,5,Runs paid search and email campaigns and tracks clicks and conversions.
+E0876,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,5,Closes deals and sells products to new customers.
+E0877,Yarrow Stonebrook - Graphic Designer,MKT,Brand,7,
+E0878,Security Analyst,TEC,Information Security,2,Runs vulnerability scans and reviews access rights.
+E0879,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,10,
+E0880,Account Manager,SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0881,BUSINESS DEVELOPMENT REPRESENTATIVE III,SAL,Inside Sales,8,Qualifies leads for the sales team and finds new sales leads by outreach.
+E0882,senior human resources coordinator #150653,HRS,People Operations,8,Schedules onboarding for new hires and keeps employee records.
+E0883,Billing Specialist - SYD,CUS,Service Quality,2,Resolves invoice disputes and adjusts customer bills.
+E0884,Billing Specialist - SYD,CUS,Service Quality,8,Resolves invoice disputes and adjusts customer bills.
+E0885,Software Engineer - CHI,TEC,Engineering,4,Duties vary with the needs of the department.
+E0886,HUMAN RESOURCES COORD II,HRS,People Operations,6,Schedules onboarding for new hires and keeps employee records.
+E0887,Returns Coordinator,CUS,Billing Services,9,
+E0888,Customer Experience Analyst - LDN #533530,CUS,Service Quality,7,Duties vary with the needs of the department.
+E0889,Comp. Analyst,HRS,Total Rewards,,Evaluates jobs for grading and prepares the annual bonus cycle.
+E0890,Sr Int Comms Specialist,MKT,Communications,7,Edits the staff newsletter and briefs spokespeople.
+E0891,Jr AP Spec REQ-482641 (CHI),FIN,Accounting,1,Processes supplier invoices and matches invoices to purchase orders.
+E0892,digital mktg. spec.,MKT,Digital Marketing,2,Runs paid search and email campaigns and tracks clicks and conversions.
+E0893,SR. SALES ENGINEER,SAL,Enterprise Sales,7,Runs product demonstrations and explains the technical side of products during a sale.
+E0894,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,9,Runs onboarding and regular check-ins and works to reduce churn.
+E0895,CUSTOMER SVC REP,CUS,Contact Center,1,
+E0896,Paralegal,LEG,Legal Affairs,5,Prepares legal documents and keeps case files in order.
+E0897,Senior Quality Assurance Engineer,TEC,Engineering,8,Writes test plans and verifies releases before launch.
+E0898,CUSTOMER SVC REP,CUS,Contact Center,3,
+E0899,Quality Assurance Engineer,TEC,Engineering,5,Verifies releases before launch and writes test plans.
+E0900,PRIN TERRITORY EXECUTIVE,SAL,Inside Sales,10,Closes deals and works an assigned territory by phone and in person.
+E0901,Sr. Whse. Operator,OPS,Distribution,8,
+E0902,Associate Field Service Technician - SEA,CUS,Billing Services,5,Documents fixes and reproduces faults and raises defects.
+E0903,Sales Representative - BOS #726618,SAL,Inside Sales,4,Sells products to new customers and works an assigned territory by phone and in person.
+E0904,business development representative,SAL,Inside Sales,7,Qualifies leads for the sales team and books first meetings with prospects.
+E0905,Cust Success Spec II,SAL,Customer Success,6,
+E0906,Paralegal REQ-61535,LEG,Legal Affairs,4,Prepares legal documents and keeps case files in order.
+E0907,Logistics Coord.,OPS,Distribution,1,Schedules shipments and resolves delays with transport partners.
+E0908,Privacy Spec. II (REQ-427877),LEG,Privacy Office,5,Answers data subject requests and assesses how personal data is handled.
+E0909,MARKETING MANAGER,MKT,Brand,5,Manages the marketing budget and plans campaigns.
+E0910,Senior Software Engineer,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0911,"Senior Warehouse Operator, ATL",OPS,Distribution,4,
+E0912,Account Manager,SAL,Enterprise Sales,8,Manages a portfolio of customer accounts and renews customer contracts.
+E0913,Systems Administrator,TEC,Infrastructure,6,
+E0914,PRODUCT SUPPORT SPEC III,CUS,Product Support,7,Documents fixes and troubleshoots product problems reported by customers.
+E0915,GRAPHIC DESIGNER,MKT,Brand,9,
+E0916,Operational Risk Analyst III - NYC,LEG,Compliance,7,Maintains the risk register and assesses operational and regulatory risks.
+E0917,Customer Svc Rep - SYD,CUS,Service Quality,4,
+E0918,Jr Email Marketing Spec (REQ-679204),MKT,Digital Marketing,3,Runs paid search and email campaigns and manages social media channels.
+E0919,CONTRACTS ADMIN - SYD,LEG,Contracts,9,Drafts commercial contracts and tracks renewal dates.
+E0920,Recruiter II,HRS,Talent Acquisition,4,Sources candidates and screens applications and schedules interviews.
+E0921,Paralegal REQ-61535,LEG,Legal Affairs,10,Prepares legal documents and keeps case files in order.
+E0922,Sr Cust Success Mgr (#333210),SAL,Customer Success,7,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E0923,"SECURITY ANALYST, SR",TEC,Information Security,7,Investigates security incidents and monitors systems for threats.
+E0924,"compensation analyst, senior",HRS,Total Rewards,7,
+E0925,Associate Human Resources Assistant,HRS,Learning,9,Keeps employee records and prepares employment letters.
+E0926,Software Engineer,TEC,Engineering,10,Duties vary with the needs of the department.
+E0927,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,4,Runs onboarding and regular check-ins and works to reduce churn.
+E0928,Graphic Artist,MKT,Brand,5,Lays out presentations and prepares artwork for print and web.
+E0929,Customer Service Representative,CUS,Contact Center,7,
+E0930,Warehouse Operator,OPS,Distribution,5,Picks and packs orders and loads goods for shipment.
+E0931,Operations Manager III (NYC),OPS,Site Operations,7,Runs daily site operations and improves processes.
+E0932,Operations Manager III (NYC),OPS,Site Operations,8,Runs daily site operations and improves processes.
+E0933,CALL CENTER SUPERVISOR,CUS,Contact Center,9,Supervises a team of agents and monitors call quality.
+E0934,Business Development Representative,SAL,Inside Sales,9,Qualifies leads for the sales team and books first meetings with prospects.
+E0935,CUST SUCCESS MGR,SAL,Enterprise Sales,8,Runs onboarding and regular check-ins and works to reduce churn.
+E0936,Digital Mktg. Spec. II,MKT,Digital Marketing,6,Tracks clicks and conversions and optimises landing pages.
+E0937,Content Writer 1,MKT,Digital Marketing,3,See the attached profile for details of this post.
+E0938,Sales Engineer II,SAL,Enterprise Sales,6,Runs product demonstrations and answers detailed questions from prospects.
+E0939,"Junior Quality Assurance Engineer, DEN",TEC,Engineering,2,Verifies releases before launch and tracks defects to closure.
+E0940,accountant i,FIN,Accounting,2,Prepares monthly accounts and keeps the general ledger.
+E0941,Sales Representative - BOS #726618,SAL,Inside Sales,4,Sells products to new customers and works an assigned territory by phone and in person.
+E0942,Logistics Coord.,OPS,Distribution,8,Schedules shipments and resolves delays with transport partners.
+E0943,demand planner,OPS,Supply Chain,8,Reports on stock turns and forecasts demand by product.
+E0944,"Accountant, Senior",FIN,Accounting,7,See the attached profile for details of this post.
+E0945,SOFTWARE ENGINEER,TEC,Engineering,5,Duties vary with the needs of the department.
+E0946,Senior Software Engineer,TEC,Engineering,8,Reviews changes before release and designs and writes application code.
+E0947,Lead Whse Operator #848340 (SGP),OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E0948,CALL CENTER SUPERVISOR 3 (CHI),CUS,Contact Center,8,Coaches new starters and supervises a team of agents.
+E0949,SR. SALES ENGINEER,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E0950,Sales Representative - BOS #726618,SAL,Inside Sales,8,Sells products to new customers and works an assigned territory by phone and in person.
+E0951,Training Coord - ATL #604745,HRS,Learning,4,
+E0952,Accountant II,FIN,Accounting,5,Prepares monthly accounts and keeps the general ledger.
+E0953,Sr Int Auditor - LDN,FIN,Internal Audit,9,Plans audit fieldwork and follows up on agreed actions.
+E0954,customer insights analyst ii,CUS,Service Quality,4,
+E0955,JUNIOR PAYROLL CLERK,FIN,Accounting,,Resolves pay queries and runs payroll.
+E0956,Treasury Spec 1,FIN,Treasury,1,Manages cash positions and bank accounts and executes currency trades.
+E0957,Sr Safety Insp,OPS,Health and Safety,7,Inspects sites for hazards and trains staff on safe working.
+E0958,Cust Success Spec II,SAL,Customer Success,6,
+E0959,SENIOR TRAINING SPECIALIST,HRS,Learning,8,Designs training courses and delivers courses to employees.
+E0960,CUSTOMER SVC REP,CUS,Contact Center,5,
+E0961,Senior Accountant,FIN,Treasury,4,Prepares monthly accounts and reconciles balance sheet items.
+E0962,"Junior Quality Assurance Engineer, DEN",TEC,Engineering,4,Verifies releases before launch and tracks defects to closure.
+E0963,Senior Logistics Coordinator,OPS,Distribution,7,
+E0964,CUST SUCCESS MGR,SAL,Enterprise Sales,2,Runs onboarding and regular check-ins and works to reduce churn.
+E0965,JUNIOR INTERNAL AUDIT ANALYST (REQ-702278),FIN,Internal Audit,1,Follows up on agreed actions and plans audit fieldwork.
+E0966,SENIOR ACCOUNTS PAYABLE CLERK,FIN,Internal Audit,7,Matches invoices to purchase orders and answers vendor questions about remittances.
+E0967,Sr Customer Experience Specialist,CUS,Service Quality,8,Reports complaint trends and analyses satisfaction surveys.
+E0968,internal auditor,FIN,Internal Audit,10,"Position within the wider group, working on shared priorities."
+E0969,GRAPHIC DESIGNER,MKT,Brand,10,
+E0970,CORP PARALEGAL,LEG,Legal Affairs,10,Supports counsel on filings and keeps case files in order. Questions to isolde.larkspur@example.com.
+E0971,Billing Specialist - SYD,CUS,Service Quality,10,Resolves invoice disputes and adjusts customer bills.
+E0972,CONTRACTS SPECIALIST II,LEG,Contracts,5,
+E0973,"Senior Sales Representative, SYD",SAL,Inside Sales,8,Meets a monthly quota and works an assigned territory by phone and in person.
+E0974,"Sales Consultant, Sr",SAL,Inside Sales,,Sells products to new customers and closes deals.
+E0975,Privacy Analyst #403518,LEG,Privacy Office,6,Assesses how personal data is handled and answers data subject requests.
+E0976,Sr. Sales Dev. Rep.,SAL,Inside Sales,8,Finds new sales leads by outreach and qualifies leads for the sales team.
+E0977,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E0978,Bookkeeper - ATL,FIN,Accounting,2,Works with colleagues across the company to meet agreed goals.
+E0979,Graphic Designer REQ-734518,MKT,Brand,3,
+E0980,CUSTOMER SVC REP,CUS,Contact Center,10,
+E0981,Sr Compliance Officer,LEG,Compliance,7,
+E0982,Lead Data Protection Advisor - BOS,LEG,Privacy Office,9,Full-time position based at the main office.
+E0983,Comms Coord REQ-85076,MKT,Communications,4,Writes internal announcements and briefs spokespeople.
+E0984,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,7,Runs onboarding and regular check-ins and works to reduce churn.
+E0985,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,8,
+E0986,CUSTOMER SVC REP,CUS,Contact Center,8,
+E0987,DIGITAL MARKETING SPECIALIST,MKT,Digital Marketing,2,Runs paid search and email campaigns and tracks clicks and conversions.
+E0988,Senior Human Resources Coordinator,HRS,People Operations,8,Schedules onboarding for new hires and keeps employee records.
+E0989,QA. Eng. II,TEC,Engineering,5,Writes test plans and automates regression tests.
+E0990,"TRAINING SPECIALIST, SGP",HRS,Learning,1,Delivers courses to employees and designs training courses.
+E0991,jr acct mgr,SAL,Inside Sales,1,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E0992,Sr Help Desk Tech,TEC,Data,7,
+E0993,Systems Administrator,TEC,Infrastructure,6,
+E0994,billing specialist,CUS,Billing Services,5,Resolves invoice disputes and adjusts customer bills.
+E0995,SALES REPRESENTATIVE II (Remote),SAL,Inside Sales,4,Closes deals and sells products to new customers.
+E0996,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E0997,salary processing clerk,FIN,Corporate Finance,3,Runs payroll and resolves pay queries.
+E0998,Help Desk Technician,TEC,Service Desk,5,Sets up laptops and phones and resolves hardware and software problems for employees.
+E0999,Quality Assurance Engineer,TEC,Engineering,10,Verifies releases before launch and writes test plans.
+E1000,Sr. Sales Ops. Analyst,SAL,Sales Operations,8,Prepares pipeline reports and maintains sales forecasts and territories.
+E1001,Special Projects,FIN,Internal Audit,7,Works on assignments set by the leadership team.
+E1002,Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E1003,SENIOR CONTENT WRITER (CHI),MKT,Brand,8,Edits product copy and keeps a publishing calendar.
+E1004,business data analyst ii REQ-163827,TEC,Data,9,Explains trends to the business and queries data and builds dashboards.
+E1005,Software Engineer - CHI,TEC,Engineering,5,Duties vary with the needs of the department.
+E1006,account manager,SAL,Enterprise Sales,3,Manages a portfolio of customer accounts and renews customer contracts.
+E1007,Senior Quality Assurance Engineer,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E1008,Lead Revenue Operations Analyst,SAL,Sales Operations,10,Prepares pipeline reports and keeps the customer database tidy.
+E1009,Account Manager (#749705),SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E1010,Content Writer II,MKT,Communications,4,Keeps a publishing calendar and interviews experts for stories.
+E1011,Senior Compliance Officer,LEG,Privacy Office,7,
+E1012,Jr Software Eng,TEC,Engineering,3,Reviews changes before release and fixes defects found in production.
+E1013,Contracts Admin - DEN REQ-94630,LEG,Contracts,4,Drafts commercial contracts and tracks renewal dates.
+E1014,Account Manager (#749705),SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E1015,Senior Business Development Representative,SAL,Inside Sales,8,
+E1016,Lead Returns Clerk - DEN #578502,CUS,Billing Services,9,Processes product returns and books collections with couriers.
+E1017,MARKETING MANAGER,MKT,Brand,6,Manages the marketing budget and plans campaigns.
+E1018,JUNIOR HUMAN RESOURCES COORDINATOR #717049,HRS,People Operations,5,Keeps employee records and schedules onboarding for new hires.
+E1019,Systems Administrator,TEC,Infrastructure,3,
+E1020,Billing Specialist - SYD,CUS,Service Quality,5,Resolves invoice disputes and adjusts customer bills.
+E1021,pay benchmarking consultant - BOS,HRS,Total Rewards,3,Maintains salary bands and benchmarks pay against the market.
+E1022,Senior Financial Analyst REQ-703720 (SGP),FIN,Corporate Finance,8,Explains variances against plan and prepares the monthly management pack.
+E1023,Account Manager (#749705),SAL,Enterprise Sales,6,Manages a portfolio of customer accounts and renews customer contracts.
+E1024,Sales Representative - BOS #726618,SAL,Inside Sales,,Sells products to new customers and works an assigned territory by phone and in person.
+E1025,Paralegal REQ-61535,LEG,Legal Affairs,1,Prepares legal documents and keeps case files in order.
+E1026,senior paralegal #696501,LEG,Legal Affairs,8,Prepares legal documents and supports counsel on filings.
+E1027,Paralegal REQ-61535,LEG,Legal Affairs,5,Prepares legal documents and keeps case files in order.
+E1028,digital mktg. spec.,MKT,Digital Marketing,7,Runs paid search and email campaigns and tracks clicks and conversions.
+E1029,Paralegal REQ-61535,LEG,Legal Affairs,7,Prepares legal documents and keeps case files in order.
+E1030,senior human resources coordinator #150653,HRS,People Operations,8,Schedules onboarding for new hires and keeps employee records.
+E1031,SALES REPRESENTATIVE 2 - NYC,SAL,Inside Sales,6,Closes deals and works an assigned territory by phone and in person.
+E1032,Help Desk Technician 3,TEC,Service Desk,10,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1033,Jr Billing Spec,CUS,Billing Services,2,
+E1034,RISK ANALYST #16838 (BOS),LEG,Compliance,6,Assesses operational and regulatory risks and reports exposures to the board.
+E1035,Jr. Backend Eng.,TEC,Data,3,Fixes defects found in production and builds services and interfaces.
+E1036,Whse. Operator #953660 (ATL),OPS,Distribution,4,Picks and packs orders and loads goods for shipment.
+E1037,Software Engineer - CHI,TEC,Engineering,3,Duties vary with the needs of the department.
+E1038,Benefits Admin,HRS,Total Rewards,3,Enrols employees in health and retirement plans and processes leave requests.
+E1039,senior compensation analyst #782996 (SEA),HRS,Total Rewards,8,Benchmarks pay against the market and maintains salary bands.
+E1040,Payroll Specialist 2 (#881532),FIN,Accounting,5,Runs payroll and checks timesheets and deductions.
+E1041,Software Engineer,TEC,Engineering,8,Duties vary with the needs of the department.
+E1042,Systems Administrator,TEC,Infrastructure,1,
+E1043,Systems Admin.,TEC,Infrastructure,1,
+E1044,Site Operations Manager,OPS,Site Operations,2,Improves processes and runs daily site operations.
+E1045,Jr Software Eng,TEC,Engineering,8,Reviews changes before release and fixes defects found in production.
+E1046,Security Analyst (DEN),TEC,Information Security,5,Runs vulnerability scans and reviews access rights.
+E1047,Software Engineer II,TEC,Engineering,4,
+E1048,Junior Communications Spec,MKT,Digital Marketing,1,Writes internal announcements and prepares press releases.
+E1049,FIN ANALYST III,FIN,Corporate Finance,7,
+E1050,Logistics Coord.,OPS,Distribution,10,Schedules shipments and resolves delays with transport partners.
+E1051,"Sr Treasury Analyst, CHI",FIN,Treasury,8,Arranges short-term funding and manages cash positions and bank accounts. Questions to odalys.wrenfield@example.com.
+E1052,Health and Safety Inspector II,OPS,Health and Safety,5,Inspects sites for hazards and enforces safety regulations. Reports to Oswin Thistlewood.
+E1053,Satisfaction Survey Coordinator 2,CUS,Service Quality,6,Reports complaint trends and recommends service improvements.
+E1054,Supply Chain Analyst,OPS,Supply Chain,2,Plans inventory levels and analyses supplier performance.
+E1055,Account Manager,SAL,Enterprise Sales,7,Manages a portfolio of customer accounts and renews customer contracts.
+E1056,senior customer accounts clerk,CUS,Billing Services,8,Resolves invoice disputes and adjusts customer bills.
+E1057,Cash Manager,FIN,Treasury,4,
+E1058,Biz Dev Rep,SAL,Inside Sales,3,Qualifies leads for the sales team and books first meetings with prospects.
+E1059,Help Desk Technician II,TEC,Service Desk,4,Full-time position based at the main office.
+E1060,Call Center Supv. - ATL,CUS,Contact Center,8,Supervises a team of agents and monitors call quality.
+E1061,"agreements coord, sr",LEG,Contracts,7,Drafts commercial contracts and checks terms against templates.
+E1062,Customer Svc Rep - SYD,CUS,Service Quality,3,
+E1063,Pay Benchmarking Consultant - NYC #120302,HRS,Total Rewards,3,Maintains salary bands and benchmarks pay against the market.
+E1064,client success manager iii,SAL,Inside Sales,8,Carries out the duties of the post as directed.
+E1065,Lead Whse Operator #848340 (SGP),OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E1066,Prin. Call Ctr. Supv.,CUS,Contact Center,10,Supervises a team of agents and monitors call quality.
+E1067,Account Manager,SAL,Enterprise Sales,2,Manages a portfolio of customer accounts and renews customer contracts.
+E1068,Account Manager (#749705),SAL,Enterprise Sales,6,Manages a portfolio of customer accounts and renews customer contracts.
+E1069,Contracts Specialist (BOS),LEG,Compliance,9,Drafts commercial contracts and tracks renewal dates.
+E1070,Bookkeeper - ATL,FIN,Accounting,7,Works with colleagues across the company to meet agreed goals.
+E1071,Client Success Mgr III - SEA,SAL,Customer Success,7,Carries out the duties of the post as directed.
+E1072,Software Eng. 1,TEC,Engineering,4,Designs and writes application code and reviews changes before release.
+E1073,Logistics Coord.,OPS,Distribution,10,Schedules shipments and resolves delays with transport partners.
+E1074,Paralegal - NYC REQ-716874,LEG,Legal Affairs,3,Prepares legal documents and keeps case files in order.
+E1075,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E1076,"Senior Sales Representative, SYD",SAL,Inside Sales,7,Meets a monthly quota and works an assigned territory by phone and in person.
+E1077,Digital Mktg. Spec. II,MKT,Digital Marketing,6,Tracks clicks and conversions and runs paid search and email campaigns.
+E1078,Biz Dev Rep,SAL,Inside Sales,10,Qualifies leads for the sales team and books first meetings with prospects.
+E1079,MARKETING MANAGER,MKT,Brand,5,Manages the marketing budget and plans campaigns.
+E1080,sr. biz. dev. rep.,SAL,Inside Sales,1,
+E1081,senior human resources coordinator #150653,HRS,People Operations,7,Schedules onboarding for new hires and keeps employee records.
+E1082,ACCOUNTANT II,FIN,Accounting,6,Prepares monthly accounts and keeps the general ledger.
+E1083,Assoc Agreements Coord,LEG,Contracts,6,Tracks renewal dates and drafts commercial contracts.
+E1084,"Accountant, SGP",FIN,Accounting,10,Prepares monthly accounts and keeps the general ledger.
+E1085,Sr. Fin. Analyst,FIN,Corporate Finance,7,Explains variances against plan and prepares the monthly management pack.
+E1086,Senior Risk Analyst,LEG,Compliance,6,Assesses operational and regulatory risks and tests business continuity plans.
+E1087,PRIN PEOPLE BIZ PARTNER,HRS,Talent Acquisition,10,Handles employee relations cases and advises managers on staffing and performance.
+E1088,"Procurement Spec., Sr. - NYC",OPS,Purchasing,7,Runs tenders and reviews supplier agreements.
+E1089,Account Manager (#749705),SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E1090,PRODUCT SUPPORT SPECIALIST 3,CUS,Product Support,8,Documents fixes and troubleshoots product problems reported by customers.
+E1091,Principal Software Tester,TEC,Engineering,10,Full-time position based at the main office.
+E1092,human resources coord,HRS,People Operations,7,Keeps employee records and prepares employment letters.
+E1093,Sales Representative - BOS #726618,SAL,Inside Sales,2,Sells products to new customers and works an assigned territory by phone and in person.
+E1094,legal assistant,LEG,Legal Affairs,6,Supports counsel on filings and prepares legal documents.
+E1095,billing specialist,CUS,Billing Services,5,Resolves invoice disputes and adjusts customer bills.
+E1096,Legal Assistant,LEG,Contracts,8,Supports counsel on filings and prepares legal documents.
+E1097,"Accountant, SGP",FIN,Accounting,6,Prepares monthly accounts and keeps the general ledger.
+E1098,Accountant (cover for Liora Ashgrove),FIN,Accounting,,Keeps the general ledger while a colleague is on leave.
+E1099,"Help Desk Technician 3, SGP",TEC,Service Desk,7,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1100,CUSTOMER SVC REP,CUS,Contact Center,1,
+E1101,Call Center Supv. - ATL,CUS,Contact Center,,Supervises a team of agents and monitors call quality.
+E1102,Customer Svc Rep - SYD,CUS,Service Quality,4,
+E1103,privacy analyst ii,LEG,Contracts,8,Answers data subject requests and checks new systems for privacy gaps.
+E1104,Junior Paralegal - BOS,LEG,Legal Affairs,7,Researches precedents and keeps case files in order.
+E1105,Warehouse Operator,OPS,Distribution,4,Picks and packs orders and loads goods for shipment.
+E1106,Risk Analyst III (#317246),LEG,Compliance,7,Assesses operational and regulatory risks and maintains the risk register.
+E1107,Paralegal REQ-61535,LEG,Legal Affairs,7,Prepares legal documents and keeps case files in order.
+E1108,Systems Admin.,TEC,Infrastructure,8,
+E1109,Risk Analyst 1 - Remote,LEG,Contracts,1,Maintains the risk register and assesses operational and regulatory risks.
+E1110,Legal Counsel III,LEG,Legal Affairs,8,Interprets corporate law and advises the business on contracts and disputes.
+E1111,ACCOUNTS PAYABLE ADMINISTRATOR III,FIN,Accounting,9,Schedules payments and answers vendor questions about remittances.
+E1112,Account Manager,SAL,Enterprise Sales,9,Manages a portfolio of customer accounts and renews customer contracts.
+E1113,senior digital marketing specialist,MKT,Digital Marketing,7,Manages social media channels and tracks clicks and conversions.
+E1114,CONTRACTS ADMIN - SYD,LEG,Contracts,3,Drafts commercial contracts and tracks renewal dates.
+E1115,DIGITAL MARKETING SPECIALIST,MKT,Digital Marketing,5,Runs paid search and email campaigns and tracks clicks and conversions.
+E1116,digital mktg. spec.,MKT,Digital Marketing,5,Runs paid search and email campaigns and tracks clicks and conversions.
+E1117,Junior Contact Center Supervisor,CUS,Contact Center,1,Monitors call quality and sets rosters and breaks.
+E1118,Benefits Coordinator II,HRS,Total Rewards,5,Enrols employees in health and retirement plans and processes leave requests.
+E1119,Senior Supply Analyst,OPS,Supply Chain,8,Plans inventory levels and reports on stock turns.
+E1120,Senior Billing Spec (REQ-353004),CUS,Billing Services,8,Adjusts customer bills and issues credit notes.
+E1121,Account Manager,SAL,Enterprise Sales,5,Manages a portfolio of customer accounts and renews customer contracts.
+E1122,DIGITAL MARKETING SPECIALIST,MKT,Digital Marketing,10,Runs paid search and email campaigns and tracks clicks and conversions.
+E1123,Client Onboarding Advisor,SAL,Customer Success,2,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E1124,Bookkeeper 1,FIN,Accounting,1,Full-time position based at the main office.
+E1125,Presales Engineer - CHI REQ-914343,SAL,Enterprise Sales,6,Explains the technical side of products during a sale and builds proofs of concept.
+E1126,Ops. Mgr.,OPS,Site Operations,10,
+E1127,"Logistics Coordinator 1, SEA",OPS,Distribution,2,Tracks deliveries with carriers and prepares customs paperwork.
+E1128,CONTENT WRITER #726405,MKT,Digital Marketing,3,Writes articles and web pages and interviews experts for stories.
+E1129,Lead Sales Operations Analyst,SAL,Sales Operations,9,Keeps the customer database tidy and tracks quota attainment for leadership.
+E1130,"Customer Service Representative, Senior",CUS,Contact Center,7,Logs each contact and passes complex cases to specialists.
+E1131,Recruiter,HRS,Talent Acquisition,4,Sources candidates and fills open positions.
+E1132,Account Manager II,SAL,Enterprise Sales,6,Assists the group and takes on other tasks as assigned.
+E1133,Senior Procurement Officer,OPS,Purchasing,8,Sources suppliers and negotiates prices and issues purchase orders.
+E1134,"Accountant, Senior",FIN,Accounting,8,See the attached profile for details of this post.
+E1135,CUSTOMER EXPERIENCE ANALYST,CUS,Service Quality,9,Duties vary with the needs of the department.
+E1136,SENIOR RESEARCH ANALYST,MKT,Communications,8,Sizes new segments and runs focus groups.
+E1137,Treasury Analyst,FIN,Treasury,4,Arranges short-term funding and forecasts liquidity.
+E1138,"Accountant, Senior",FIN,Accounting,8,See the attached profile for details of this post.
+E1139,Paralegal,LEG,Legal Affairs,1,Prepares legal documents and keeps case files in order.
+E1140,Junior Visual Designer #970954,MKT,Brand,2,Creates visual designs for campaigns and lays out presentations.
+E1141,Paralegal REQ-61535,LEG,Legal Affairs,2,Prepares legal documents and keeps case files in order.
+E1142,Procurement Spec,OPS,Purchasing,7,Sources suppliers and negotiates prices and issues purchase orders.
+E1143,Sr Accountant,FIN,Accounting,8,Prepares monthly accounts and reconciles balance sheet items.
+E1144,Privacy Analyst II - BOS,LEG,Compliance,6,Answers data subject requests and checks new systems for privacy gaps.
+E1145,RISK ANALYST #16838 (BOS),LEG,Compliance,6,Assesses operational and regulatory risks and reports exposures to the board.
+E1146,Cash Mgr.,FIN,Treasury,7,
+E1147,Presales Engineer - CHI REQ-914343,SAL,Enterprise Sales,7,Explains the technical side of products during a sale and builds proofs of concept.
+E1148,Sr. Cash Mgr. REQ-621187,FIN,Treasury,3,Manages cash positions and bank accounts and arranges short-term funding.
+E1149,MARKETING MANAGER,MKT,Brand,1,Presents results to leadership and plans campaigns.
+E1150,whse operator,OPS,Distribution,7,Picks and packs orders and loads goods for shipment.
+E1151,"Logistics Specialist III, DEN",OPS,Distribution,8,Tracks deliveries with carriers and resolves delays with transport partners.
+E1152,LOGISTICS COORDINATOR,OPS,Distribution,6,Schedules shipments and resolves delays with transport partners.
+E1153,Account Manager,SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E1154,DIGITAL MARKETING COORDINATOR III - Remote,MKT,Digital Marketing,5,
+E1155,Customer Service Representative,CUS,Contact Center,8,
+E1156,Jr Call Ctr Supv,CUS,Contact Center,3,Monitors call quality and supervises a team of agents.
+E1157,GRAPHIC DESIGNER III - SYD,MKT,Brand,8,
+E1158,Biz Dev Rep,SAL,Inside Sales,2,Qualifies leads for the sales team and books first meetings with prospects.
+E1159,SR. SALES ENGINEER,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E1160,Principal Territory Executive,SAL,Inside Sales,,Closes deals and works an assigned territory by phone and in person.
+E1161,HUMAN RESOURCES BUSINESS PARTNER - NYC #838400,HRS,People Operations,2,Advises managers on staffing and performance and handles employee relations cases.
+E1162,SALES REPRESENTATIVE 2 - NYC,SAL,Inside Sales,5,Meets a monthly quota and sells products to new customers.
+E1163,Sales Representative - BOS #726618,SAL,Inside Sales,5,Sells products to new customers and works an assigned territory by phone and in person.
+E1164,CONTENT WRITER #726405,MKT,Digital Marketing,1,Writes articles and web pages and interviews experts for stories.
+E1165,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,4,Queries data and builds dashboards and explains trends to the business.
+E1166,Operations Manager III (NYC),OPS,Site Operations,7,Runs daily site operations and improves processes.
+E1167,Cust. Success Mgr. 3 - NYC REQ-924503,SAL,Customer Success,7,Keeps customers satisfied after the sale and runs onboarding and regular check-ins.
+E1168,Security Analyst,TEC,Information Security,2,Runs vulnerability scans and reviews access rights.
+E1169,Product Support Specialist REQ-111810,CUS,Contact Center,1,Guides users through installation and reproduces faults and raises defects.
+E1170,Technical Presales Consultant III - SGP,SAL,Sales Operations,8,Runs product demonstrations and explains the technical side of products during a sale.
+E1171,"COMPENSATION SPECIALIST, BOS",HRS,Total Rewards,2,
+E1172,SALARY PROCESSING CLERK - CHI #832709,FIN,Accounting,8,Runs payroll and resolves pay queries.
+E1173,Senior Quality Assurance Engineer,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E1174,BUSINESS CONTINUITY PLANNER III,LEG,Compliance,7,Maintains the risk register and tests business continuity plans.
+E1175,MARKETING MANAGER,MKT,Brand,3,Manages the marketing budget and plans campaigns.
+E1176,SALES REPRESENTATIVE 2 - NYC,SAL,Inside Sales,4,Closes deals and works an assigned territory by phone and in person.
+E1177,senior data specialist - BOS,TEC,Data,7,Contributes to departmental objectives and ad hoc projects.
+E1178,Systems Administrator,TEC,Infrastructure,3,
+E1179,Senior Billing Specialist - DEN REQ-579865,CUS,Billing Services,8,Adjusts customer bills and issues credit notes.
+E1180,"ACCOUNT MANAGER, SENIOR",SAL,Customer Success,7,
+E1181,Software Engineer,TEC,Engineering,3,Duties vary with the needs of the department.
+E1182,Junior Account Manager,SAL,Enterprise Sales,2,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E1183,Comms Coord REQ-85076,MKT,Communications,2,Writes internal announcements and briefs spokespeople.
+E1184,Content Writer,MKT,Digital Marketing,2,Writes articles and web pages and interviews experts for stories.
+E1185,Senior Graphic Designer (#270737),MKT,Brand,7,
+E1186,Paralegal II,LEG,Legal Affairs,5,Supports counsel on filings and prepares legal documents.
+E1187,Accountant I,FIN,Internal Audit,2,Prepares monthly accounts and keeps the general ledger.
+E1188,JR PROCUREMENT SPEC,OPS,Purchasing,3,
+E1189,SR DISPATCHER,OPS,Distribution,8,See the attached profile for details of this post.
+E1190,Compensation Analyst 2,HRS,Total Rewards,6,Maintains salary bands and prepares the annual bonus cycle.
+E1191,HR. Coord.,HRS,Total Rewards,2,Keeps employee records and prepares employment letters.
+E1192,Corporate Recruiter,HRS,Talent Acquisition,2,Sources candidates and fills open positions.
+E1193,Senior Call Center Supervisor REQ-149373 (Remote),CUS,Contact Center,8,Supervises a team of agents and monitors call quality.
+E1194,SALES ENG,SAL,Enterprise Sales,4,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E1195,Payroll Spec 2,FIN,Accounting,8,Runs payroll and checks timesheets and deductions.
+E1196,Biz Dev Rep,SAL,Inside Sales,10,Qualifies leads for the sales team and books first meetings with prospects.
+E1197,"Senior Warehouse Operator, ATL",OPS,Distribution,8,
+E1198,Sr Help Desk Tech,TEC,Data,7,
+E1199,Sr Supply Chain Analyst REQ-465625 (SGP),OPS,Supply Chain,8,Plans inventory levels and analyses supplier performance.
+E1200,Customer Svc Rep - SYD,CUS,Service Quality,4,
+E1201,Warehouse Operator,OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E1202,Data Specialist,TEC,Infrastructure,4,
+E1203,Help Desk Technician,TEC,Service Desk,8,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1204,Prin Returns Coord,CUS,Billing Services,10,Processes product returns and arranges refunds and exchanges. Reports to Dariel Brackenridge.
+E1205,lead backend engineer,TEC,Engineering,9,Designs and writes application code and reviews changes before release.
+E1206,Content Writer II,MKT,Communications,6,Keeps a publishing calendar and interviews experts for stories.
+E1207,internal auditor,FIN,Internal Audit,9,"Position within the wider group, working on shared priorities."
+E1208,Staff Accountant,,Accounting,7,Keeps the general ledger and prepares monthly accounts.
+E1209,Supply Chain Analyst II,OPS,Supply Chain,6,Forecasts demand by product and reports on stock turns.
+E1210,PRODUCT SUPPORT SPEC III,CUS,Product Support,8,Documents fixes and troubleshoots product problems reported by customers.
+E1211,Benefits Coordinator III,HRS,Learning,8,See the attached profile for details of this post.
+E1212,COMPENSATION ANALYST II (LDN),HRS,Total Rewards,,Evaluates jobs for grading and prepares the annual bonus cycle.
+E1213,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,,
+E1214,Fin Analyst II,FIN,Corporate Finance,5,Builds budgets and forecasts and explains variances against plan.
+E1215,Key Acct Mgr,SAL,Inside Sales,4,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E1216,Presales Eng II,SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E1217,Security Analyst,TEC,Information Security,1,Runs vulnerability scans and reviews access rights.
+E1218,SR. OPS. MGR.,OPS,Site Operations,7,Improves processes and tracks output against targets.
+E1219,Senior Call Center Supervisor REQ-149373 (Remote),CUS,Contact Center,7,Supervises a team of agents and monitors call quality.
+E1220,Creative Artworker II,MKT,Brand,6,Creates visual designs for campaigns and maintains brand materials. Questions to kasimir.larkspur@example.com.
+E1221,SENIOR DATA ANALYST (DEN),TEC,Infrastructure,8,Queries data and builds dashboards and explains trends to the business.
+E1222,Warehouse Picker II,OPS,Distribution,5,
+E1223,Software Engineer - CHI,TEC,Engineering,8,Duties vary with the needs of the department.
+E1224,Corp Recruiter,HRS,Talent Acquisition,3,Sources candidates and fills open positions.
+E1225,TRAINING SPEC II REQ-195083,HRS,Learning,5,Assists the group and takes on other tasks as assigned.
+E1226,Account Manager,SAL,Enterprise Sales,4,Manages a portfolio of customer accounts and renews customer contracts.
+E1227,Help Desk Technician,TEC,Service Desk,4,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1228,Junior Refunds Administrator,CUS,Billing Services,1,Processes product returns and arranges refunds and exchanges.
+E1229,SALES ENGINEER (BOS),SAL,Sales Operations,3,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E1230,Whse. Operator I - SEA,OPS,Distribution,3,Picks and packs orders and loads goods for shipment.
+E1231,Benefits Admin,HRS,Total Rewards,8,Enrols employees in health and retirement plans and processes leave requests.
+E1232,Billing Spec II,CUS,Billing Services,6,Explains charges to callers and issues credit notes.
+E1233,"OPERATIONS MANAGER III, Remote",OPS,Site Operations,7,Runs daily site operations and improves processes.
+E1234,Systems Administrator,TEC,Infrastructure,10,
+E1235,Territory Executive 3,SAL,Inside Sales,8,Sells products to new customers and works an assigned territory by phone and in person.
+E1236,"Accountant, SGP",FIN,Accounting,5,Prepares monthly accounts and keeps the general ledger.
+E1237,AGREEMENTS COORD II,LEG,Contracts,4,Drafts commercial contracts and tracks renewal dates. Questions to kasimir.wrenfield@example.com.
+E1238,Recruiter,HRS,Talent Acquisition,10,Sources candidates and fills open positions.
+E1239,Sr Cust Success Mgr (#333210),SAL,Customer Success,7,Keeps customers satisfied after the sale and helps existing customers adopt products.
+E1240,Software Engineer,TEC,Engineering,5,Duties vary with the needs of the department.
+E1241,Risk Analyst 1,LEG,Compliance,3,Maintains the risk register and assesses operational and regulatory risks.
+E1242,sr privacy analyst (DEN),LEG,Privacy Office,8,Assesses how personal data is handled and answers data subject requests.
+E1243,Lead Compliance Officer,LEG,Privacy Office,9,Monitors adherence to regulations and reports breaches to regulators.
+E1244,Junior Digital Marketing Spec - SYD,MKT,Digital Marketing,1,Carries out the duties of the post as directed.
+E1245,Sr. Demand Planner,OPS,Supply Chain,7,
+E1246,"Senior Warehouse Operator, ATL",OPS,Distribution,8,
+E1247,SR PROCUREMENT SPEC - ATL,OPS,Purchasing,7,Sources suppliers and negotiates prices and runs tenders.
+E1248,"Data Analyst, BOS",TEC,Data,7,Explains trends to the business and cleans and joins data sets.
+E1249,JUNIOR BENEFITS COORDINATOR (REQ-268809),HRS,Total Rewards,1,Enrols employees in health and retirement plans and answers benefits questions.
+E1250,Cust. Care Rep. 2,CUS,Contact Center,,
+E1251,Compensation Analyst (SGP),HRS,Total Rewards,6,Evaluates jobs for grading and prepares the annual bonus cycle.
+E1252,Lead Help Desk Tech.,TEC,Service Desk,8,Sets up laptops and phones and resets passwords.
+E1253,Sr. Acct. Mgr.,SAL,Enterprise Sales,7,Full-time position based at the main office.
+E1254,Lead Product Support Specialist,CUS,Product Support,9,Troubleshoots product problems reported by customers and documents fixes.
+E1255,"Senior Accounts Payable Clerk, SEA",FIN,Accounting,8,Matches invoices to purchase orders and answers vendor questions about remittances.
+E1256,Tech,TEC,Service Desk,6,
+E1257,Sr. Whse. Operator,OPS,Distribution,7,
+E1258,Billing Specialist - SYD,CUS,Service Quality,9,Resolves invoice disputes and adjusts customer bills.
+E1259,training spec,HRS,Learning,6,Delivers courses to employees and designs training courses.
+E1260,Financial Analyst II,FIN,Corporate Finance,5,Builds budgets and forecasts and explains variances against plan.
+E1261,Quality Assurance Engineer,TEC,Engineering,9,Verifies releases before launch and writes test plans.
+E1262,Account Manager,SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and renews customer contracts.
+E1263,Customer Svc Rep - SYD,CUS,Service Quality,10,
+E1264,digital mktg. spec.,MKT,Digital Marketing,5,Runs paid search and email campaigns and tracks clicks and conversions.
+E1265,Key Acct Mgr,SAL,Inside Sales,6,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E1266,"procurement specialist, senior",OPS,Health and Safety,8,Runs tenders and reviews supplier agreements.
+E1267,Account Manager II,SAL,Enterprise Sales,4,Assists the group and takes on other tasks as assigned.
+E1268,Paralegal REQ-61535,LEG,Legal Affairs,5,Prepares legal documents and keeps case files in order.
+E1269,Product Support Specialist II,CUS,Product Support,5,Documents fixes and troubleshoots product problems reported by customers.
+E1270,Prin. Int. Auditor,FIN,Internal Audit,10,Reports findings to the audit committee and tests internal controls.
+E1271,DIGITAL MARKETING SPECIALIST,MKT,Digital Marketing,9,Runs paid search and email campaigns and tracks clicks and conversions.
+E1272,Brand Director - CHI REQ-898978,MKT,Communications,3,Plans campaigns and presents results to leadership.
+E1273,Account Manager,SAL,Enterprise Sales,2,Manages a portfolio of customer accounts and renews customer contracts.
+E1274,AP Clerk - SYD,FIN,Accounting,6,Schedules payments and processes supplier invoices.
+E1275,Bookkeeper - ATL,FIN,Accounting,,Works with colleagues across the company to meet agreed goals.
+E1276,Training Coordinator II,HRS,Total Rewards,6,Delivers courses to employees and maintains the learning platform.
+E1277,FIN ANALYST III,FIN,Corporate Finance,7,Builds budgets and forecasts and explains variances against plan.
+E1278,PRIN RECRUITER,HRS,Talent Acquisition,6,Screens applications and schedules interviews and extends job offers.
+E1279,Call Center Supv. - ATL,CUS,Contact Center,3,Supervises a team of agents and monitors call quality.
+E1280,"Senior Warehouse Operator, ATL",OPS,Distribution,7,
+E1281,Senior Call Center Supervisor REQ-149373 (Remote),CUS,Contact Center,5,Supervises a team of agents and monitors call quality.
+E1282,Junior Research Analyst,MKT,Market Insights,3,Surveys customers and analyses market trends and competitors. Reports to Bramwell Quillfeather.
+E1283,INTERNAL AUDITOR,FIN,Internal Audit,9,"Position within the wider group, working on shared priorities."
+E1284,PRODUCT SUPPORT SPECIALIST,CUS,Product Support,1,Guides users through installation and reproduces faults and raises defects.
+E1285,Logistics Coord.,OPS,Distribution,2,Schedules shipments and resolves delays with transport partners.
+E1286,Graphic Artist,MKT,Brand,,Lays out presentations and prepares artwork for print and web.
+E1287,SALES OPERATIONS ANALYST,SAL,Sales Operations,2,Maintains sales forecasts and territories and prepares pipeline reports.
+E1288,Account Manager,SAL,Enterprise Sales,3,Manages a portfolio of customer accounts and renews customer contracts.
+E1289,Paralegal,LEG,Legal Affairs,7,Prepares legal documents and keeps case files in order.
+E1290,CUSTOMER SVC REP,CUS,Contact Center,9,
+E1291,JR SUPPLY CHAIN ANALYST,OPS,Supply Chain,2,Analyses supplier performance and plans inventory levels.
+E1292,ACCOUNTS PAYABLE ADMINISTRATOR,FIN,Accounting,7,Carries out the duties of the post as directed.
+E1293,HUMAN RESOURCES BUSINESS PARTNER - NYC #838400,HRS,People Operations,8,Advises managers on staffing and performance and handles employee relations cases.
+E1294,SALES ENG,SAL,Enterprise Sales,7,Explains the technical side of products during a sale and answers detailed questions from prospects.
+E1295,Principal Refunds Administrator,CUS,Billing Services,9,Processes product returns and arranges refunds and exchanges.
+E1296,Sales Dev Representative #563516,SAL,Sales Operations,3,Qualifies leads for the sales team and makes cold calls and sends introductory emails.
+E1297,CONTRACTS ADMIN - SYD,LEG,Contracts,8,Drafts commercial contracts and tracks renewal dates.
+E1298,GRAPHIC DESIGNER,MKT,Brand,5,
+E1299,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,2,Schedules payments and processes supplier invoices.
+E1300,SITE OPS MGR,OPS,Purchasing,9,Improves processes and runs daily site operations.
+E1301,Logistics Coordinator,OPS,Distribution,2,Schedules shipments and resolves delays with transport partners.
+E1302,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,9,Models revenue and cost scenarios and prepares the monthly management pack.
+E1303,Software Engineer - CHI,TEC,Engineering,10,Duties vary with the needs of the department.
+E1304,Warehouse Operator I - DEN,OPS,Distribution,2,Picks and packs orders and loads goods for shipment.
+E1305,Paralegal REQ-61535,LEG,Legal Affairs,4,Prepares legal documents and keeps case files in order.
+E1306,Corporate Counsel II - SGP,LEG,Legal Affairs,4,Interprets corporate law and advises the business on contracts and disputes.
+E1307,Sales Dev Representative #563516,SAL,Sales Operations,9,Qualifies leads for the sales team and makes cold calls and sends introductory emails.
+E1308,Billing Specialist - SYD,CUS,Service Quality,9,Resolves invoice disputes and adjusts customer bills.
+E1309,Lead Whse Operator,OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E1310,"Accountant, SGP",FIN,Accounting,5,Prepares monthly accounts and keeps the general ledger.
+E1311,Problem Solver,TEC,Service Desk,5,The person to ask when something breaks.
+E1312,Safety Insp,OPS,Health and Safety,3,Enforces safety regulations and inspects sites for hazards.
+E1313,Software Eng. II - SYD #321188,TEC,Engineering,7,
+E1314,CUSTOMER SVC REP,CUS,Contact Center,6,
+E1315,Call Center Supervisor II,CUS,Contact Center,4,Monitors call quality and supervises a team of agents.
+E1316,digital mktg. spec.,MKT,Digital Marketing,4,Runs paid search and email campaigns and tracks clicks and conversions.
+E1317,Jr Mktg Mgr,MKT,Brand,3,Manages the marketing budget and sets brand priorities with agencies.
+E1318,Quality Assurance Engineer,TEC,Engineering,2,Verifies releases before launch and writes test plans.
+E1319,Paralegal,LEG,Legal Affairs,3,Prepares legal documents and keeps case files in order.
+E1320,Site Ops Mgr II,OPS,Site Operations,6,Runs daily site operations and improves processes.
+E1321,Warehouse Operator,OPS,Distribution,5,Picks and packs orders and loads goods for shipment.
+E1322,Acct Mgr II,SAL,Enterprise Sales,6,Assists the group and takes on other tasks as assigned.
+E1323,Sr Supply Chain Analyst REQ-465625 (SGP),OPS,Supply Chain,7,Plans inventory levels and analyses supplier performance.
+E1324,JUNIOR SOCIAL MEDIA COORDINATOR,MKT,Digital Marketing,2,
+E1325,Accountant I,FIN,Internal Audit,3,Prepares monthly accounts and keeps the general ledger.
+E1326,Paralegal - Isolde Fennimore,LEG,Legal Affairs,9,
+E1327,Sr. Sys. Admin. - SGP,TEC,Infrastructure,8,Runs servers and networks and manages user accounts.
+E1328,Warehouse Operator,OPS,Distribution,5,Picks and packs orders and loads goods for shipment.
+E1329,CUSTOMER SVC REP,CUS,Contact Center,3,
+E1330,senior marketing mgr (LDN),MKT,Brand,7,Manages the marketing budget and presents results to leadership.
+E1331,Key Account Manager,SAL,Enterprise Sales,10,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E1332,Sr. Acct. Mgr.,SAL,Enterprise Sales,7,Full-time position based at the main office.
+E1333,MARKET RESEARCH ANALYST,MKT,Market Insights,3,Analyses market trends and competitors and runs focus groups.
+E1334,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,1,
+E1335,Benefits Admin,HRS,Total Rewards,5,Enrols employees in health and retirement plans and processes leave requests.
+E1336,CUSTOMER SVC REP,CUS,Contact Center,4,
+E1337,AGREEMENTS COORD II,LEG,Contracts,6,Drafts commercial contracts and tracks renewal dates. Questions to kasimir.wrenfield@example.com.
+E1338,sr comms spec - LDN REQ-266927,MKT,Communications,8,Prepares press releases and edits the staff newsletter.
+E1339,Benefits Coord. II REQ-793517 (NYC),HRS,Total Rewards,6,Enrols employees in health and retirement plans and processes leave requests.
+E1340,Software Engineer,TEC,Engineering,10,Duties vary with the needs of the department.
+E1341,"Accountant, SGP",FIN,Accounting,4,Prepares monthly accounts and keeps the general ledger.
+E1342,HEALTH AND SAFETY INSP II,OPS,Health and Safety,6,Inspects sites for hazards and enforces safety regulations. Reports to Oswin Thistlewood.
+E1343,Systems Administrator,TEC,Infrastructure,10,
+E1344,Training Spec,HRS,Learning,2,Delivers courses to employees and designs training courses.
+E1345,Lead Data Spec REQ-116042,TEC,Data,9,Explains trends to the business and queries data and builds dashboards.
+E1346,account manager,SAL,Enterprise Sales,2,Manages a portfolio of customer accounts and renews customer contracts.
+E1347,Treasury Analyst II,FIN,Corporate Finance,4,Manages cash positions and bank accounts and forecasts liquidity.
+E1348,Principal Buyer,OPS,Purchasing,6,Issues purchase orders and sources suppliers and negotiates prices.
+E1349,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,2,Models revenue and cost scenarios and prepares the monthly management pack.
+E1350,Sr Help Desk Tech,TEC,Data,7,
+E1351,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E1352,safety insp ii #747820,OPS,Health and Safety,7,Inspects sites for hazards and enforces safety regulations.
+E1353,Data Specialist,TEC,Infrastructure,2,
+E1354,"Senior Sales Representative, SYD",SAL,Inside Sales,3,Meets a monthly quota and works an assigned territory by phone and in person.
+E1355,CORP PARALEGAL,LEG,Legal Affairs,2,Supports counsel on filings and keeps case files in order. Questions to isolde.larkspur@example.com.
+E1356,Customer Service Agent 2,CUS,Contact Center,6,Passes complex cases to specialists and takes orders and updates details.
+E1357,JUNIOR PAYROLL CLERK,FIN,Accounting,3,Resolves pay queries and runs payroll.
+E1358,Senior Paralegal - DEN,LEG,Legal Affairs,7,Prepares legal documents and supports counsel on filings.
+E1359,Systems Administrator,TEC,Infrastructure,8,
+E1360,Digital Mktg. Specialist,MKT,Digital Marketing,3,Runs paid search and email campaigns and tracks clicks and conversions.
+E1361,JUNIOR PRIVACY ANALYST,LEG,Privacy Office,2,Checks new systems for privacy gaps and keeps the record of processing.
+E1362,SR. SALES ENGINEER,SAL,Enterprise Sales,7,Runs product demonstrations and explains the technical side of products during a sale.
+E1363,"Senior Accounts Payable Clerk, SEA",FIN,Accounting,7,Matches invoices to purchase orders and answers vendor questions about remittances.
+E1364,"CUSTOMER SUCCESS MGR, NYC",SAL,Customer Success,6,Runs onboarding and regular check-ins and works to reduce churn.
+E1365,Paralegal REQ-61535,LEG,Legal Affairs,10,Prepares legal documents and keeps case files in order.
+E1366,controls assurance specialist iii #162789,FIN,Treasury,8,Plans audit fieldwork and follows up on agreed actions.
+E1367,Senior Recruiter #221095,HRS,Talent Acquisition,8,Sources candidates and fills open positions.
+E1368,CUSTOMER SVC REP,CUS,Contact Center,4,
+E1369,JUNIOR PRIVACY ANALYST,LEG,Privacy Office,2,Checks new systems for privacy gaps and keeps the record of processing.
+E1370,Warehouse Operator II #199707,OPS,Distribution,6,Loads goods for shipment and drives a forklift.
+E1371,CUSTOMER SVC REP,CUS,Contact Center,8,
+E1372,Biz Dev Rep,SAL,Inside Sales,7,Qualifies leads for the sales team and books first meetings with prospects.
+E1373,Senior Customer Service Agent - CHI,CUS,Contact Center,8,"Logs each contact and answers customer questions by phone, email and chat. Questions to liora.merriweather@example.com."
+E1374,Corporate Counsel,LEG,Legal Affairs,4,Interprets corporate law and reviews board papers. Reports to Odalys Larkspur.
+E1375,Senior Logistics Coordinator - ATL,OPS,Distribution,7,
+E1376,Sr Supply Chain Analyst REQ-465625 (SGP),OPS,Supply Chain,8,Plans inventory levels and analyses supplier performance.
+E1377,Contracts Admin. II,LEG,Contracts,4,Tracks renewal dates and drafts commercial contracts.
+E1378,content writer - ATL #560729,MKT,Digital Marketing,10,Writes articles and web pages and interviews experts for stories.
+E1379,Key Acct Mgr,SAL,Inside Sales,6,Manages a portfolio of customer accounts and acts as the main contact for assigned clients.
+E1380,associate field service technician,CUS,Product Support,5,Documents fixes and reproduces faults and raises defects.
+E1381,Software Engineer - CHI,TEC,Engineering,6,Duties vary with the needs of the department.
+E1382,"Senior Warehouse Operator, ATL",OPS,Distribution,8,
+E1383,ACCOUNTS PAYABLE CLERK - Remote,FIN,Accounting,4,Schedules payments and processes supplier invoices.
+E1384,Internal Communications Specialist,MKT,Communications,5,Writes internal announcements and prepares press releases.
+E1385,demand planner,OPS,Supply Chain,4,Reports on stock turns and forecasts demand by product.
+E1386,SOFTWARE ENGINEER,TEC,Engineering,4,Duties vary with the needs of the department.
+E1387,Senior Graphic Designer (#270737),MKT,Brand,8,
+E1388,CUSTOMER SVC REP,CUS,Contact Center,4,
+E1389,Warehouse Operator I - DEN,OPS,Distribution,1,Picks and packs orders and loads goods for shipment.
+E1390,"Accountant, SGP",FIN,Accounting,1,Prepares monthly accounts and keeps the general ledger.
+E1391,Billing Specialist,CUS,Billing Services,5,Resolves invoice disputes and adjusts customer bills.
+E1392,Digital Mktg. Specialist,MKT,Digital Marketing,8,Runs paid search and email campaigns and tracks clicks and conversions.
+E1393,CUSTOMER SVC REP,CUS,Contact Center,4,
+E1394,Software Engineer,TEC,Engineering,10,Duties vary with the needs of the department.
+E1395,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,9,Models revenue and cost scenarios and prepares the monthly management pack.
+E1396,DATA ANALYST II - NYC,TEC,Data,4,
+E1397,Desktop Support Technician (REQ-789397),TEC,Service Desk,2,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1398,Benefits Coordinator III,HRS,Learning,8,See the attached profile for details of this post.
+E1399,content writer - ATL #560729,MKT,Digital Marketing,2,Writes articles and web pages and interviews experts for stories.
+E1400,SR. BENEFITS COORD.,HRS,Total Rewards,7,
+E1401,Fin Analyst III,FIN,Corporate Finance,7,Builds budgets and forecasts and explains variances against plan.
+E1402,SUPPLY CHAIN ANALYST,OPS,Supply Chain,4,Plans inventory levels and analyses supplier performance.
+E1403,Systems Administrator,TEC,Infrastructure,6,
+E1404,Customer Service Representative REQ-69484 (SYD),CUS,Contact Center,6,
+E1405,Procurement Spec,OPS,Purchasing,8,Sources suppliers and negotiates prices and issues purchase orders.
+E1406,Customer Experience Analyst - LDN #533530,CUS,Service Quality,3,Duties vary with the needs of the department.
+E1407,Account Manager II,SAL,Enterprise Sales,4,Assists the group and takes on other tasks as assigned.
+E1408,Paralegal,LEG,Legal Affairs,9,Prepares legal documents and keeps case files in order.
+E1409,Recruiter,HRS,Talent Acquisition,9,Sources candidates and fills open positions.
+E1410,Senior Consumer Insights Specialist (#134803),MKT,Market Insights,8,Analyses market trends and competitors and surveys customers.
+E1411,Help Desk Technician,TEC,Service Desk,3,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1412,Sales Representative - BOS #726618,SAL,Inside Sales,8,Sells products to new customers and works an assigned territory by phone and in person.
+E1413,Mkt Research Analyst II,MKT,Market Insights,6,Analyses market trends and competitors and surveys customers.
+E1414,Desktop Support Technician (REQ-789397),TEC,Service Desk,4,Sets up laptops and phones and resolves hardware and software problems for employees.
+E1415,JUNIOR HUMAN RESOURCES COORDINATOR #717049,HRS,People Operations,3,Keeps employee records and schedules onboarding for new hires.
+E1416,CUSTOMER SVC REP,CUS,Contact Center,1,
+E1417,Customer Svc Rep - SYD,CUS,Service Quality,2,
+E1418,digital mktg. spec.,MKT,Digital Marketing,2,Runs paid search and email campaigns and tracks clicks and conversions.
+E1419,CALL CENTER SUPERVISOR 3 (CHI),CUS,Contact Center,8,Carries out the duties of the post as directed.
+E1420,AP Clerk - SYD,FIN,Accounting,5,Schedules payments and processes supplier invoices.
+E1421,Corp Counsel 2,LEG,Legal Affairs,4,Interprets corporate law and negotiates terms with outside lawyers.
+E1422,Senior Quality Assurance Engineer,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E1423,Bookkeeper - ATL,FIN,Accounting,2,Works with colleagues across the company to meet agreed goals.
+E1424,Contracts Admin - DEN REQ-94630,LEG,Contracts,6,Drafts commercial contracts and tracks renewal dates.
+E1425,Acct Manager REQ-298716 (SYD),SAL,Enterprise Sales,1,Manages a portfolio of customer accounts and renews customer contracts.
+E1426,TRAINING SPEC II REQ-195083,HRS,Learning,6,Assists the group and takes on other tasks as assigned.
+E1427,Human Resources Coordinator 3,HRS,Total Rewards,8,Schedules onboarding for new hires and prepares employment letters.
+E1428,Warehouse Operator,OPS,Distribution,2,Picks and packs orders and loads goods for shipment.
+E1429,"Customer Service Representative, Senior",CUS,Contact Center,7,Logs each contact and passes complex cases to specialists.
+E1430,"Logistics Coordinator 1, SEA",OPS,Distribution,1,Tracks deliveries with carriers and prepares customs paperwork.
+E1431,Biz Dev Rep,SAL,Inside Sales,3,Qualifies leads for the sales team and books first meetings with prospects.
+E1432,Systems Administrator,TEC,Infrastructure,4,
+E1433,Whse. Operator #953660 (ATL),OPS,Distribution,9,Picks and packs orders and loads goods for shipment.
+E1434,Senior Warehouse Operator,OPS,Supply Chain,8,
+E1435,"Marketing Campaign Manager, Senior",MKT,Brand,8,
+E1436,digital mktg. spec.,MKT,Digital Marketing,1,Runs paid search and email campaigns and tracks clicks and conversions.
+E1437,JUNIOR PARALEGAL - CHI,LEG,Compliance,1,Researches precedents and keeps case files in order.
+E1438,ACCOUNTS PAYABLE ADMINISTRATOR,FIN,Accounting,8,Carries out the duties of the post as directed.
+E1439,SENIOR COMMUNICATIONS SPECIALIST,MKT,Communications,7,Prepares press releases and edits the staff newsletter.
+E1440,CALL CENTER SUPERVISOR,CUS,Contact Center,7,Supervises a team of agents and monitors call quality.
+E1441,Senior Graphic Designer (#270737),MKT,Brand,7,
+E1442,Customer Svc Rep - SYD,CUS,Service Quality,6,
+E1443,SR. TEST ENG. - CHI,TEC,Engineering,7,Writes test plans and verifies releases before launch.
+E1444,Billing Specialist - SYD,CUS,Service Quality,9,Resolves invoice disputes and adjusts customer bills.
+E1445,BOOKKEEPER 1,FIN,Accounting,2,Full-time position based at the main office.
+E1446,HUMAN RESOURCES BUSINESS PARTNER - NYC #838400,HRS,People Operations,7,Advises managers on staffing and performance and handles employee relations cases.
+E1447,"SALES CONSULTANT, SENIOR - DEN",SAL,Inside Sales,8,Sells products to new customers and closes deals.
+E1448,"Payroll Specialist 3, LDN",FIN,Accounting,8,Contributes to departmental objectives and ad hoc projects.
+E1449,Marketing Manager II (REQ-662905),MKT,Brand,4,Contributes to departmental objectives and ad hoc projects.
+E1450,SUPPLY CHAIN ANALYST,OPS,Supply Chain,1,Plans inventory levels and analyses supplier performance.
+E1451,Senior Customer Service Agent - CHI,CUS,Contact Center,8,"Logs each contact and answers customer questions by phone, email and chat. Questions to liora.merriweather@example.com."
+E1452,HUMAN RESOURCES BUSINESS PARTNER - NYC #838400,HRS,People Operations,10,Advises managers on staffing and performance and handles employee relations cases.
+E1453,business development representative,SAL,Inside Sales,4,Qualifies leads for the sales team and books first meetings with prospects.
+E1454,Software Engineer - CHI,TEC,Engineering,5,Duties vary with the needs of the department.
+E1455,AP Clerk - SYD,FIN,Accounting,4,Schedules payments and processes supplier invoices.
+E1456,Contracts Specialist (BOS),LEG,Compliance,6,Drafts commercial contracts and tracks renewal dates.
+E1457,Sr HR Business Partner,HRS,People Operations,6,Handles employee relations cases and supports reorganisations.
+E1458,Business Development Representative,SAL,Inside Sales,3,Qualifies leads for the sales team and books first meetings with prospects.
+E1459,Recruiter II,HRS,Talent Acquisition,4,Sources candidates and screens applications and schedules interviews.
+E1460,Quality Assurance Engineer,TEC,Engineering,8,Verifies releases before launch and writes test plans.
+E1461,HR. Coord.,HRS,Total Rewards,7,Keeps employee records and prepares employment letters.
+E1462,Sales Rep,SAL,Inside Sales,1,Sells products to new customers and works an assigned territory by phone and in person.
+E1463,"Accountant, SGP",FIN,Accounting,6,Prepares monthly accounts and keeps the general ledger.
+E1464,"FINANCIAL ANALYST, SYD",FIN,Corporate Finance,8,Models revenue and cost scenarios and prepares the monthly management pack.
+E1465,DIGITAL MKTG. SPEC. 1,MKT,Digital Marketing,2,Manages social media channels and runs paid search and email campaigns.
+E1466,CUST. CARE TEAM LEADER,CUS,Contact Center,2,
+E1467,content writer - ATL #560729,MKT,Digital Marketing,9,Writes articles and web pages and interviews experts for stories.
+E1468,Account Manager,SAL,Enterprise Sales,1,Manages a portfolio of customer accounts and renews customer contracts.
+E1469,Jr Billing Spec,CUS,Billing Services,2,
+E1470,GRAPHIC DESIGNER,MKT,Brand,4,
+E1471,INFRASTRUCTURE ENGINEER II (#801212),TEC,Infrastructure,4,
+E1472,SENIOR CUSTOMER EXPERIENCE ANALYST,CUS,Service Quality,8,
+E1473,Logistics Coord.,OPS,Distribution,6,Schedules shipments and resolves delays with transport partners.
+E1474,HR. Assistant I,HRS,People Operations,1,Answers routine policy questions and prepares employment letters.
+E1475,Compensation Analyst (SGP),HRS,Total Rewards,8,Evaluates jobs for grading and prepares the annual bonus cycle.
+E1476,Call Center Supv. - ATL,CUS,Contact Center,9,Supervises a team of agents and monitors call quality.
+E1477,"Sr Sales Eng, SYD",SAL,Enterprise Sales,8,Runs product demonstrations and explains the technical side of products during a sale.
+E1478,Safety Insp,OPS,Health and Safety,10,Enforces safety regulations and inspects sites for hazards.
+E1479,Training Specialist 3 REQ-671539,HRS,Learning,10,See the attached profile for details of this post.
+E1480,Senior Business Development Representative,SAL,Inside Sales,8,
+E1481,LEAD BACKEND ENG #447387,TEC,Engineering,9,Designs and writes application code and reviews changes before release.
+E1482,Associate Agreements Coordinator (CHI),LEG,Contracts,5,Tracks renewal dates and drafts commercial contracts.
+E1483,prin. safety inspector #16933 (SYD),OPS,Health and Safety,1,Enforces safety regulations and inspects sites for hazards.
+E1484,PRESALES ENGINEER,SAL,Inside Sales,4,Explains the technical side of products during a sale and builds proofs of concept.
+E1485,CONTRACTS ADMIN - SYD,LEG,Contracts,8,Drafts commercial contracts and tracks renewal dates.
+E1486,Content Writer,MKT,Digital Marketing,7,Writes articles and web pages and interviews experts for stories.
+E1487,Paralegal,LEG,Legal Affairs,,Prepares legal documents and keeps case files in order.
+E1488,Training Coordinator II,HRS,Total Rewards,4,
+E1489,Senior Contracts Administrator (REQ-345244),LEG,Contracts,8,
+E1490,Sales Ops Analyst - NYC,SAL,Enterprise Sales,8,Maintains sales forecasts and territories and prepares pipeline reports.
+E1491,Compliance Officer III,LEG,Compliance,8,Reports breaches to regulators and monitors adherence to regulations.
+E1492,data protection advisor iii,LEG,Privacy Office,8,
+E1493,CUSTOMER SVC REP,CUS,Contact Center,4,
+E1494,Logistics Coordinator II - LDN,OPS,Distribution,5,Tracks deliveries with carriers and resolves delays with transport partners.
+E1495,Legal Counsel III,LEG,Legal Affairs,7,Interprets corporate law and advises the business on contracts and disputes.
+E1496,Billing Specialist - SYD,CUS,Service Quality,4,Resolves invoice disputes and adjusts customer bills.
+E1497,SENIOR RETURNS COORDINATOR,CUS,Billing Services,8,Arranges refunds and exchanges and checks returned goods.
+E1498,"Software Engineer, SGP",TEC,Engineering,9,Duties vary with the needs of the department.
+E1499,Transport Coord II,OPS,Distribution,9,Schedules shipments and tracks deliveries with carriers.
+E1500,MARKETING MANAGER,MKT,Brand,7,Manages the marketing budget and plans campaigns.

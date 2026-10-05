@@ -84,11 +84,19 @@ def module(name: str, **members) -> ModuleType:
 def library(monkeypatch, tmp_path: Path) -> SimpleNamespace:
     """Stubs of the two libraries of the extra, in place of the real ones.
 
-    fetched lists every file asked of the hub and loaded every model folder
-    opened, with the options of each call.
+    cached maps a file name to what the cache answers for it: nothing is in
+    the cache unless a test puts it there. looked lists every file looked for
+    in the cache, fetched every file asked of the hub and loaded every model
+    folder opened, with the options of each call.
     """
     folder = tmp_path / "hub" / "snapshots" / MODEL_REVISION
-    stub = SimpleNamespace(model=StubModel(), folder=folder, fetched=[], loaded=[])
+    stub = SimpleNamespace(
+        model=StubModel(), folder=folder, cached={}, looked=[], fetched=[], loaded=[]
+    )
+
+    def try_to_load_from_cache(repo_id, filename, **options):
+        stub.looked.append((repo_id, filename, options))
+        return stub.cached.get(filename)
 
     def hf_hub_download(repo_id, filename, **options):
         stub.fetched.append((repo_id, filename, options))
@@ -102,7 +110,13 @@ def library(monkeypatch, tmp_path: Path) -> SimpleNamespace:
 
     monkeypatch.setitem(sys.modules, "model2vec", module("model2vec", StaticModel=StaticModel))
     monkeypatch.setitem(
-        sys.modules, "huggingface_hub", module("huggingface_hub", hf_hub_download=hf_hub_download)
+        sys.modules,
+        "huggingface_hub",
+        module(
+            "huggingface_hub",
+            try_to_load_from_cache=try_to_load_from_cache,
+            hf_hub_download=hf_hub_download,
+        ),
     )
     return stub
 
@@ -131,8 +145,8 @@ def test_the_three_files_are_asked_for_at_the_pinned_revision(library):
         (MODEL_NAME, "tokenizer.json"),
     ]
     assert all(options["revision"] == MODEL_REVISION for _, _, options in library.fetched)
-    # A full commit id, not a branch: a branch can move, and the hub is asked
-    # where it points on every run. A commit in the cache needs no request.
+    # A full commit id, not a branch: a branch can move, so only the hub knows
+    # where it points today. A commit is the same files wherever it is found.
     assert len(MODEL_REVISION) == 40 and set(MODEL_REVISION) <= set("0123456789abcdef")
 
 
@@ -141,6 +155,52 @@ def test_no_credential_is_sent_for_the_public_model(library):
     # token=False, not None: None would send a token stored on the machine (2.5).
     assert [options["token"] for _, _, options in library.fetched] == [False, False, False]
     assert all(set(options) == {"revision", "token"} for _, _, options in library.fetched)
+
+
+# --- The cache before the hub (Q30) ------------------------------------------------
+
+
+def put_in_cache(library: SimpleNamespace, *names: str) -> None:
+    """The cache answers for these files with their path, as the hub library does."""
+    for name in names:
+        library.cached[name] = str(library.folder / name)
+
+
+def test_each_file_is_looked_for_in_the_cache_at_the_pinned_revision(library):
+    build_embedder(LOCAL)
+    assert library.looked == [
+        (MODEL_NAME, "config.json", {"revision": MODEL_REVISION}),
+        (MODEL_NAME, "model.safetensors", {"revision": MODEL_REVISION}),
+        (MODEL_NAME, "tokenizer.json", {"revision": MODEL_REVISION}),
+    ]
+
+
+def test_a_model_in_the_cache_is_not_asked_of_the_hub(library):
+    put_in_cache(library, *MODEL_FILES)
+    embedder = build_embedder(LOCAL)
+    # Not even to hear that the files are there: the hub library's download
+    # call can contact the hub before it looks in the cache, so a later run
+    # would not be free of the network.
+    assert library.fetched == []
+    assert library.loaded == [(library.folder, {})]
+    assert embedder.model is library.model
+
+
+@pytest.mark.parametrize("missing", MODEL_FILES)
+def test_only_a_file_missing_from_the_cache_is_asked_of_the_hub(library, missing):
+    put_in_cache(library, *(name for name in MODEL_FILES if name != missing))
+    build_embedder(LOCAL)
+    assert library.fetched == [(MODEL_NAME, missing, {"revision": MODEL_REVISION, "token": False})]
+    assert library.loaded == [(library.folder, {})]
+
+
+def test_a_cache_answer_that_is_no_path_sends_the_file_to_the_hub(library):
+    # The hub library answers with a marker, not a path, for a file it was
+    # once told the revision does not hold. The hub is asked again.
+    put_in_cache(library, *MODEL_FILES)
+    library.cached["tokenizer.json"] = object()
+    build_embedder(LOCAL)
+    assert [filename for _, filename, _ in library.fetched] == ["tokenizer.json"]
 
 
 def test_the_model_is_read_from_the_folder_of_the_pinned_revision(library):
@@ -154,11 +214,11 @@ def test_the_model_is_read_from_the_folder_of_the_pinned_revision(library):
 
 def test_the_model_is_loaded_when_the_embedder_is_built_and_only_then(library):
     embedder = build_embedder(LOCAL)
-    assert len(library.loaded) == 1 and len(library.fetched) == 3
+    assert len(library.loaded) == 1 and len(library.looked) == 3 and len(library.fetched) == 3
     assert library.model.calls == []
     embedder.embed(["account manager"])
     embedder.embed(["treasury analyst", "account manager"])
-    assert len(library.loaded) == 1 and len(library.fetched) == 3
+    assert len(library.loaded) == 1 and len(library.looked) == 3 and len(library.fetched) == 3
 
 
 # --- The lazy import (2.5) --------------------------------------------------------
@@ -225,11 +285,11 @@ def test_the_message_repeats_what_the_failed_import_said(no_library):
 
 
 def test_a_missing_extra_fetches_nothing_and_nothing_stands_in(library, no_library):
-    # The hub library is there, the embedding library is not: no file is asked
-    # for, and no embedder of another kind comes back.
+    # The hub library is there, the embedding library is not: no file is looked
+    # for or asked for, and no embedder of another kind comes back.
     with pytest.raises(TitlestdError, match="model2vec"):
         build_embedder(LOCAL)
-    assert library.fetched == [] and library.loaded == []
+    assert library.looked == [] and library.fetched == [] and library.loaded == []
 
 
 # --- A failed load (Q30) ----------------------------------------------------------
@@ -275,6 +335,17 @@ def test_a_download_that_fails_half_way_stops_the_same_way(library, monkeypatch)
     monkeypatch.setattr(sys.modules["huggingface_hub"], "hf_hub_download", second_file_fails)
     assert "(TimeoutError: timed out after 10 seconds)" in expect_failed_load(error)
     assert library.loaded == []
+
+
+def test_a_cache_that_cannot_be_looked_in_stops_the_same_way(library, monkeypatch):
+    error = PermissionError("the cache folder cannot be read")
+
+    def unreadable(repo_id, filename, **options):
+        raise error
+
+    monkeypatch.setattr(sys.modules["huggingface_hub"], "try_to_load_from_cache", unreadable)
+    assert "(PermissionError: the cache folder cannot be read)" in expect_failed_load(error)
+    assert library.fetched == [] and library.loaded == []
 
 
 def test_a_model_folder_that_cannot_be_read_stops_the_same_way(library, monkeypatch):

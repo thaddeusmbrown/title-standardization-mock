@@ -21,8 +21,13 @@ Decided here, where Q30 leaves the detail open:
   the three files it reads (MODEL_FILES) are fetched here at MODEL_REVISION
   with huggingface_hub, the library model2vec itself downloads with, which
   the extra installs too, and model2vec is handed the folder they are in.
-  A file that is already in the cache is used without a request to the hub,
-  so only the first run needs the network.
+- The cache is looked in first, and the hub is asked only for a file that
+  is not there. So a run with the three files in the cache makes no request
+  to the hub, and only the first run needs the network. Looking first is
+  what makes this true: the hub library's download call prepares its
+  request before it looks in the cache, and preparing it can contact the
+  hub by itself (huggingface_hub 1.33 fetches a list for its user agent,
+  about once a day), even for a file it then finds in the cache.
 - No credential. The model is public, so the files are asked for without a
   token (token=False): a Hugging Face token kept on the machine is never
   sent, and the program's only secret stays ANTHROPIC_API_KEY (2.5). While
@@ -101,13 +106,20 @@ def _unit(row: Iterable[Any]) -> Vector:
 
 
 def _model_folder() -> Path:
-    """The folder of MODEL_REVISION in the Hugging Face cache, filled on first use."""
-    from huggingface_hub import hf_hub_download
+    """The folder of MODEL_REVISION in the Hugging Face cache, filled on first use.
 
-    files = [
-        hf_hub_download(MODEL_NAME, name, revision=MODEL_REVISION, token=False)
-        for name in MODEL_FILES
-    ]
+    A file that is in the cache is taken from it, and the download call is
+    never reached for it: that call can contact the hub even for a cached file.
+    """
+    from huggingface_hub import hf_hub_download, try_to_load_from_cache
+
+    files = []
+    for name in MODEL_FILES:
+        # A path when the file is in the cache; otherwise None or a marker.
+        found = try_to_load_from_cache(MODEL_NAME, name, revision=MODEL_REVISION)
+        if not isinstance(found, str):
+            found = hf_hub_download(MODEL_NAME, name, revision=MODEL_REVISION, token=False)
+        files.append(found)
     return Path(files[0]).parent
 
 

@@ -87,6 +87,7 @@ class StaticModel:
 sys.modules["model2vec"] = types.ModuleType("model2vec")
 sys.modules["model2vec"].StaticModel = StaticModel
 sys.modules["huggingface_hub"] = types.ModuleType("huggingface_hub")
+sys.modules["huggingface_hub"].try_to_load_from_cache = lambda repo_id, filename, **options: None
 sys.modules["huggingface_hub"].hf_hub_download = lambda repo_id, filename, **options: filename
 
 from titlestd import switch
@@ -135,12 +136,18 @@ def model(monkeypatch) -> WordModel:
             assert Path(path).name == MODEL_REVISION
             return loaded
 
+    def try_to_load_from_cache(repo_id, filename, *, revision):
+        return None  # nothing is in the cache: every file is asked of the hub
+
     def hf_hub_download(repo_id, filename, *, revision, token):
         return f"/nowhere/{repo_id}/snapshots/{revision}/{filename}"
 
     stubs = {
         "model2vec": {"StaticModel": StaticModel},
-        "huggingface_hub": {"hf_hub_download": hf_hub_download},
+        "huggingface_hub": {
+            "try_to_load_from_cache": try_to_load_from_cache,
+            "hf_hub_download": hf_hub_download,
+        },
     }
     for name, members in stubs.items():
         stub = ModuleType(name)

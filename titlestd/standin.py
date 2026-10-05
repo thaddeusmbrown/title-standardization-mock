@@ -28,16 +28,248 @@ quote is tested with an injected answer, not produced here.
 
 Every answer carries contracts.LABEL_STAND_IN. This module must not import
 titlestd.people or titlestd.catalog.
+
+Decided here, where Q17 leaves the detail open:
+- Words. A word is a run of letters and digits. An abbreviation is expanded
+  when a whole word equals its short form, once; a long form of several words
+  gives several content words. The masks [NAME] and [EMAIL] are not words.
+  STOP_WORDS is a short list of English function words; it leaves out "it"
+  and "us", which job titles use as nouns. The level numerals are 1 to 5 and
+  i to v, one for each of the design's five levels.
+- "No description" means record.description is empty or blank.
+- A role's words are its name's and its definition's content words. A word
+  of the record matches a role when it shares a content word with them.
+- The quote for a role is the longest run of consecutive title words that
+  all match it, the first such run on a tie, copied from the first to the
+  last of its words with whatever stands between them. With no such run in
+  the title it is the longest in the description, and with none there the
+  whole title. Any other word ends a run, a stop word included. A run is cut
+  to its first contracts.QUOTE_MAX_WORDS words, and a run under
+  contracts.QUOTE_MIN_CHARS characters or without a letter is passed over,
+  so that the stand-in never offers a quote the shared check must refuse
+  while the record holds one it would accept.
+- For "no match" and "insufficient data" the quote is the whole title as it
+  is. A title of one or two characters, or an empty one, then fails the
+  shared quote check and goes to a person: that is the record's doing, not a
+  fault injected here.
+- Only roles that carry a number are candidates. With none, the LLM answers
+  "no match".
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+import re
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
 
-from titlestd.contracts import Abbreviation, LadderLevel, Llm
+from titlestd.contracts import (
+    EMAIL_MASK,
+    LABEL_STAND_IN,
+    NAME_MASK,
+    QUOTE_MAX_WORDS,
+    QUOTE_MIN_CHARS,
+    Abbreviation,
+    ChooseAnswer,
+    ChooseKind,
+    LadderLevel,
+    Llm,
+    NumberedRole,
+    Record,
+)
 from titlestd.settings import Settings
 
 _NOT_BUILT = "titlestd.standin is built by feat/model-switch-offline"
+
+# English function words, never content. "it" and "us" are left out on purpose.
+STOP_WORDS = frozenset(
+    {
+        "a",
+        "all",
+        "also",
+        "an",
+        "and",
+        "any",
+        "are",
+        "as",
+        "at",
+        "be",
+        "been",
+        "by",
+        "each",
+        "for",
+        "from",
+        "has",
+        "have",
+        "in",
+        "into",
+        "is",
+        "its",
+        "of",
+        "on",
+        "or",
+        "other",
+        "our",
+        "such",
+        "that",
+        "the",
+        "their",
+        "them",
+        "these",
+        "they",
+        "this",
+        "those",
+        "to",
+        "was",
+        "were",
+        "which",
+        "who",
+        "will",
+        "with",
+    }
+)
+# A level written as a number, as in "ACCT MGR II" or "Analyst 2".
+LEVEL_NUMERALS = frozenset({"1", "2", "3", "4", "5", "i", "ii", "iii", "iv", "v"})
+
+_MASKS = (NAME_MASK, EMAIL_MASK)
+_WORD = re.compile("|".join([*map(re.escape, _MASKS), "[A-Za-z0-9]+"]))
+
+
+@dataclass(frozen=True, slots=True)
+class _Word:
+    """One written word of a text: where it stands and its content words."""
+
+    start: int
+    end: int
+    content: frozenset[str]
+
+
+@dataclass(frozen=True, slots=True)
+class _Scored:
+    """A candidate role with its overlap score (Q17)."""
+
+    numbered: NumberedRole
+    score: int
+    name_hits: int  # |T and N|
+    words: frozenset[str]  # N or F
+
+
+def _tokens(text: str) -> list[str]:
+    """The lower-cased words of a reference text: a long form or a level word."""
+    return [written.lower() for written in _WORD.findall(text) if written not in _MASKS]
+
+
+def _content(words: Iterable[_Word]) -> frozenset[str]:
+    return frozenset().union(*(word.content for word in words))
+
+
+def _quotable(span: str) -> bool:
+    """True when the shared quote check can accept the span's size (Q15)."""
+    return (
+        len(span) >= QUOTE_MIN_CHARS
+        and any(character.isalpha() for character in span)
+        and len(span.split()) <= QUOTE_MAX_WORDS
+    )
+
+
+def _longest_run(text: str, words: Sequence[_Word], role_words: frozenset[str]) -> str:
+    """The longest run of consecutive words that all match the role, verbatim.
+
+    Empty when the text has no quotable run.
+    """
+    best, best_length = "", 0
+    run: list[_Word] = []
+    for word in [*words, None]:
+        if word is not None and word.content & role_words:
+            run.append(word)
+            continue
+        kept = run[:QUOTE_MAX_WORDS]
+        if len(kept) > best_length:
+            span = text[kept[0].start : kept[-1].end]
+            if _quotable(span):
+                best, best_length = span, len(kept)
+        run = []
+    return best
+
+
+class StandIn:
+    """The stand-in chooser: word overlap, nothing kept between calls."""
+
+    def __init__(
+        self,
+        settings: Settings,
+        ladder: Sequence[LadderLevel],
+        abbreviations: Sequence[Abbreviation],
+    ) -> None:
+        self._min_title_words = settings.standin_min_title_words
+        self._no_match_below = settings.standin_no_match_below
+        self._expansions = {
+            abbreviation.short_form.lower(): tuple(_tokens(abbreviation.long_form))
+            for abbreviation in abbreviations
+        }
+        level_words = {
+            token
+            for level in ladder
+            for word in (level.long_word, level.short_word)
+            for token in _tokens(word)
+        }
+        self._ignored = STOP_WORDS | LEVEL_NUMERALS | level_words
+
+    # --- words ----------------------------------------------------------------
+
+    def _words(self, text: str) -> list[_Word]:
+        words = []
+        for match in _WORD.finditer(text):
+            written = match.group()
+            content: frozenset[str] = frozenset()
+            if written not in _MASKS:
+                token = written.lower()
+                content = frozenset(self._expansions.get(token, (token,))) - self._ignored
+            words.append(_Word(match.start(), match.end(), content))
+        return words
+
+    def content_words(self, text: str) -> frozenset[str]:
+        """The content words of a text (Q17)."""
+        return _content(self._words(text))
+
+    # --- the overlap score (Q17) ------------------------------------------------
+
+    def _rank(self, record: Record, roles: Iterable[NumberedRole]) -> list[_Scored]:
+        """The numbered roles, best first: by score, then |T and N|, then role_id."""
+        title = self.content_words(record.cleaned_title)
+        record_words = title | self.content_words(record.description)
+        scored = []
+        for numbered in roles:
+            if numbered.number is None:
+                continue
+            name = self.content_words(numbered.role.role_name)
+            role_words = name | self.content_words(numbered.role.definition)
+            name_hits = len(title & name)
+            score = 2 * name_hits + len(record_words & role_words)
+            scored.append(_Scored(numbered, score, name_hits, role_words))
+        return sorted(scored, key=lambda s: (-s.score, -s.name_hits, s.numbered.role.role_id))
+
+    def _quote(self, record: Record, role_words: frozenset[str]) -> str:
+        for text in (record.cleaned_title, record.description):
+            run = _longest_run(text, self._words(text), role_words)
+            if run:
+                return run
+        return record.cleaned_title
+
+    # --- choose (Q17) -------------------------------------------------------------
+
+    def choose(self, record: Record, roles: Sequence[NumberedRole]) -> ChooseAnswer:
+        title = self.content_words(record.cleaned_title)
+        if not record.description.strip() and len(title) < self._min_title_words:
+            return ChooseAnswer(
+                ChooseKind.INSUFFICIENT_DATA, None, record.cleaned_title, LABEL_STAND_IN
+            )
+        ranked = self._rank(record, roles)
+        if not ranked or ranked[0].score < self._no_match_below:
+            return ChooseAnswer(ChooseKind.NO_MATCH, None, record.cleaned_title, LABEL_STAND_IN)
+        best = ranked[0]
+        return ChooseAnswer(
+            ChooseKind.ROLE, best.numbered.number, self._quote(record, best.words), LABEL_STAND_IN
+        )
 
 
 def build_llm(

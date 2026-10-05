@@ -37,9 +37,12 @@ Decided here, where Q17 and Q19 leave the detail open:
   form, once; a long form of several words gives several content words. The
   masks [NAME] and [EMAIL] are not words.
   STOP_WORDS is a short list of English function words, with the "s" an
-  apostrophe leaves behind ("customer's"); it leaves out "it" and "us",
-  which job titles use as nouns. The level numerals are 1 to 5 and i to v,
-  one for each of the design's five levels.
+  apostrophe leaves behind ("customer's"). It holds the usual prepositions
+  and conjunctions ("after", "during", "while") and "not", because two
+  sentences share such words whatever they are about, and two shared words
+  are a match. It leaves out "it" and "us", which job titles use as nouns.
+  The level numerals are 1 to 5 and i to v, one for each of the design's
+  five levels.
 - "No description" means record.description is empty or blank.
 - A role's words are its name's and its definition's content words. A word
   of the record matches a role when it shares a content word with them. The
@@ -98,38 +101,55 @@ from titlestd.contracts import (
 )
 from titlestd.settings import Settings
 
-# English function words, never content, and the "s" of "customer's".
+# English function words, never content, the usual prepositions and
+# conjunctions among them, and the "s" of "customer's".
 # "it" and "us" are left out on purpose.
 STOP_WORDS = frozenset(
     {
         "a",
+        "about",
+        "across",
+        "after",
+        "against",
         "all",
         "also",
+        "among",
         "an",
         "and",
         "any",
         "are",
+        "around",
         "as",
         "at",
         "be",
         "been",
+        "before",
+        "between",
+        "but",
         "by",
+        "during",
         "each",
         "for",
         "from",
         "has",
         "have",
+        "if",
         "in",
         "into",
         "is",
         "its",
+        "nor",
+        "not",
         "of",
         "on",
         "or",
         "other",
         "our",
+        "over",
+        "per",
         "s",
         "such",
+        "than",
         "that",
         "the",
         "their",
@@ -138,13 +158,23 @@ STOP_WORDS = frozenset(
         "they",
         "this",
         "those",
+        "through",
         "to",
+        "under",
+        "until",
+        "upon",
+        "via",
         "was",
         "were",
+        "when",
+        "where",
         "which",
+        "while",
         "who",
         "will",
         "with",
+        "within",
+        "without",
     }
 )
 # A level written as a number, as in "ACCT MGR II" or "Analyst 2".

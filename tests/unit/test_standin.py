@@ -121,6 +121,26 @@ def test_stop_words_are_not_content():
     assert {"a", "and", "of", "the", "their", "to", "with"} <= standin.STOP_WORDS
 
 
+PREPOSITIONS_AND_CONJUNCTIONS = (
+    "about across after against among around before between but during if nor over per "
+    "than through under until upon via when where while within without"
+)
+
+
+def test_prepositions_and_conjunctions_are_not_content():
+    # Two sentences share such words whatever they are about.
+    words = make().content_words
+    assert words("Covers the office after hours and during holidays, but not between shifts") == {
+        "covers",
+        "office",
+        "hours",
+        "holidays",
+        "shifts",
+    }
+    assert set(PREPOSITIONS_AND_CONJUNCTIONS.split()) <= standin.STOP_WORDS
+    assert words(PREPOSITIONS_AND_CONJUNCTIONS) == set()
+
+
 def test_the_ending_an_apostrophe_leaves_behind_is_not_content():
     # Otherwise "customer's" and "company's" would share a word.
     words = make().content_words
@@ -289,6 +309,25 @@ def test_two_shared_words_are_a_match():
     assert (answer.answer, picked(answer, THREE)) == (ChooseKind.ROLE, "R-02")
 
 
+def test_a_shared_preposition_is_not_the_second_shared_word():
+    # "helps" is the one content word shared. "after" and "during" stand in
+    # both texts too, and must not lift the title over the line.
+    success = numbered(
+        role(
+            "R-05",
+            "Customer Success Manager",
+            "Helps existing customers adopt products during and after the sale.",
+        )
+    )
+    asked = record(
+        "special projects",
+        "Covers the office after hours and during holidays, and helps where needed.",
+    )
+    assert make().choose(asked, success) == ChooseAnswer(
+        ChooseKind.NO_MATCH, None, "special projects", LABEL_STAND_IN
+    )
+
+
 def test_the_no_match_line_is_a_setting():
     asked = record("manager", "Sells widgets.")  # Account Manager scores 3
     assert make(standin_no_match_below=3).choose(asked, THREE).answer is ChooseKind.ROLE
@@ -357,6 +396,16 @@ def test_a_mask_matches_nothing_and_ends_a_run():
     assert make().choose(masked, badge).answer is ChooseKind.NO_MATCH  # "badge" alone
     split = record("widget wrangler", f"Tracks budgets {NAME_MASK} forecasts.")
     assert make().choose(split, THREE).quote == "budgets"
+
+
+def test_a_preposition_ends_a_run_and_is_never_the_quote():
+    success = numbered(
+        role("R-05", "Customer Success Manager", "Helps customers adopt products after the sale.")
+    )
+    answer = make().choose(record("widget wrangler", "Helps customers after the sale."), success)
+    assert (answer.answer, answer.quote) == (ChooseKind.ROLE, "Helps customers")
+    alone = make().choose(record("widget wrangler", "After the sale, after products."), success)
+    assert (alone.answer, alone.quote) == (ChooseKind.ROLE, "sale")
 
 
 def test_a_run_too_short_to_quote_is_passed_over():

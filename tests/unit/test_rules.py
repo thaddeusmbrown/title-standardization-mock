@@ -548,6 +548,21 @@ def test_a_role_outside_the_family_goes_to_a_person_not_back_to_the_agent():
     )
 
 
+@pytest.mark.parametrize("family", ["SAL", " SAL", "SAL ", "\tSAL\n"])
+def test_the_agent_s_role_is_compared_with_the_recorded_family_after_trimming(family: str):
+    # S05, as for the LLM's answer: a padded code is still the family.
+    assert agent(settles(1), family=family) == RuleOutcome(Route.ACCEPT, (), "S1")
+
+
+@pytest.mark.parametrize("family", ["FIN", "sal", "Sal", "", "   ", "XXX", "S", "SAL-FIN"])
+def test_the_agent_s_role_is_inside_no_family_code_but_its_own(family: str):
+    # Case counts, and a blank or unknown code holds no role: whatever the
+    # agent picks is outside it, and its failed check goes to a person.
+    assert agent(settles(1), family=family) == RuleOutcome(
+        Route.PERSON, (Reason.FAMILY_MISMATCH,), "S1"
+    )
+
+
 @pytest.mark.parametrize("quote", [NOT_A_QUOTE, "", "ccount manager", "senior manager"])
 def test_an_agent_quote_that_is_not_in_the_record_sends_the_title_to_a_person(quote: str):
     assert agent(settles(1, quote)) == RuleOutcome(

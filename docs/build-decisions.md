@@ -131,10 +131,12 @@ has not acted by the close.
 **Decision.** The route is built, with a concrete trigger. The simulated reviewer returns the
 decision "no suitable role" only when the truth file has no row for the title; a data test
 asserts that every title in the default data has a truth row, so the default run never
-produces the mark. A marked title is assigned to "Catalog owner (simulated)", written to the
+produces the mark. A marked title waits for the catalog owner: it is written to the
 review-queue file with the reason "no suitable role, waiting for catalog owner", skipped by
 the generic-role step, not counted against the 2% cap, and counted in the "left on legacy
-title" row. The catalog is read-only during a run: no role is added. Unit tests on a small
+title" row. That reason is how the file names the catalog owner: its `decided_by` column holds
+the SME or the reviewer who made the mark, and no output carries the persona "Catalog owner
+(simulated)". The catalog is read-only during a run: no role is added. Unit tests on a small
 fixture cover the route, the never-generic rule and the cap exclusion. There is no seeded
 share of such titles, and the mark is never the source of the leftovers that take the generic
 role (Q01).
@@ -1060,7 +1062,10 @@ unstated whether the suite must pass where the SDK is not installed.
   is absent.
 - (d) Tests marked `live` and `local_model`, skipped unless a key or a cached model is
   present, and never part of the gate. The build may run `local_model` once at the end if the
-  model download works; the result is reported but never gates a merge.
+  model download works; the result is reported but never gates a merge. As built, this tier
+  holds one test, the `local_model` smoke test of Q30. No test carries the `live` marker,
+  which stays declared as a reserved name: the live adapter met the hosted model in the run
+  that made the recording of Q02, with the `record` command, and that is not a test.
 
 The committed recording gets its own replay test, marked `replay`: a full run with `llm =
 replay` has zero misses.
@@ -1729,7 +1734,9 @@ by running the library. They are what the entries above rely on.
 
 The work is cut into one shared branch and fifteen component branches in five stages. Branches
 within a stage are built in parallel; each stage starts from main after the previous stage is
-merged.
+merged. Two more branches follow stage 5 and belong to no stage, eighteen branches in all:
+`docs/live-run-observation`, the last row of the stage plan, and `chore/final-review-fixes`,
+which settles the findings of a final review of the finished main and owns no file.
 
 ### Rules for every branch
 
@@ -1812,6 +1819,7 @@ owner here.
 | 4 | `feat/live-replay` | `llm = anthropic`, `llm = replay`, the recorder and its key | `titlestd/live.py`, `replay.py`, `recording.py` | model-switch-offline, llm-fallback-rules, agent | None of the eight. Tiers (b) and (c) of Q32 at the level of `choose` and the agent loop over the mini data set; the start-up errors of Q31; the failures of Q39 with a fake client; the message for a missing extra (S09). |
 | 5 | `feat/recordings-replay-e2e` | The round trip of a whole run with a scripted client, first; then the smoke run, the one live recording, the committed recordings and the replay run in the gate | `recordings/`, `tests/integration/test_recordings*.py` | pipeline-report-cli, live-replay | None of the eight of its own: the replay run passes the same invariants as the default run. The round trip of a whole run (Q32 b); the replay run under the import guard (Q32 a); the committed recording replays with zero misses, marked `replay` (Q02, Q32); no recording holds a key-shaped string (Q29). |
 | 5 | `docs/readme-hygiene` | The README; the hygiene checks of 2.8 | `README.md`, `tests/unit/test_hygiene.py` | pipeline-report-cli | None of the eight. Mock emails use `example.com`; no tracked file holds a key-shaped string and no `.env` file is tracked (Q02, Q28). The README is held to the program and to "What the README must say" below: the two statements of 2.4 are in it; every command it gives is one the command line or the Makefile takes; the output it shows is the frozen table; the files and modules it names exist. No test asks any other statement of it (owner decision 10). |
+| after 5 | `docs/live-run-observation` | A note on what the one live run showed about the quote check, and the README's pointer to it (owner decision 10) | `docs/live-run-observation.md`; the one line of `README.md` that names it | recordings-replay-e2e, readme-hygiene | None of the eight and none of its own: the README test of `docs/readme-hygiene` holds that the note the README names exists, and the note's last section gives the commands that reproduce its figures from the committed recording. |
 
 ### Work that crosses a branch boundary
 
@@ -1845,7 +1853,11 @@ any money is spent: on the mini data set, live mode with a scripted client under
 `test-double` runs through the pipeline and the real recorder into a temporary folder; replay
 then gives the same decisions and files, apart from the answer label; one changed input gives
 a miss, a non-zero exit and no output files. It uses the seams of S09 and commits no
-recording.
+recording. As built, the two came in the other order: the recording of the live run was
+committed first and the scripted round-trip test after it. By then the smoke run had recorded
+the mini data set with the hosted model and its replay had given the same files with no miss,
+as the commit message of the recording says. That replay had served as the round trip of a
+whole run, on a real recording, before the full run was paid for.
 
 **The runs under the import guard (Q32 a).** Both use `IMPORT_GUARD` of `tests/conftest.py`
 (S15): the default run in `feat/pipeline-report-cli`, the replay run in

@@ -24,9 +24,13 @@ def _tokens(text: str) -> set[str]:
 
 @pytest.fixture(scope="module")
 def truth(mini_dir: Path) -> dict[tuple[str, str], str]:
-    """The mini truth: (raw job title, family code as recorded) to true role."""
+    """The mini truth: (raw job title, family code) to true role.
+
+    The family code is trimmed, as in a row's key: codes are compared after
+    removing surrounding whitespace on both sides (S05).
+    """
     return {
-        (row.job_title, row.job_family_code): row.true_role_id
+        (row.job_title, row.job_family_code.strip()): row.true_role_id
         for row in people.read_truth(mini_dir)
     }
 
@@ -153,9 +157,25 @@ def test_the_wave1_cut_of_the_mini_settings_does_not_rest_on_a_tie(mini_rows, mi
 # --- Truth and seed look-up agree with the rows (Q09) ---------------------------------
 
 
-def test_truth_has_one_row_per_raw_title_and_family(mini_inputs: InputData, truth):
+def test_truth_has_one_row_per_raw_title_and_family(mini_inputs: InputData, mini_dir: Path):
+    # As recorded: the truth file repeats the employees file's pairs byte for byte (Q09).
     raw_pairs = {(e.job_title, e.job_family_code) for e in mini_inputs.employees}
-    assert set(truth) == raw_pairs
+    recorded = [(row.job_title, row.job_family_code) for row in people.read_truth(mini_dir)]
+    assert set(recorded) == raw_pairs
+    assert len(recorded) == len(raw_pairs)
+
+
+def test_a_padded_family_code_is_the_same_family(
+    mini_inputs: InputData, mini_rows, mini_dir: Path, truth
+):
+    # One code is padded on purpose. Its row is keyed on the trimmed code, the
+    # truth file holds the code as recorded, and the two still meet (S05).
+    padded = [e for e in mini_inputs.employees if e.job_family_code != e.job_family_code.strip()]
+    assert [(e.employee_id, e.job_family_code) for e in padded] == [("E020", "FIN ")]
+    assert people.TruthRow("Treasury Analyst", "FIN ", "FIN-06") in people.read_truth(mini_dir)
+    (row,) = [row for row in mini_rows if "E020" in row.employee_ids]
+    assert row.key == TitleKey("FIN", "treasury analyst") and row.family_usable
+    assert truth[("Treasury Analyst", row.key.family_code)] == "FIN-06"
 
 
 def test_each_cleaned_row_has_one_true_role(mini_rows: tuple[TitleRow, ...], truth):
@@ -167,7 +187,7 @@ def test_each_cleaned_row_has_one_true_role(mini_rows: tuple[TitleRow, ...], tru
 def test_seed_rows_are_long_tail_titles_and_agree_with_the_truth(mini_inputs, mini_rows, truth):
     by_raw = {(raw, row.key.family_code): row for row in mini_rows for raw in row.raw_titles}
     for seed in mini_inputs.seed_lookup:
-        pair = (seed.job_title, seed.job_family_code)
+        pair = (seed.job_title, seed.job_family_code.strip())
         assert truth[pair] == seed.role_id
         assert by_raw[pair].headcount == 1  # never on the Wave 1 list (Q13)
 

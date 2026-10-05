@@ -19,6 +19,11 @@ title gets the same label on every occasion in a run and whatever the order of
 calls (Q27). The truth is looked up by a row's raw titles and its family code,
 so this module needs no cleaner and must not call titlestd.prepare or
 titlestd.catalog, which are built in parallel: it reads Catalog.roles directly.
+
+Family codes are compared after removing surrounding whitespace on both sides
+(S05): a row's key holds the trimmed code, while the truth file holds the code
+as recorded, which may be padded or made of spaces only. The mini data set has
+one padded code to show it.
 """
 
 from __future__ import annotations

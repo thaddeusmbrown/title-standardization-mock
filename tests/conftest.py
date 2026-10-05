@@ -9,9 +9,9 @@ docs/design.md 2.3: two families with six roles each plus their generic roles,
 22 employees on 15 title rows. It reproduces the worked example of 1.3 and
 holds one of each kind of mess: abbreviations, mixed case, a location suffix,
 two requisition suffixes, level words in several forms, a person's name in a
-title, a name and an email in descriptions, empty descriptions, missing grades
-and a blank family code. Everything in it is invented. Tests read it and never
-write into it.
+title, a name and an email in descriptions, empty descriptions, missing grades,
+a blank family code and a padded one ("FIN ", which is family FIN: S05).
+Everything in it is invented. Tests read it and never write into it.
 
 MINI_ROWS is what the prepare step must produce from it, written out by hand
 (Q11, Q14, Q26), so branches can test against real title rows before the

@@ -1347,6 +1347,14 @@ code is usable. Because a row keeps its raw titles, the simulated people look th
 raw title and family code and need no cleaner (Q09 still holds: the files are keyed on raw
 titles).
 
+Family codes are compared after removing surrounding whitespace on both sides. The key holds
+the trimmed code, while the employees, seed and truth files hold the code as recorded and the
+readers trim nothing (S01). So whoever matches a file's row to a key trims the file's code
+first: `prepare.title_key` for the seed look-up, the simulated people for the truth. Without
+that a padded code, or one made of spaces only, would miss the truth and come back as "no
+suitable role". The mini data set has one padded code (`"FIN "` on one employee and on its
+truth row), so both stage 1 branches meet the case.
+
 ### S06. The order of cleaning
 
 Within "clean" (Q14) the steps run in this order: lower-case; remove requisition numbers;

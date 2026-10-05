@@ -719,7 +719,7 @@ def test_replay_of_no_recording_stops_at_start_up_through_the_switch(mini_inputs
     chosen = Settings(llm="replay", recording_dir=tmp_path / "recordings")
     with pytest.raises(RecordingError, match="found no recording") as raised:
         switch.build_models(chosen, mini_inputs.catalog.ladder, mini_inputs.abbreviations, "f")
-    assert "--llm-model" in str(raised.value)
+    assert "record command" in str(raised.value)
 
 
 def test_live_mode_without_a_key_stops_at_start_up_through_the_switch(mini_inputs, settings):

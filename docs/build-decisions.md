@@ -1021,12 +1021,14 @@ replay` reads the model from the recording's manifest; if `llm_model` is also se
 that is a start-up error. The layout of Q29 has the model in the path, so the recording is
 found first: with `llm_model` set, replay opens `<recording_dir>/<llm_model>/<embedder>/`;
 with it unset, it uses the only folder `<recording_dir>/<model>/<embedder>` that exists for
-the embedder in force, and stops at start-up, listing the models found and naming
-`--llm-model`, if there is none or more than one. Docs and tests use the alias
-`claude-haiku-4-5` exactly as written, with no date suffix. Any model string is passed through
-unchanged; to stay valid across current models the request sends no `temperature`, `top_p` or
-`top_k`, no thinking parameter, no effort parameter and no forced tool choice (tool choice
-auto with a strict tool, or structured output).
+the embedder in force, and stops at start-up if there is none or more than one. With more
+than one it lists the models found and names `--llm-model`. With none it says which embedders
+the recordings in the folder were made with, since naming a model does not help where the
+embedder in force has no recording. Docs and tests use the alias `claude-haiku-4-5` exactly
+as written, with no date suffix. Any model string is passed through unchanged; to stay valid
+across current models the request sends no `temperature`, `top_p` or `top_k`, no thinking
+parameter, no effort parameter and no forced tool choice (tool choice auto with a strict tool,
+or structured output).
 
 **Basis.** 2.5: "`llm_model` | a small hosted model, for example `claude-haiku-4-5` |" with an
 empty default, while `embedder` and `llm` both show `offline`; the key is read "only when `llm

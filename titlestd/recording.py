@@ -416,6 +416,17 @@ def recorded_models(settings: Settings) -> list[str]:
     )
 
 
+def recorded_embedders(settings: Settings) -> list[str]:
+    """The embedders the recordings under settings.recording_dir were made with,
+    sorted: the folders <model>/<embedder> that hold a manifest. Replay names
+    them when the embedder in force has no recording (titlestd.replay)."""
+    if not settings.recording_dir.is_dir():
+        return []
+    manifests = settings.recording_dir.glob(f"*/*/{MANIFEST_FILE}")
+    found = {manifest.parent.name for manifest in manifests if manifest.is_file()}
+    return sorted(name for name in found if not name.endswith(PARTIAL_SUFFIX))
+
+
 # What a manifest says beside the settings (Q29), and what of it is about one
 # run and not about what its prompts were made from.
 _RUN_FACTS = ("started", "ended", "requests", "complete")

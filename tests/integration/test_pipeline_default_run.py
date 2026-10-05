@@ -24,6 +24,7 @@ import shutil
 import sqlite3
 import sys
 import time
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -57,8 +58,17 @@ pytestmark = pytest.mark.e2e
 EXPECTED_OUTPUT = Path("tests") / "fixtures" / "expected" / "default_run.txt"
 ROW_NAMES = [row.value for row in TableRow]
 PATH_ROWS = ("models agree", "agent-settled")
+# The step whose accepted answer settles a title of each machine path (1.2).
+PATH_STEP = {"models agree": "choose", "agent-settled": "review"}
 # The occasions on which an HR SME decides, as the state file names them.
 SME_ASKED = (pipeline.OCCASION_WAVE1, pipeline.OCCASION_GOLDEN, pipeline.OCCASION_AUDIT)
+# The occasion on which a person decided the titles counted in a table row.
+DECIDED_ON = {
+    "approved in Wave 1": pipeline.OCCASION_WAVE1,
+    "models agree": pipeline.OCCASION_AUDIT,
+    "agent-settled": pipeline.OCCASION_AUDIT,
+    "review queue": pipeline.OCCASION_QUEUE,
+}
 # The titles on which the compliance check of 1.7 fired, in any scoring of a run.
 COMPLIANCE_FIRED = (
     "SELECT DISTINCT family_code, cleaned_title FROM scorings "
@@ -435,6 +445,101 @@ def test_the_load_file_says_what_was_decided_by_whom_and_how_far_to_rely_on_it(
         by_a_path = status == "Provisional" and source == "machine"
         assert (line["error_rate"] != "") == by_a_path == (error_rate is not None)
     assert statuses <= {"Approved", "Confirmed", "Provisional"} and "Approved" in statuses
+
+
+def check_who_decided(state) -> Counter:
+    """Every final decision of a run names the role of whoever decided the title.
+
+    The role and the name of a person's decision are those of the person's
+    own answer on the occasion that decided the title, whatever a machine
+    proposed; the role of a machine's decision is the one its path accepted
+    in Wave 2; a look-up hit carries its seed entry. state reads the state
+    file of the run. Returns the number of decisions per table row and source.
+    """
+    people = {
+        (occasion, TitleKey(family, title)): answer
+        for occasion, family, title, *answer in state(
+            "SELECT occasion, family_code, cleaned_title, answer, role_id, decided_by "
+            "FROM human_decisions"
+        )
+    }
+    audited = {
+        TitleKey(family, title): path
+        for path, family, title in state(
+            "SELECT path, family_code, cleaned_title FROM audit_samples"
+        )
+    }
+    accepted_rows = state(
+        "SELECT family_code, cleaned_title, step, role_id FROM model_answers "
+        "WHERE stage = 'Wave 2' AND route = 'accept'"
+    )
+    accepted = {TitleKey(family, title): answer for family, title, *answer in accepted_rows}
+    assert len(accepted) == len(accepted_rows)  # a title is settled by one path
+    seeded = {
+        TitleKey(family, title): role_id
+        for family, title, role_id in state(
+            "SELECT family_code, cleaned_title, role_id FROM lookup WHERE joined_at = 'set-up'"
+        )
+    }
+    counted = Counter()
+    labeled = {}  # the audited titles: the role released and the machine's own
+    through_a_path = set()
+    for family, title, table_row, source, role_id, decided_by, legacy_reason in state(
+        "SELECT family_code, cleaned_title, table_row, source, role_id, decided_by, "
+        "legacy_reason FROM decisions"
+    ):
+        key = TitleKey(family, title)
+        counted[table_row, source] += 1
+        if table_row in PATH_ROWS or legacy_reason == "stopped path":
+            through_a_path.add(key)
+        if table_row in PATH_ROWS:
+            # Counted in the row of the path that settled it in Wave 2 (Q16).
+            assert accepted[key][0] == PATH_STEP[table_row], key
+        if source == "person":
+            # 1.10, Q16, Q21: the SME's approval, the audit label or the reviewer's decision.
+            assert people[DECIDED_ON[table_row], key] == ["role", role_id, decided_by], key
+            assert audited.get(key) == (table_row if table_row in PATH_ROWS else None), key
+            if key in audited:
+                labeled[key] = (role_id, accepted[key][1])
+        elif source == "machine":
+            # No person read it (1.9): the role is the one its path accepted.
+            assert accepted[key][1] == role_id and key not in audited, key
+        elif source == "look-up":
+            assert (role_id, decided_by) == (seeded[key], LOOKUP_DECIDED_BY), key
+        else:
+            assert source in ("code", "none") and not decided_by, key
+    assert through_a_path == set(accepted) and set(labeled) == set(audited)
+    # Wrong is counted against the machine's role, and the title still takes the label (Q21).
+    wrong = sum(label != machine for label, machine in labeled.values())
+    assert state("SELECT sum(wrong) FROM audits") == [(wrong,)]
+    return counted
+
+
+def test_every_decision_names_the_role_of_whoever_decided_the_title(default_run):
+    # The test above compares the load file with the final decisions. Here each
+    # decision is compared with what produced it: the people's own answers and
+    # the answers the machine paths accepted, as the state recorded them when
+    # they were given.
+    counted = check_who_decided(default_run.state)
+    assert set(counted) >= {
+        ("look-up hit", "look-up"),
+        ("approved in Wave 1", "person"),
+        ("models agree", "person"),
+        ("models agree", "machine"),
+        ("review queue", "person"),
+    }
+    # The labels of the audits did differ from what the machine chose.
+    assert default_run.state("SELECT sum(wrong) FROM audits")[0][0] > 0
+    # And the people did not just say what the ML model said first.
+    for occasion in (pipeline.OCCASION_WAVE1, pipeline.OCCASION_QUEUE):
+        differing = default_run.state(
+            "SELECT count(*) FROM human_decisions h JOIN scorings s "
+            "USING (family_code, cleaned_title) WHERE h.occasion = ? AND s.stage = ? "
+            "AND h.role_id IS NOT s.ml_first_choice",
+            occasion,
+            "Wave 1" if occasion == pipeline.OCCASION_WAVE1 else "Wave 2",
+        )
+        assert differing[0][0] > 0, occasion
 
 
 def test_an_employee_with_no_grade_gets_the_title_with_no_level_word_and_is_listed(

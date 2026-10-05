@@ -45,6 +45,10 @@ Decided here, where the record leaves the detail open:
   recorded run, 1 for a miss.
 - The day an answer was recorded on is fixed by replacing recording.utc_now,
   so the recorded label is the same on every day the tests run.
+
+The last test is of a defect this branch found in titlestd.live and fixed
+there (rule 9 of the build): a quote or a search query that is not valid
+Unicode stopped a live run when the recorder tried to write it.
 """
 
 from __future__ import annotations
@@ -447,5 +451,62 @@ def test_a_live_run_that_stops_keeps_its_answers_and_writes_no_output_file(recor
     assert len(kept) == 9 and not (partial / MANIFEST_FILE).exists()
     assert files_in(recorded.folder) == before
     # The recording of the run that completed still replays, whole.
+    replayed = pipeline.run_pipeline(recorded.replay_settings(tmp_path / "replayed"))
+    assert unlabelled(replayed) == unlabelled(recorded.result)
+
+
+# --- Model text that no recording can hold ----------------------------------------------
+
+# Half of a surrogate pair. A JSON text can carry it as an escape, and the SDK
+# hands it on in a tool request; UTF-8 cannot encode it, so no file can hold it.
+LONE_SURROGATE = "\ud800"
+
+
+class Garbling(ScriptedModel):
+    """The scripted model, with a lone surrogate in every quote it gives or in
+    every search it asks for."""
+
+    def __init__(self, where: str) -> None:
+        super().__init__()
+        self._where = where
+
+    def answer(self, kind: str, number: int | None, quote: str) -> SimpleNamespace:
+        return super().answer(kind, number, quote + LONE_SURROGATE * (self._where == "quote"))
+
+    def search(self, tool: str, query: str) -> SimpleNamespace:
+        return super().search(tool, query + LONE_SURROGATE * (self._where == "query"))
+
+
+@pytest.mark.parametrize(
+    ("where", "step", "detail"),
+    [
+        ("quote", "choose", "the quote is not valid Unicode text"),
+        ("query", "review", "the query of a search is not valid Unicode text"),
+    ],
+)
+def test_text_that_is_not_valid_unicode_is_an_invalid_answer_that_replay_repeats(
+    mini_settings, tmp_path, where, step, detail
+):
+    # Q39, S10: an answer that fails validation sends the title to a person
+    # and is recorded, so replay repeats it. Before, such a quote or query
+    # stopped the live run with a UnicodeEncodeError when it was recorded.
+    settings = dataclasses.replace(mini_settings, llm="anthropic", llm_model=MODEL)
+    model = Garbling(where)
+    recorded = Recorded(settings, record_a_run(settings, model), model)
+    given = state(
+        settings.out_dir, f"SELECT answer, detail FROM model_answers WHERE step = '{step}'"
+    )
+    assert ("invalid", detail) in given and {answer for answer, _ in given} == {"invalid"}
+    reasons = {reason for entry in recorded.result.queue for reason in entry.reasons}
+    assert Reason.INVALID_ANSWER in reasons
+    # No search was run with a query that is no text: the turn ended the case.
+    assert not state(settings.out_dir, "SELECT 1 FROM shown_roles WHERE shown_in LIKE 'search%'")
+    # The recording is complete and is valid UTF-8, and it replays.
+    turns = [
+        entry["turn"]
+        for name in (CHOOSE_FILE, REVIEW_FILE)
+        for entry in lines(recorded.folder / name)
+    ]
+    assert recording.invalid_turn(detail) in turns
     replayed = pipeline.run_pipeline(recorded.replay_settings(tmp_path / "replayed"))
     assert unlabelled(replayed) == unlabelled(recorded.result)

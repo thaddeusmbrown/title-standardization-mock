@@ -7,7 +7,9 @@ key), Q28 (what the hygiene tests check, and that none searches for a vendor's
 name).
 
 Every tracked file is an ordinary file, none is a .env file, none holds a
-key-shaped string, and every email address is at example.com.
+key-shaped string, and every email address is at example.com. The README is
+one of those files; what it says is checked in test_hygiene_readme.py, here
+and under tests/integration.
 
 Decided here, where the record is silent:
 

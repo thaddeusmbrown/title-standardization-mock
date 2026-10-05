@@ -661,6 +661,22 @@ def test_an_ml_alone_role_outside_the_family_it_is_given_says_so():
     assert rules.check_ml_alone(ml("F1", "F2", "S1"), "FIN ", CATALOG).reasons == (Reason.ML_ALONE,)
 
 
+@pytest.mark.parametrize("family", ["SAL", " SAL", "SAL ", "\tSAL\n"])
+def test_an_ml_alone_role_is_compared_with_the_family_after_trimming(family: str):
+    assert rules.check_ml_alone(MATCH, family, CATALOG) == RuleOutcome(
+        Route.PERSON, (Reason.ML_ALONE,), "S1"
+    )
+
+
+@pytest.mark.parametrize("family", ["FIN", "sal", "Sal", "", "   ", "XXX", "S", "SAL-FIN"])
+def test_an_ml_alone_role_is_inside_no_family_code_but_its_own(family: str):
+    # The one reading of the module docstring: case counts, and a blank or
+    # unknown code holds no role.
+    assert rules.check_ml_alone(MATCH, family, CATALOG) == RuleOutcome(
+        Route.PERSON, (Reason.ML_ALONE, Reason.FAMILY_MISMATCH), "S1"
+    )
+
+
 def test_ml_alone_never_stands_without_a_person():
     # Q04: "stand alone" means without the LLM, not without a person.
     for top in itertools.permutations([*MODEL_ROLE_IDS, "S9", "X1"], 3):

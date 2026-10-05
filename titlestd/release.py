@@ -47,6 +47,9 @@ Decided here, where the record is silent:
   like the legacy title beside it. In the review queue it is the title key's.
 - Rows are sorted by employee_id as text, the order a title row lists its
   employees in.
+- apply_reverse reads only employee_id and legacy_job_title, answers in the
+  order of the load rows, and also refuses an employee listed twice in either
+  file.
 - The released = 1 lines of exceptions.csv are the employees
   RunResult.no_grade_employees counts.
 """
@@ -183,7 +186,27 @@ def apply_reverse(
 
     Raises TitlestdError when the two files do not hold the same employee ids.
     """
-    raise NotImplementedError(_NOT_BUILT)
+    legacy: dict[str, str] = {}
+    for row in reverse_rows:
+        if row["employee_id"] in legacy:
+            raise ReleaseError(f"{REVERSE_FILE}: employee {row['employee_id']} is listed twice")
+        legacy[row["employee_id"]] = row["legacy_job_title"]
+    restored: dict[str, str] = {}
+    for row in load_rows:
+        employee_id = row["employee_id"]
+        if employee_id in restored:
+            raise ReleaseError(f"{LOAD_FILE}: employee {employee_id} is listed twice")
+        if employee_id not in legacy:
+            raise ReleaseError(
+                f"{REVERSE_FILE} has no legacy title for employee {employee_id} of {LOAD_FILE}"
+            )
+        restored[employee_id] = legacy[employee_id]
+    unloaded = sorted(set(legacy) - set(restored))
+    if unloaded:
+        raise ReleaseError(
+            f"{REVERSE_FILE} lists employees that {LOAD_FILE} does not: {_some(unloaded)}"
+        )
+    return restored
 
 
 def _decision_of_each_employee(

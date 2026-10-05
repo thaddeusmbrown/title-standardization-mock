@@ -1,8 +1,9 @@
 """Release: the load file, the reverse file, the exceptions list, the review queue.
 
-One test of section 2.7 starts here: the writer refuses a role or a title that
-is not in the catalog, so none can reach the load file. Beside it, the file
-checks of Q05.
+Two tests of section 2.7 belong to this module. The writer refuses a role or a
+title that is not in the catalog, so none can reach the load file; and applying
+the reverse file to the load file restores every legacy title. Beside them, the
+file checks of Q05.
 """
 
 from __future__ import annotations
@@ -737,3 +738,89 @@ def test_a_decision_the_files_cannot_state_is_refused(
         release.write_release_files(tmp_path, decisions, ROWS, EMPLOYEES, mini_catalog)
     assert f"title {decision.key.cleaned_title!r} in family" in str(refusal.value)
     assert list(tmp_path.iterdir()) == []
+
+
+# --- The reverse file, and applying it (2.7, Q05) -----------------------------------
+
+
+def test_the_reverse_file_holds_the_same_employees_as_the_load_file(out: Path):
+    load, reverse, _ = _read(out)
+    assert [row["employee_id"] for row in reverse] == [row["employee_id"] for row in load]
+    assert {row["employee_id"]: row["legacy_job_title"] for row in reverse} == {
+        row["employee_id"]: _BY_ID[row["employee_id"]].job_title for row in load
+    }
+
+
+def test_applying_the_reverse_file_restores_every_legacy_title(out: Path):
+    load, reverse, _ = _read(out)
+    restored = release.apply_reverse(load, reverse)
+    assert list(restored) == [row["employee_id"] for row in load]
+    assert len(restored) == 9
+    for employee_id, title in restored.items():
+        assert title == _BY_ID[employee_id].job_title
+    # It restores what the load file replaced, and nothing in the load file is legacy.
+    assert restored["A1"] == "Sr. Acct Mgr - NYC"
+    assert next(row for row in load if row["employee_id"] == "A1")["long_title"] != restored["A1"]
+
+
+AWKWARD_TITLES = [
+    "  Sr. Acct Mgr - NYC  ",
+    'Manager, "Special" Projects',
+    "Ingénieur Commercial / Ventes",
+    "ACCT MGR II\t",
+    "Line One\nLine Two",
+    "Carriage\r\nReturn",
+    "'=Quoted",
+    "経理",
+]
+
+
+def test_a_legacy_title_comes_back_byte_for_byte(tmp_path: Path, mini_catalog: Catalog):
+    employees = [
+        _employee(f"X{number}", title, "SAL", 5) for number, title in enumerate(AWKWARD_TITLES)
+    ]
+    rows = [_row(f"title {number}", employee) for number, employee in enumerate(employees)]
+    decisions = [_confirmed("SAL-02")(row) for row in rows]
+    release.write_release_files(tmp_path, decisions, rows, employees, mini_catalog)
+    load, reverse, _ = _read(tmp_path)
+    restored = release.apply_reverse(load, reverse)
+    assert [restored[f"X{number}"] for number in range(len(AWKWARD_TITLES))] == AWKWARD_TITLES
+    for employee in employees:
+        assert restored[employee.employee_id].encode() == employee.job_title.encode()
+
+
+def test_apply_reverse_reads_only_the_two_columns_it_needs():
+    load = [{"employee_id": "B", "long_title": "x"}, {"employee_id": "A", "long_title": "y"}]
+    reverse = [
+        {"employee_id": "A", "legacy_job_title": "Old A"},
+        {"employee_id": "B", "legacy_job_title": "Old B"},
+    ]
+    restored = release.apply_reverse(load, reverse)
+    assert restored == {"A": "Old A", "B": "Old B"}
+    assert list(restored) == ["B", "A"]  # the order of the load rows
+    assert release.apply_reverse([], []) == {}
+
+
+def test_apply_reverse_refuses_files_that_do_not_hold_the_same_employees(out: Path):
+    load, reverse, _ = _read(out)
+    with pytest.raises(
+        ReleaseError, match=r"reverse\.csv has no legacy title for employee A1 of load\.csv"
+    ):
+        release.apply_reverse(load, reverse[1:])
+    with pytest.raises(
+        ReleaseError, match=r"reverse\.csv lists employees that load\.csv does not: A1, A2$"
+    ):
+        release.apply_reverse(load[2:], reverse)
+    with pytest.raises(ReleaseError, match="no legacy title for employee A1"):
+        release.apply_reverse(load, [])
+    with pytest.raises(ReleaseError, match=r"does not: A1, A2, A3, B1, C1 and 4 more$"):
+        release.apply_reverse([], reverse)
+
+
+def test_apply_reverse_refuses_an_employee_listed_twice(out: Path):
+    load, reverse, _ = _read(out)
+    with pytest.raises(ReleaseError, match=r"load\.csv: employee A1 is listed twice"):
+        release.apply_reverse([*load, load[0]], reverse)
+    other = {"employee_id": "A1", "legacy_job_title": "Another Title"}
+    with pytest.raises(ReleaseError, match=r"reverse\.csv: employee A1 is listed twice"):
+        release.apply_reverse(load, [*reverse, other])

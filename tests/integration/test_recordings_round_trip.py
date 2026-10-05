@@ -200,20 +200,22 @@ class Recorded:
         """The folder of the recording the run made."""
         return self.settings.recording_dir / MODEL / "offline"
 
-    def replay_settings(self, out_dir: Path) -> Settings:
-        """The settings that replay the recording: no model is named (Q31)."""
-        return dataclasses.replace(self.settings, llm="replay", llm_model=None, out_dir=out_dir)
 
-    def replay_flags(self, out_dir: Path) -> list[str]:
-        """The same on the command line, the data folder left to the caller."""
-        flags = {
-            "--llm": "replay",
-            "--recording-dir": self.settings.recording_dir,
-            "--out-dir": out_dir,
-            "--wave1-size": self.settings.wave1_size,
-            "--golden-size": self.settings.golden_size,
-        }
-        return [str(word) for flag in flags.items() for word in flag]
+def replay_of(settings: Settings, out_dir: Path) -> Settings:
+    """The settings that replay what a live run recorded: no model is named (Q31)."""
+    return dataclasses.replace(settings, llm="replay", llm_model=None, out_dir=out_dir)
+
+
+def replay_flags(settings: Settings, out_dir: Path) -> list[str]:
+    """The same on the command line, the data folder left to the caller."""
+    flags = {
+        "--llm": "replay",
+        "--recording-dir": settings.recording_dir,
+        "--out-dir": out_dir,
+        "--wave1-size": settings.wave1_size,
+        "--golden-size": settings.golden_size,
+    }
+    return [str(word) for flag in flags.items() for word in flag]
 
 
 @pytest.fixture(autouse=True)
@@ -228,10 +230,14 @@ def no_key(monkeypatch) -> None:
 
 
 @pytest.fixture
-def recorded(mini_settings: Settings) -> Recorded:
-    settings = dataclasses.replace(mini_settings, llm="anthropic", llm_model=MODEL)
+def live_settings(mini_settings: Settings) -> Settings:
+    return dataclasses.replace(mini_settings, llm="anthropic", llm_model=MODEL)
+
+
+@pytest.fixture
+def recorded(live_settings: Settings) -> Recorded:
     model = ScriptedModel()
-    return Recorded(settings, record_a_run(settings, model), model)
+    return Recorded(live_settings, record_a_run(live_settings, model), model)
 
 
 def lines(path: Path) -> list[dict]:
@@ -309,7 +315,7 @@ def test_the_scripted_run_records_every_kind_of_turn(recorded):
 
 
 def test_replay_gives_the_same_decisions_and_files_apart_from_the_answer_label(recorded, tmp_path):
-    again = recorded.replay_settings(tmp_path / "replayed")
+    again = replay_of(recorded.settings, tmp_path / "replayed")
     asked = len(recorded.model.requests)
     replayed = pipeline.run_pipeline(again)  # an ordinary run: the switch builds replay
     assert len(recorded.model.requests) == asked  # replay asked the model nothing
@@ -332,7 +338,7 @@ def test_replay_gives_the_same_decisions_and_files_apart_from_the_answer_label(r
 def test_every_answer_carries_one_of_the_three_labels(recorded, mini_settings, tmp_path):
     # 2.5, Q40: "stand-in", "live" or "recorded <date>, <model>".
     stand_in = dataclasses.replace(mini_settings, out_dir=tmp_path / "stand-in")
-    again = recorded.replay_settings(tmp_path / "replayed")
+    again = replay_of(recorded.settings, tmp_path / "replayed")
     runs = [
         (stand_in, pipeline.run_pipeline(stand_in), LABEL_STAND_IN),
         (recorded.settings, recorded.result, LABEL_LIVE),
@@ -352,7 +358,8 @@ def test_every_answer_carries_one_of_the_three_labels(recorded, mini_settings, t
 def test_the_replay_command_needs_only_the_recording(recorded, bare_cli, mini_dir, tmp_path):
     # The real command on a bare interpreter: no SDK, no key and no model named.
     out_dir = tmp_path / "replayed"
-    result = bare_cli("run", "--data-dir", str(mini_dir), *recorded.replay_flags(out_dir))
+    replay = replay_flags(recorded.settings, out_dir)
+    result = bare_cli("run", "--data-dir", str(mini_dir), *replay)
     assert result.returncode == 0, result.stderr
     assert result.stderr == ""
     # The table of the live run, apart from the line that says where answers came from.
@@ -414,7 +421,7 @@ def test_one_changed_input_is_a_miss_a_non_zero_exit_and_no_output_files(
     # the run stops at once, and the message names the step and the title and
     # says how the manifest differs from the settings in force.
     out_dir = tmp_path / "replayed"
-    replay = recorded.replay_flags(out_dir)
+    replay = replay_flags(recorded.settings, out_dir)
     unchanged = a_copy_of(mini_dir, tmp_path / "unchanged")
     changed = a_copy_of(mini_dir, tmp_path / "changed", *edit)
     # First the run as it was recorded, on a copy of the data: it leaves its files.
@@ -451,8 +458,27 @@ def test_a_live_run_that_stops_keeps_its_answers_and_writes_no_output_file(recor
     assert len(kept) == 9 and not (partial / MANIFEST_FILE).exists()
     assert files_in(recorded.folder) == before
     # The recording of the run that completed still replays, whole.
-    replayed = pipeline.run_pipeline(recorded.replay_settings(tmp_path / "replayed"))
+    replayed = pipeline.run_pipeline(replay_of(recorded.settings, tmp_path / "replayed"))
     assert unlabelled(replayed) == unlabelled(recorded.result)
+
+
+def test_the_answers_of_a_run_that_stopped_are_no_recording_to_replay(
+    live_settings, bare_cli, mini_dir, tmp_path
+):
+    # Q29: replay refuses a missing or incomplete recording before doing any
+    # work. What a run that stopped has kept is not a recording yet.
+    with pytest.raises(LiveError):
+        record_a_run(live_settings, ScriptedModel(fail_at=10))
+    kept = live_settings.recording_dir / MODEL / ("offline" + PARTIAL_SUFFIX)
+    assert [path.name for path in kept.parent.iterdir()] == [kept.name]
+    out_dir = tmp_path / "replayed"
+    result = bare_cli("run", "--data-dir", str(mini_dir), *replay_flags(live_settings, out_dir))
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert result.stderr.startswith(
+        "titlestd: llm = replay found no recording for embedder = offline"
+    )
+    assert not out_dir.exists()  # nothing was begun: not even the state file
 
 
 # --- Model text that no recording can hold ----------------------------------------------
@@ -485,22 +511,20 @@ class Garbling(ScriptedModel):
     ],
 )
 def test_text_that_is_not_valid_unicode_is_an_invalid_answer_that_replay_repeats(
-    mini_settings, tmp_path, where, step, detail
+    live_settings, tmp_path, where, step, detail
 ):
     # Q39, S10: an answer that fails validation sends the title to a person
     # and is recorded, so replay repeats it. Before, such a quote or query
     # stopped the live run with a UnicodeEncodeError when it was recorded.
-    settings = dataclasses.replace(mini_settings, llm="anthropic", llm_model=MODEL)
     model = Garbling(where)
-    recorded = Recorded(settings, record_a_run(settings, model), model)
-    given = state(
-        settings.out_dir, f"SELECT answer, detail FROM model_answers WHERE step = '{step}'"
-    )
+    recorded = Recorded(live_settings, record_a_run(live_settings, model), model)
+    out_dir = live_settings.out_dir
+    given = state(out_dir, f"SELECT answer, detail FROM model_answers WHERE step = '{step}'")
     assert ("invalid", detail) in given and {answer for answer, _ in given} == {"invalid"}
     reasons = {reason for entry in recorded.result.queue for reason in entry.reasons}
     assert Reason.INVALID_ANSWER in reasons
     # No search was run with a query that is no text: the turn ended the case.
-    assert not state(settings.out_dir, "SELECT 1 FROM shown_roles WHERE shown_in LIKE 'search%'")
+    assert not state(out_dir, "SELECT 1 FROM shown_roles WHERE shown_in LIKE 'search%'")
     # The recording is complete and is valid UTF-8, and it replays.
     turns = [
         entry["turn"]
@@ -508,5 +532,5 @@ def test_text_that_is_not_valid_unicode_is_an_invalid_answer_that_replay_repeats
         for entry in lines(recorded.folder / name)
     ]
     assert recording.invalid_turn(detail) in turns
-    replayed = pipeline.run_pipeline(recorded.replay_settings(tmp_path / "replayed"))
+    replayed = pipeline.run_pipeline(replay_of(recorded.settings, tmp_path / "replayed"))
     assert unlabelled(replayed) == unlabelled(recorded.result)

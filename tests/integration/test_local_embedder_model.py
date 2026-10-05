@@ -11,6 +11,13 @@ outside the repository, and embeds the title rows of the mini data set. In
 any other run it is skipped unless the library is installed and the model is
 already in that cache, so no other test run reaches the network.
 
+That rests on a cached model being loaded without a request to the hub, which
+the stubs of the unit tests cannot show of the real hub library. The test's
+second process shows it. Its Hugging Face home is an empty folder beside the
+real cache, so the hub library has no copy of the list it keeps there and
+would fetch it as soon as its download call ran; and every connection the
+process tries to open is recorded and refused. It must have tried none.
+
 The nearest-neighbour match is built beside this branch (titlestd.matcher), so
 the texts are put together by hand, the way 1.6 step 3 describes them: a
 role's name and one-line definition, a row's cleaned title and description.
@@ -55,16 +62,29 @@ NEAREST = {
     ("SAL", "senior account manager"): "SAL-01",  # in both its spellings
 }
 
-# Prints one digest of the vectors of the texts given on standard input.
-DIGEST_SCRIPT = """
-import hashlib, json, sys
+# Prints one digest of the vectors of the texts given on standard input, and
+# every connection the process tried to open: each is recorded and refused.
+SECOND_PROCESS = """
+import hashlib, json, socket, sys
+
+connections = []
+
+
+def refuse(*where, **options):
+    connections.append(repr(where))
+    raise OSError("this process is not to use the network")
+
+
+socket.getaddrinfo = refuse
+socket.socket.connect = refuse
 
 from titlestd.local_embedder import build_embedder
 from titlestd.settings import Settings
 
 vectors = build_embedder(Settings(embedder="local")).embed(json.load(sys.stdin))
 plain = json.dumps([sorted(vector.items()) for vector in vectors])
-print(hashlib.sha256(plain.encode()).hexdigest())
+digest = hashlib.sha256(plain.encode()).hexdigest()
+print(json.dumps({"digest": digest, "connections": connections}))
 """
 
 
@@ -80,6 +100,13 @@ def model_is_cached() -> bool:
         isinstance(try_to_load_from_cache(MODEL_NAME, name, revision=MODEL_REVISION), str)
         for name in MODEL_FILES
     )
+
+
+def cache_folder() -> str:
+    """The Hugging Face cache this process reads and fills."""
+    from huggingface_hub import constants
+
+    return constants.HF_HUB_CACHE
 
 
 def dot(a: Vector, b: Vector) -> float:
@@ -117,7 +144,11 @@ def test_only_a_run_that_names_the_marker_may_fetch_the_model(expression: str, a
 
 @pytest.mark.local_model
 def test_the_local_model_embeds_the_titles_of_the_mini_data_set(
-    request: pytest.FixtureRequest, repo_root: Path, mini_inputs: InputData, mini_settings: Settings
+    request: pytest.FixtureRequest,
+    repo_root: Path,
+    tmp_path: Path,
+    mini_inputs: InputData,
+    mini_settings: Settings,
 ):
     pytest.importorskip("model2vec", reason='the optional extra "local" is not installed')
     asked = asked_for_by_marker(request.config.getoption("markexpr") or "")
@@ -170,15 +201,27 @@ def test_the_local_model_embeds_the_titles_of_the_mini_data_set(
     assert [embedder.embed([text])[0] for text in texts] == row_vectors
     assert embedder.embed(["", *texts, " \n"]) == [{}, *row_vectors, {}]
     assert switch.build_models(settings, [], []).embedder.embed(texts) == row_vectors
+    # The other process finds the model in the cache, which is filled by now,
+    # and nothing else of the hub library's: its home is a folder with nothing
+    # in it.
     result = subprocess.run(
-        [sys.executable, "-c", DIGEST_SCRIPT],
+        [sys.executable, "-c", SECOND_PROCESS],
         input=json.dumps(texts),
         cwd=repo_root,
-        env={**os.environ, "PYTHONPATH": str(repo_root), "PYTHONHASHSEED": "12345"},
+        env={
+            **os.environ,
+            "PYTHONPATH": str(repo_root),
+            "PYTHONHASHSEED": "12345",
+            "HF_HOME": str(tmp_path / "hugging-face-home"),
+            "HF_HUB_CACHE": cache_folder(),
+        },
         capture_output=True,
         text=True,
         timeout=300,
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == digest(row_vectors)
+    report = json.loads(result.stdout)
+    assert report["digest"] == digest(row_vectors)
+    # A later run asks nothing of the hub: no connection was even tried.
+    assert report["connections"] == []

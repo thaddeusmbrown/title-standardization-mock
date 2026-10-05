@@ -3,7 +3,9 @@
 Owner: feat/golden-audit-status (stage 2).
 Governed by: docs/design.md 1.9, 2.4 ("Audit at mock scale", "Wrong");
 docs/build-decisions.md Q07 (golden titles stay in the sampling frame), Q16
-(what the path row shows), Q21 (audited titles take the SME's label).
+(what the path row shows), Q21 (audited titles take the SME's label), Q23 (the
+three outcomes, the path of 60 or fewer and the release setting are tested on
+constructed counts).
 
 The numbers (2.4), for a sample of n titles:
 - confirmed if wrong is at most the largest count that a path at exactly
@@ -24,16 +26,44 @@ them as Provisional. Level is not scored.
 
 The sample draws each title once, with seeding.rng(seed, STREAM_AUDIT,
 path.value) over the path's sorted keys.
+
+This module reads no file and never the truth (Q22): the caller hands in the
+SME's blind labels. It knows nothing of the golden set, so a golden title is
+drawn and decided like any other title of its path (Q07, Q21).
+
+Decided on this branch, where the record says nothing:
+- The lines are computed exactly. The three shares are read as the decimals
+  the design states (0.90 is nine tenths, not the nearest binary float) and
+  the binomial is summed in fractions, so a count never falls on the other
+  side of a line through rounding.
 """
 
 from __future__ import annotations
 
+import math
 from collections.abc import Collection, Mapping
+from fractions import Fraction
 
-from titlestd.contracts import AuditResult, Decision, HumanDecision, MachinePath, TitleKey
+from titlestd import seeding
+from titlestd.contracts import (
+    AUDIT_ACCURACY_BAR,
+    AUDIT_PASS_CHANCE,
+    AUDIT_SAMPLE_SIZE,
+    AUDIT_STOP_SHARE,
+    AuditResult,
+    Decision,
+    HumanDecision,
+    MachinePath,
+    TitleKey,
+)
 from titlestd.settings import Settings
 
 _NOT_BUILT = "titlestd.audit is built by feat/golden-audit-status"
+
+
+def _exact(share: float) -> Fraction:
+    """A share as the decimal the design states: 0.90 gives 9/10."""
+    return Fraction(str(share))
 
 
 def confirm_limit(sample_size: int) -> int:
@@ -41,19 +71,39 @@ def confirm_limit(sample_size: int) -> int:
 
     Raises ValueError for a sample so small that no count passes (under 22).
     """
-    raise NotImplementedError(_NOT_BUILT)
+    right = _exact(AUDIT_ACCURACY_BAR)  # the chance that one title is right, at the bar
+    pass_chance = _exact(AUDIT_PASS_CHANCE)
+    limit = -1
+    chance = Fraction(0)  # that a path exactly at the bar has at most this many wrong
+    for wrong in range(sample_size + 1):
+        chance += (
+            math.comb(sample_size, wrong) * (1 - right) ** wrong * right ** (sample_size - wrong)
+        )
+        if chance > pass_chance:
+            break
+        limit = wrong
+    if limit < 0:
+        raise ValueError(
+            f"a sample of {sample_size} titles cannot confirm a path: with none wrong, a path "
+            f"exactly at the bar would still pass more than {AUDIT_PASS_CHANCE:.0%} of the time"
+        )
+    return limit
 
 
 def stop_limit(sample_size: int) -> int:
     """The most wrong answers a path may have without being stopped: 12 for 60,
     40 for 200."""
-    raise NotImplementedError(_NOT_BUILT)
+    return math.floor(_exact(AUDIT_STOP_SHARE) * sample_size)
 
 
 def draw_sample(path: MachinePath, keys: Collection[TitleKey], seed: int) -> tuple[TitleKey, ...]:
     """The titles to label, sorted: every key when the path holds
     contracts.AUDIT_SAMPLE_SIZE or fewer, otherwise a seeded sample of that size."""
-    raise NotImplementedError(_NOT_BUILT)
+    ordered = sorted(set(keys))
+    if len(ordered) <= AUDIT_SAMPLE_SIZE:
+        return tuple(ordered)
+    generator = seeding.rng(seed, seeding.STREAM_AUDIT, path.value)
+    return tuple(sorted(generator.sample(ordered, AUDIT_SAMPLE_SIZE)))
 
 
 def audit_path(

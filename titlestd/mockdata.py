@@ -1,9 +1,9 @@
-"""The mock data generator: writes the seven data files of docs/design.md 2.3.
+"""The mock data generator: writes the seven data files of DESIGN.md 2.3.
 
 Owner: feat/mock-data (stage 2, after prepare and catalog-naming, because the
 generator must use the real cleaner and naming rule). It also owns the
 committed files in data/.
-Governed by: docs/design.md 2.1 (sizes), 2.3 (files and deliberate mess);
+Governed by: DESIGN.md 2.1 (sizes), 2.3 (files and deliberate mess);
 docs/build-decisions.md Q06 (own fixed seed, committed output, byte-for-byte
 regeneration), Q09 (raw titles; one true role per cleaned row), Q13 (seed
 titles sit in the long tail), Q23 (the difficulty knobs, and the flagged roles

@@ -1,7 +1,7 @@
 """Catalog access and the naming rule.
 
 Owner: feat/catalog-naming (stage 1).
-Governed by: docs/design.md 1.2 (generic family role), 1.3 (naming rule), 2.4
+Governed by: DESIGN.md 1.2 (generic family role), 1.3 (naming rule), 2.4
 (missing grade); docs/build-decisions.md Q05 (the title with no level word),
 Q26 (usable family code), Q36 (the worked example).
 Section 2.7 tests: no title outside the catalog can reach the load file

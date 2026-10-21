@@ -6,7 +6,7 @@ labeled by the real simulated people and shown to the real stand-in LLM. The
 last tests tie the data to the mini data set, which the earlier stages were
 built against.
 
-docs/design.md 2.1 and 2.3; docs/build-decisions.md Q03 (every title has a
+DESIGN.md 2.1 and 2.3; docs/build-decisions.md Q03 (every title has a
 truth row), Q06 (byte-for-byte regeneration), Q09 (raw titles, one true role
 per row, the seed look-up), Q11 (descriptions), Q13 (seed titles in the long
 tail), Q14 (the reference lists share no word with the data), Q17 (titles

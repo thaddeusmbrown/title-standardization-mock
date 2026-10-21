@@ -1,7 +1,7 @@
 """The quick start of the README, run as the README gives it.
 
 Owner: docs/readme-hygiene (stage 5).
-Governed by: docs/design.md 2.1 (the standard library by default), 2.6 (one
+Governed by: DESIGN.md 2.1 (the standard library by default), 2.6 (one
 command prints one table and writes the files); docs/build-decisions.md owner
 decisions 9 (run from a fresh clone with nothing installed) and 10 (a short
 README), Q38 (the output files).

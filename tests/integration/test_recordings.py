@@ -1,6 +1,6 @@
 """The recordings under recordings/: what is committed and what it may hold.
 
-docs/design.md 2.5 ("Recordings are never written by hand") and 2.8 ("No
+DESIGN.md 2.5 ("Recordings are never written by hand") and 2.8 ("No
 secrets. ... No keys in recordings."); docs/build-decisions.md Q02 (one live
 recording, made with the offline embedder under the model alias as written),
 Q29 (the layout, and what an entry stores: "never headers or the key"), Q32 b

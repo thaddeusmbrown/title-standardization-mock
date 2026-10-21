@@ -1,6 +1,6 @@
 """The shared code around choose: record block, numbered roles, mapping, quote check.
 
-docs/design.md 1.6 step 4, 1.7 and 2.5; docs/build-decisions.md Q15 (the quote
+DESIGN.md 1.6 step 4, 1.7 and 2.5; docs/build-decisions.md Q15 (the quote
 check), Q18 (the seeded shuffle), S16 (what a model is shown).
 
 Two tests of section 2.7 start here. "A quote that is not in the record sends

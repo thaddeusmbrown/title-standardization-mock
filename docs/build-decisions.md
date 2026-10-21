@@ -1,6 +1,6 @@
 # Build decisions
 
-`docs/design.md` is the design. It is firm, and where anything here seems to differ from it,
+`DESIGN.md` is the design. It is firm, and where anything here seems to differ from it,
 the design wins. This file records what the design leaves open and how each point was settled,
 so that every part of the build makes the same choice.
 
@@ -17,7 +17,7 @@ How to read it:
   it owns: the eight of section 2.7 and every test or deliverable that an entry decides. It
   also says what crosses a branch boundary and what the README must say.
 
-Section numbers such as 1.8 or 2.4 refer to `docs/design.md`. "The mini data set" is the small
+Section numbers such as 1.8 or 2.4 refer to `DESIGN.md`. "The mini data set" is the small
 hand-written data set in `tests/fixtures/mini`.
 
 ---
@@ -40,7 +40,8 @@ hand-written data set in `tests/fixtures/mini`.
 5. **The invented name list and location list are module constants** inside the package, not
    CSV files, so the data files are exactly the seven listed in section 2.3.
 6. **The optional extras are named `live`** (the anthropic SDK) **and `local`** (model2vec).
-7. **Commit messages end with the co-author and session trailer lines** of the coding tool.
+7. **Commit messages end with the co-author trailer line** of the coding tool, and no session
+   trailer line (amended by the owner on 2026-10-21: the repository is public).
    Section 2.8 covers real companies, clients and people, not technology
    vendors or the coding tool.
 8. **The configured model string is the one that counts.** Recording keys and the
@@ -939,7 +940,8 @@ Commits made with the coding tool end with a co-author line and a session link.
 **Decision.** The rule covers real companies, clients and people, in data,
 code, docs, branch names and commit text. Technology vendors and products may be named where
 the design names them or the code needs them. The repository's git identity stays as
-configured. Commits keep the coding tool's co-author and session trailer lines. No hygiene
+configured. Commits keep the coding tool's co-author trailer line; the session trailer line
+was dropped on 2026-10-21 (owner decision 7). No hygiene
 test searches for vendor names; the tests check instead that mock emails use `example.com` and
 that no key-shaped strings or `.env` files are committed.
 

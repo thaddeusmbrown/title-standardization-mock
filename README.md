@@ -1,6 +1,6 @@
 # Job-title standardization mock
 
-I translated my work to a docs/design.md file with Claude.  The
+I translated my work to a DESIGN.md file with Claude.  The
 architecture is my own design, with my selection of models and
 replay strategy.  The architecture PNGs are my design work as well to help
 inform the final agnostic/Microsoft designs. Claude Code ran the end-to-end 
@@ -156,6 +156,9 @@ Three things to keep in mind when reading the table of a run:
 
 ## Where to read more
 
-- `docs/design.md`: the design, and what the mock builds from it.
+- `DESIGN.md`: the design, and what the mock builds from it.
 - `docs/build-decisions.md`: every point the design left open and how it was settled.
 - `docs/live-run-observation.md`: what the one live run showed about the quote check.
+- `PROMPT.md`: how the LLM fallback and the agent are prompted, and which limits code
+  enforces.
+- `CLAUDE_CODE.md`: how Claude Code is set up for this repository, and how it ran the build.

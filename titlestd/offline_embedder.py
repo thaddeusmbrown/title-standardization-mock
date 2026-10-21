@@ -1,7 +1,7 @@
 """embedder = offline: hashed character n-grams, standard library only.
 
 Owner: feat/model-switch-offline (stage 1).
-Governed by: docs/design.md 1.5 (off the shelf, not trained), 2.5;
+Governed by: DESIGN.md 1.5 (off the shelf, not trained), 2.5;
 docs/build-decisions.md Q12.
 
 The method (Q12): case-fold; split into [a-z0-9]+ tokens; wrap each as

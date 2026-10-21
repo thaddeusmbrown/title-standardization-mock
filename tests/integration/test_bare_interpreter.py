@@ -1,6 +1,6 @@
 """The program on a bare interpreter: nothing installed, nothing optional imported.
 
-docs/design.md 2.5: "Import the SDK and the embedding library lazily, so the
+DESIGN.md 2.5: "Import the SDK and the embedding library lazily, so the
 default run installs nothing." These tests start a fresh interpreter from the
 repository root.
 """

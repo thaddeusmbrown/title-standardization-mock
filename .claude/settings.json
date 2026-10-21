@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(git push *)",
+      "Bash(gh *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Monitor",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/hooks/no-push.py\"; [ -r \"$f\" ] || exit 0; exec python3 -I \"$f\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/hooks/ruff-format.sh\"; [ -r \"$f\" ] || exit 0; exec bash \"$f\"",
+            "timeout": 30,
+            "statusMessage": "Formatting with ruff"
+          }
+        ]
+      }
+    ]
+  }
+}

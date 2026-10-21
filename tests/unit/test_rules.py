@@ -1,6 +1,6 @@
 """The rules of 1.7: where code sends every proposal.
 
-docs/design.md 1.7; docs/build-decisions.md Q04 (the ML-alone route), Q15 (the
+DESIGN.md 1.7; docs/build-decisions.md Q04 (the ML-alone route), Q15 (the
 quote is checked on every choose answer; a number that names no shown role
 fails the catalog check), S10 (an answer that is not usable), S11 (reasons).
 

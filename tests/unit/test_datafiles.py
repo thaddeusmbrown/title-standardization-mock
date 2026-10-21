@@ -12,7 +12,7 @@ from titlestd import datafiles
 from titlestd.contracts import CatalogRole, Employee, InputData, SeedLookupRow
 from titlestd.datafiles import DataError
 
-# The column names of docs/design.md 2.3, copied from the design.
+# The column names of DESIGN.md 2.3, copied from the design.
 DESIGN_COLUMNS = {
     datafiles.ROLES_FILE: (
         "role_id, family_code, role_name, short_name, definition, compliance_flag, is_generic"

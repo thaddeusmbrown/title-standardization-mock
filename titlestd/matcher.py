@@ -1,7 +1,7 @@
 """The ML match: nearest neighbours on text embeddings.
 
 Owner: feat/lookup-ml-match (stage 2).
-Governed by: docs/design.md 1.4 (what is embedded), 1.5, 1.6 step 3, 2.4
+Governed by: DESIGN.md 1.4 (what is embedded), 1.5, 1.6 step 3, 2.4
 ("Role score", "Missing data"); docs/build-decisions.md Q04 (the ML-alone
 route), Q12 (example vectors), Q18 (stable ties).
 Section 2.7 test: no model is ever shown a generic family role (never embedded,

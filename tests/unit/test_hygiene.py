@@ -1,7 +1,7 @@
 """Repository hygiene: what a tracked file may be and may hold.
 
 Owner: docs/readme-hygiene (stage 5).
-Governed by: docs/design.md 2.3 (invented emails use example.com), 2.8
+Governed by: DESIGN.md 2.3 (invented emails use example.com), 2.8
 (hygiene); docs/build-decisions.md Q02 (a test scans the tracked files for a
 key), Q28 (what the hygiene tests check, and that none searches for a vendor's
 name).
@@ -95,7 +95,7 @@ def _content(repo_root: Path, path: str) -> bytes:
 
 def test_the_listing_holds_the_files_of_the_repository(tracked):
     # Otherwise every test below would pass on an empty listing.
-    assert {"docs/design.md", "titlestd/__init__.py", "data/employees.csv"} <= set(tracked)
+    assert {"DESIGN.md", "titlestd/__init__.py", "data/employees.csv"} <= set(tracked)
 
 
 def test_every_tracked_file_is_an_ordinary_file(tracked):

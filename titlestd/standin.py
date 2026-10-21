@@ -1,7 +1,7 @@
 """llm = offline: the deterministic stand-ins for the LLM and the agent.
 
 Owner: feat/model-switch-offline (stage 1).
-Governed by: docs/design.md 2.4 ("Stand-in models never read the truth file";
+Governed by: DESIGN.md 2.4 ("Stand-in models never read the truth file";
 word overlap after abbreviation expansion), 2.5; docs/build-decisions.md Q15
 (answer shape and the quote), Q17 (the stand-in LLM), Q19 (the stand-in
 agent's script), Q20 (one turn at a time), Q40 (label "stand-in").

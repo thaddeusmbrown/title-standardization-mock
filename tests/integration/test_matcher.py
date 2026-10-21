@@ -2,7 +2,7 @@
 
 The rows come from the real prepare step, the roles from the real catalog, the
 embedder from the real switch and the decisions from the real simulated
-people. docs/design.md 1.5, 1.6 step 3, 2.4; docs/build-decisions.md Q04, Q12,
+people. DESIGN.md 1.5, 1.6 step 3, 2.4; docs/build-decisions.md Q04, Q12,
 Q14, Q18, Q26; section 2.7: no model is ever shown a generic family role.
 
 No expected first choice comes from the truth file: each is written out by hand.

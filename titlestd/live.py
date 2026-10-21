@@ -1,7 +1,7 @@
 """llm = anthropic: the live hosted model, recording every answer.
 
 Owner: feat/live-replay (stage 4).
-Governed by: docs/design.md 2.5 (the only secret; lazy import; record each
+Governed by: DESIGN.md 2.5 (the only secret; lazy import; record each
 answer; label "live"); docs/build-decisions.md Q02 (smoke run, request cap,
 at most two full runs), Q15 (structured output), Q20 (one request per agent
 turn), Q29 (where a recording is written), Q31 (the model string and the

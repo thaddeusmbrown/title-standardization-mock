@@ -1,7 +1,7 @@
 """Recordings: the key of a model request, the files, the manifest.
 
 Owner: feat/live-replay (stage 4).
-Governed by: docs/design.md 2.5 ("record each answer in a file keyed by a hash
+Governed by: DESIGN.md 2.5 ("record each answer in a file keyed by a hash
 of the step, model ID, prompt and request"; "Recordings are never written by
 hand"), 2.8 ("No keys in recordings"); docs/build-decisions.md Q18 (the
 manifest), Q29 (layout), Q33 (the key), Q40 (date and model of the label).

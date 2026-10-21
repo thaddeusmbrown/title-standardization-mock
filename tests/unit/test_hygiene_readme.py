@@ -1,7 +1,7 @@
 """The README, held to the program it describes.
 
 Owner: docs/readme-hygiene (stage 5).
-Governed by: docs/design.md 2.4 (the two statements it asks of the README),
+Governed by: DESIGN.md 2.4 (the two statements it asks of the README),
 2.6 (what a run prints and writes); docs/build-decisions.md owner decision 10
 (a short README) and "What the README must say", Q02 and Q39 (the record
 command and the key), Q29 and Q31 (replay), Q30 and S09 (the command that
@@ -155,8 +155,8 @@ def test_the_files_the_readme_says_a_run_writes_are_the_files_it_writes(readme):
 
 
 def test_every_module_and_document_the_readme_names_exists(readme, repo_root: Path):
-    named = set(re.findall(r"`((?:titlestd|docs)/[^`\s]+)`", readme))
-    assert {"titlestd/pipeline.py", "titlestd/switch.py", "docs/design.md"} <= named
+    named = set(re.findall(r"`((?:titlestd|docs)/[^`\s]+|DESIGN\.md)`", readme))
+    assert {"titlestd/pipeline.py", "titlestd/switch.py", "DESIGN.md"} <= named
     assert [path for path in sorted(named) if not (repo_root / path).is_file()] == []
 
 

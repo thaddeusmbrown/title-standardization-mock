@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "A small offline mock of a job-title standardization workflow"
 requires-python = ">=3.12"
 # No runtime dependencies: the default run uses the standard library only
-# (docs/design.md 2.1 and 2.5). The package is not installed to be used;
+# (DESIGN.md 2.1 and 2.5). The package is not installed to be used;
 # "python3 -m titlestd" runs from the repository root.
 dependencies = []
 

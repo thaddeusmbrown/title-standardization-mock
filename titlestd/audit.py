@@ -1,7 +1,7 @@
 """The random audit of a machine path, its three outcomes and the statuses.
 
 Owner: feat/golden-audit-status (stage 2).
-Governed by: docs/design.md 1.9, 2.4 ("Audit at mock scale", "Wrong");
+Governed by: DESIGN.md 1.9, 2.4 ("Audit at mock scale", "Wrong");
 docs/build-decisions.md Q07 (golden titles stay in the sampling frame), Q16
 (what the path row shows), Q21 (audited titles take the SME's label), Q23 (the
 three outcomes, the path of 60 or fewer and the release setting are tested on

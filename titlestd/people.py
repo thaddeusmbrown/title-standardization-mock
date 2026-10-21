@@ -3,7 +3,7 @@
 Owner: feat/simulated-people (stage 1). The truth-file functions below were
 built by the scaffold; the owner built SimulatedPeople and load_people around
 them.
-Governed by: docs/design.md 1.8, 2.3 (the truth file), 2.4 ("People are
+Governed by: DESIGN.md 1.8, 2.3 (the truth file), 2.4 ("People are
 simulated from the truth file, with a small seeded error rate, and every
 simulated decision is marked as simulated"); docs/build-decisions.md Q01 (could
 not decide), Q03 (no suitable role), Q09 (truth is keyed on the raw title),

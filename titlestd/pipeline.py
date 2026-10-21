@@ -1,7 +1,7 @@
 """The pipeline: set-up, Wave 1, Wave 2 and the close, in one run.
 
 Owner: feat/pipeline-report-cli (stage 4).
-Governed by: docs/design.md 1.6 (the flow), 1.10 (waves), 2.2 (what is in the
+Governed by: DESIGN.md 1.6 (the flow), 1.10 (waves), 2.2 (what is in the
 mock), 2.6 (what a run shows); docs/build-decisions.md Q04 (the ML-alone
 route), Q06 (fresh state on every run), Q07 and Q08 (the golden set), Q13
 (look-up first), Q16 (the table is a partition), Q18 (processing order; score

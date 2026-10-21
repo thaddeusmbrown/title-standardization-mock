@@ -1,7 +1,7 @@
 """Shared code around choose: the record block, the numbered roles, the quote check.
 
 Owner: feat/llm-fallback-rules (stage 2).
-Governed by: docs/design.md 1.6 step 4, 1.7 (the quote check), 2.5 ("Masking,
+Governed by: DESIGN.md 1.6 step 4, 1.7 (the quote check), 2.5 ("Masking,
 numbering, the quote check, the search cap and the number-to-role mapping stay
 in shared code, so no model output can become a role by itself");
 docs/build-decisions.md Q11 (the record), Q15 (answer shape, the quote check),

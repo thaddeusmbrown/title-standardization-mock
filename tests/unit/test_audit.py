@@ -1,6 +1,6 @@
 """The random audit: its two lines, the sample, the three outcomes and the statuses.
 
-docs/design.md 1.9 and 2.4 ("Audit at mock scale", "Wrong");
+DESIGN.md 1.9 and 2.4 ("Audit at mock scale", "Wrong");
 docs/build-decisions.md Q16 (what a path row counts), Q21 (audited titles take
 the SME's label), Q23 (the three outcomes, the path of 60 or fewer and the
 stopped-path release setting, on constructed counts) and S02 (the lines for

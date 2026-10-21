@@ -16,7 +16,7 @@ The replay run then passes the invariants the default run passes in
 tests/integration/test_pipeline_default_run.py: the rows partition the titles
 and the employees, the status of a path follows from its counts and the footer
 agrees with the files (Q16, Q23), the files cover every employee once (Q05),
-and the rules of docs/design.md 2.7 hold on the files and the state. In the
+and the rules of DESIGN.md 2.7 hold on the files and the state. In the
 default run T2 and T4 need a model that is made to misbehave. Here the answers
 are a hosted model's own, so both are read off the state: where its quote is
 not in the record, or its number names no role it was shown, the title went

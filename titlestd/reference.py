@@ -2,7 +2,7 @@
 
 The mock has no name-masking service, so a person's name is recognised by
 looking it up in these lists. They are module constants, not data files: the
-data files are exactly the seven of docs/design.md 2.3. The prepare step and
+data files are exactly the seven of DESIGN.md 2.3. The prepare step and
 the data generator both read them from here, so what the generator writes is
 what the cleaner recognises.
 

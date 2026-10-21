@@ -2,7 +2,7 @@
 
 The title rows come from the real prepare step, the blind labels from the real
 simulated people, the settings from the real settings loader, and the golden
-set from titlestd.golden (docs/design.md 1.9, 2.4; docs/build-decisions.md
+set from titlestd.golden (DESIGN.md 1.9, 2.4; docs/build-decisions.md
 Q03, Q07, Q16, Q21, Q23, Q27).
 
 What puts a title on a machine path (the rules, the agent, the pipeline) is

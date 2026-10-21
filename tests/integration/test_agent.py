@@ -4,7 +4,7 @@ Every title row goes the way a run takes it: the real readers and prepare
 step, the seed look-up, the ML match on the offline embedder, the seeded
 numbering, the stand-in LLM, the rules of 1.7, and then the agent: the case,
 the shared loop, the two searches and the stand-in agent built by the switch,
-whose answer goes back through the rules (docs/design.md 1.6 step 6, 1.7;
+whose answer goes back through the rules (DESIGN.md 1.6 step 6, 1.7;
 docs/build-decisions.md Q10, Q19, Q20).
 
 Three tests of section 2.7 are tried on that: the agent cannot pick a role it

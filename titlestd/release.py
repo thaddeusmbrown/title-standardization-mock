@@ -1,7 +1,7 @@
 """Release: the load file, the reverse file, the exceptions list, the review queue.
 
 Owner: feat/close-release-files (stage 2).
-Governed by: docs/design.md 1.6 step 9, 2.4 ("Missing data": no grade), 2.6
+Governed by: DESIGN.md 1.6 step 9, 2.4 ("Missing data": no grade), 2.6
 (what a run writes); docs/build-decisions.md Q05 (files and columns), Q16 (the
 review-queue file), Q27 (the simulated mark), Q40 (the answer label).
 Section 2.7 tests: no title outside the catalog can reach the load file;

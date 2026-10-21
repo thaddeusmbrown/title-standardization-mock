@@ -1,6 +1,6 @@
 """The mock data generator: what it builds, how it draws, what its knobs change.
 
-docs/design.md 2.1 and 2.3; docs/build-decisions.md Q06, Q09, Q23, Q24, Q35.
+DESIGN.md 2.1 and 2.3; docs/build-decisions.md Q06, Q09, Q23, Q24, Q35.
 These tests build the data in memory and never read data/: the committed files
 are tested in tests/integration/test_mockdata.py.
 """

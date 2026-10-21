@@ -1,7 +1,7 @@
 """llm = replay: recorded answers, and nothing else.
 
 Owner: feat/live-replay (stage 4).
-Governed by: docs/design.md 2.5 ("In replay mode a miss is an error; never
+Governed by: DESIGN.md 2.5 ("In replay mode a miss is an error; never
 fall back silently"; the label "recorded <date>, <model>");
 docs/build-decisions.md Q18 (the manifest explains a miss), Q20 (replay looks
 each agent turn up and re-runs the searches for real), Q29 (a missing or

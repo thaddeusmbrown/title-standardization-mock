@@ -316,6 +316,9 @@ It also writes the load file, the reverse file and the review queue.
 
 ### 2.8 Repository hygiene
 
-- Nothing from outside this folder goes into the repository.
-- No real company, client or person is named anywhere, including commit messages.
+- Nothing from outside this folder goes into the repository, except two browser libraries for
+  the architecture page, htmx and Mermaid. Each is copied unchanged into `static/vendor/` at a
+  version and checksum the owner approved, beside its licence and a note of where it came from.
+- No real company, client or person is named anywhere, including commit messages. The
+  copyright and licence notices inside those two copies are kept as their licences require.
 - No secrets. `.env` is ignored. No keys in recordings.

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 An offline mock of a job-title standardization design, on invented data. `DESIGN.md` is the
 design and is firm. `docs/build-decisions.md` holds the points the record settled: owner
-decisions 1 to 10, Q01 to Q40, S01 to S16 and nine rules for every branch. Where an entry
+decisions 1 to 11, Q01 to Q40, S01 to S16 and nine rules for every branch. Where an entry
 settles a point, build it as written and cite the entry. Do not re-decide it. A point the
 record leaves open is settled in its module's docstring, under "Decided here" (rule 3).
 
@@ -79,12 +79,21 @@ record leaves open is settled in its module's docstring, under "Decided here" (r
   and on the branch too when the merge's tree differs from the branch's (when it is the same,
   one run covers both), and moves the build branch only to a merge that passed. That is more
   than rule 7 and Q34 ask, which is `make check` on the merge result.
-- Main moves only when the owner runs `/promote <branch>`, through the same gate. Finish a
-  build on its build branch and stop there.
+- A finished build reaches main as a pull request (owner decision 11). The user-level
+  `/pr-open build/<topic>` runs its preflight over what the push would publish, pushes the
+  build to the `claude` remote and opens a draft pull request into main. `/pr-watch
+  build/<topic>` then tends its CI and the owner's review: each fix is a branch cut from the
+  build's tip, landed with `/land` and pushed with `/pr-open` again. The owner marks the pull
+  request ready, merges it on GitHub and pulls. Main is not promoted locally: the
+  default-branch ruleset refuses a push of main. Until the owner's `/pr-setup` has added the
+  `claude` remote, `/pr-open` stops and the build waits on its branch.
 - If the land cannot fast-forward a branch that is checked out because an untracked file is
   in the way, move that file aside with one `mv` per literal path and land again.
-- Never push and never run `gh`: the owner pushes. Never amend, rebase or otherwise rewrite
-  main. `land.sh` rebases a branch only while it is unpushed.
+- Claude pushes only `build/<topic>`, only to `claude` and only through `/pr-open`, and runs
+  `gh` only as `/pr-open`, `/pr-watch` and `/pr-setup` do. Never push to `origin`, never push
+  main or a tag, never force, and never merge, ready, edit, comment on or close a pull
+  request. `.claude/hooks/no-push.py` refuses every other push and `gh` call. Never amend,
+  rebase or otherwise rewrite main. `land.sh` rebases a branch only while it is unpushed.
 - A merge message goes in a file outside the repository, passed with `--message-file`. Its
   subject is git's own: `Merge branch '<branch>'`, ending ` into <build>` when the target is
   a build branch. Then:

@@ -1,6 +1,6 @@
 """The model switch in a fresh interpreter: what a setting loads, and what it leaves alone.
 
-docs/design.md 2.5: "Import the SDK and the embedding library lazily, so the
+DESIGN.md 2.5: "Import the SDK and the embedding library lazily, so the
 default run installs nothing." The switch goes one step further (S09): a
 provider module is imported only when its setting is chosen. Each test starts
 a bare interpreter (no site-packages) behind the import guard of

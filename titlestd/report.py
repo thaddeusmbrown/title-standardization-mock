@@ -1,7 +1,7 @@
 """The printed table and its footer.
 
 Owner: feat/pipeline-report-cli (stage 4).
-Governed by: docs/design.md 2.6; docs/build-decisions.md Q05 (the counts
+Governed by: DESIGN.md 2.6; docs/build-decisions.md Q05 (the counts
 printed under the table), Q08 (golden-set lines), Q16 (rows, columns, footer),
 Q27 (people were simulated), Q40 (the answer-source line).
 

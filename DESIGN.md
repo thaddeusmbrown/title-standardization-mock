@@ -9,7 +9,7 @@ Title and Long Title.
 This file is the starting point for a small mock of that system: mock data, a mock workflow, no
 real employer and no real people. Part 1 describes the design. Part 2 says what the mock builds.
 
-Where this file and the diagrams in this folder differ, this file wins. Do not copy rules from
+Where this file and the diagrams in `docs/` differ, this file wins. Do not copy rules from
 the diagrams: they are older and differ in three places. They list three audited paths where
 there are two, say the ML model switches on in Wave 2, and give a "no suitable role" title a
 generic role.
@@ -198,7 +198,7 @@ One batch program and one database, with a small review application for people.
 | Review application | Web app behind single sign-on, four roles | Azure App Service with Entra ID, four app roles |
 | Platform | Private network, logs, single set-up file | Private endpoints, Log Analytics, one Bicep file |
 
-Detailed diagrams: `architecture-tech-agnostic.png` and `architecture-microsoft.png`.
+Detailed diagrams: `docs/architecture-tech-agnostic.png` and `docs/architecture-microsoft.png`.
 
 ---
 

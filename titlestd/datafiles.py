@@ -1,4 +1,4 @@
-"""Readers and writers for the data files of docs/design.md 2.3.
+"""Readers and writers for the data files of DESIGN.md 2.3.
 
 Six of the seven files are handled here, with exactly the column names the
 design lists. The seventh, the truth file, is read and written only in

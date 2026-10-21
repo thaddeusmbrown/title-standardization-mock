@@ -1,7 +1,7 @@
 """The mini data set: loads through the readers and is consistent with itself.
 
 It is the test bed of most tests of the components, so its own promises are
-tested here: it reproduces the worked example of docs/design.md 1.3, the
+tested here: it reproduces the worked example of DESIGN.md 1.3, the
 hand-written title rows cover the employees file, the truth and seed files
 agree with them, and everything in it is invented.
 """

@@ -86,7 +86,8 @@ def test_gitignore_covers_secrets_outputs_and_tool_folders(repo_root: Path):
         "__pycache__/",
         ".venv/",
         ".worktrees/",
-        ".claude/",
+        ".claude/settings.local.json",
+        ".claude/worktrees/",
         ".pytest_cache/",
         ".ruff_cache/",
     ):

@@ -4,7 +4,7 @@ One run is shared by every test that only reads its results: the fixture
 default_run starts it once per session, on a bare interpreter from the
 repository root and under the import guard of tests/conftest.py, and keeps
 what it printed and a copy of the files it wrote under out/. The eight rules of
-docs/design.md 2.7 are checked on those files and on the state file.
+DESIGN.md 2.7 are checked on those files and on the state file.
 
 A few more runs on the mock data, each made once and in this process, show
 what the default seed does not: a close with more leftovers than the cap holds

@@ -1,6 +1,6 @@
 """Settings: one immutable object with every setting, its default and its checks.
 
-Governed by docs/design.md 2.5 and docs/build-decisions.md Q38 (mechanism),
+Governed by DESIGN.md 2.5 and docs/build-decisions.md Q38 (mechanism),
 Q31 (llm_model has no default) and the entries named beside each field.
 
 A value comes from, in rising order of precedence: the default here, an

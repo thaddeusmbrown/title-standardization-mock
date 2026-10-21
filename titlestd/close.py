@@ -1,7 +1,7 @@
 """The close: leftovers take their family's generic role, under the cap.
 
 Owner: feat/close-release-files (stage 2).
-Governed by: docs/design.md 1.8 (last two points), 1.10 (Wave 3);
+Governed by: DESIGN.md 1.8 (last two points), 1.10 (Wave 3);
 docs/build-decisions.md Q01 (where leftovers come from), Q03 (no suitable role
 is never a generic role), Q25 (the cap and the fill order), Q26 (no family, no
 generic role).

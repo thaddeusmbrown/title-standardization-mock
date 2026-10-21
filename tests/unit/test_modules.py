@@ -66,7 +66,7 @@ def test_module_imports_cleanly_and_is_documented(name):
 def test_component_names_its_owner_and_what_governs_it(name):
     doc = importlib.import_module(f"titlestd.{name}").__doc__
     assert f"Owner: {OWNERS[name]} (stage " in doc
-    assert "Governed by: docs/design.md" in doc
+    assert "Governed by: DESIGN.md" in doc
     assert "docs/build-decisions.md Q" in doc
 
 

@@ -1,7 +1,7 @@
 """Prepare: clean titles, mask names, group to one row per title and family.
 
 Owner: feat/prepare (stage 1).
-Governed by: docs/design.md 1.4 (nothing about the person; the unit of
+Governed by: DESIGN.md 1.4 (nothing about the person; the unit of
 decision), 1.6 step 1, 2.4 (missing data); docs/build-decisions.md Q09 (raw
 titles in the seed and truth files), Q11 (one record per row), Q14 (cleaning
 and masking), Q26 (no usable family code).

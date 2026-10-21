@@ -4,7 +4,7 @@ The fixtures here are the ones several test files share. A fixture that one
 test file needs is defined in that file, not here.
 
 tests/fixtures/mini is a tiny hand-written data set in the seven-file format of
-docs/design.md 2.3: two families with six roles each plus their generic roles,
+DESIGN.md 2.3: two families with six roles each plus their generic roles,
 22 employees on 15 title rows. It reproduces the worked example of 1.3 and
 holds one of each kind of mess: abbreviations, mixed case, a location suffix,
 two requisition suffixes, level words in several forms, a person's name in a

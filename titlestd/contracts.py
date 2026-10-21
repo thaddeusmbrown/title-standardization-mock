@@ -7,7 +7,7 @@ nothing from the rest of the package. A type that crosses a module boundary is
 defined here; a type only one module uses stays in that module.
 
 Most modules read it, so a change here reaches nearly all of them. Section numbers
-refer to docs/design.md, Q numbers to docs/build-decisions.md.
+refer to DESIGN.md, Q numbers to docs/build-decisions.md.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 """The state file: a local SQLite database, recreated on every run.
 
 Owner: feat/pipeline-report-cli (stage 4).
-Governed by: docs/design.md 2.1 ("a local SQLite file or plain files for
+Governed by: DESIGN.md 2.1 ("a local SQLite file or plain files for
 state"); docs/build-decisions.md Q06, Q38.
 
 The state file is out/state.sqlite (settings.out_dir / STATE_FILE), made with

@@ -1,7 +1,7 @@
 """The rules: code checks every proposal.
 
 Owner: feat/llm-fallback-rules (stage 2).
-Governed by: docs/design.md 1.7; docs/build-decisions.md Q04 (the ML-alone
+Governed by: DESIGN.md 1.7; docs/build-decisions.md Q04 (the ML-alone
 route keeps the catalog and compliance checks), Q15 (the quote is checked on
 every choose answer; an out-of-range number fails the catalog check), Q20 and
 Q39 (an invalid answer goes to a person).

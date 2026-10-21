@@ -1,7 +1,7 @@
 """The agent: one plain loop in shared code, two read-only searches.
 
 Owner: feat/agent (stage 3).
-Governed by: docs/design.md 1.6 step 6, 1.7 (last paragraph), 2.4 ("The
+Governed by: DESIGN.md 1.6 step 6, 1.7 (last paragraph), 2.4 ("The
 agent"), 2.5 (the search cap and the number-to-role mapping stay in shared
 code); docs/build-decisions.md Q10 (the case, the searches, the numbering),
 Q19 (the stand-in's script, in titlestd.standin), Q20 (the loop).

@@ -2,7 +2,7 @@
 
 The title rows come from the real prepare step over the real readers, the
 labels from the real simulated people, and the machine's answers from the real
-offline embedder and stand-in LLM (docs/design.md 1.2, 1.10, 2.4;
+offline embedder and stand-in LLM (DESIGN.md 1.2, 1.10, 2.4;
 docs/build-decisions.md Q08, Q14, Q22, Q26).
 
 The modules that sit between these in a run are left out of these tests: the

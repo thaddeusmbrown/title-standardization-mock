@@ -4,7 +4,7 @@ Run it from the repository root with nothing installed:
 
     python3 -m titlestd run
 
-docs/design.md describes the design and scopes the mock. docs/build-decisions.md
+DESIGN.md describes the design and scopes the mock. docs/build-decisions.md
 records every point the design leaves open and how the build is cut into
 modules. titlestd/contracts.py holds the types the modules exchange.
 

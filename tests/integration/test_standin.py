@@ -1,6 +1,6 @@
 """The stand-ins on the mini data set, and "stand-in models never read the truth file".
 
-docs/design.md 2.4; docs/build-decisions.md Q15, Q17, Q19 and the behavioural
+DESIGN.md 2.4; docs/build-decisions.md Q15, Q17, Q19 and the behavioural
 test (a) of Q22: the stand-in embed, choose and review return identical output
 for identical arguments, including with the truth file absent.
 

@@ -1,7 +1,7 @@
 """The model switch: which code answers embed, choose and review.
 
 Owner: feat/model-switch-offline (stage 1).
-Governed by: docs/design.md 2.5; docs/build-decisions.md Q30 and Q31 (no
+Governed by: DESIGN.md 2.5; docs/build-decisions.md Q30 and Q31 (no
 silent fall-back), Q32 (lazy imports), Q40 (answer labels), S09 (the provider
 table, and the command a provider prints when its extra is missing: the
 provider raises it with contracts.run_with_extra, the switch lets it through).

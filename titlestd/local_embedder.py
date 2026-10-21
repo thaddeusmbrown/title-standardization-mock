@@ -1,7 +1,7 @@
 """embedder = local: a small local embedding model behind an optional extra.
 
 Owner: feat/local-embedder (stage 2).
-Governed by: docs/design.md 2.5 (lazy import; the default run installs
+Governed by: DESIGN.md 2.5 (lazy import; the default run installs
 nothing); docs/build-decisions.md Q30 (library, model and revision), Q32 (how
 it is tested), Q38 with S09 (the message for a missing extra).
 

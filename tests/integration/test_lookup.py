@@ -2,7 +2,7 @@
 
 The rows come from the real prepare step and the real catalog, the seed
 look-up from the real reader, and the decisions from the real simulated
-people. docs/design.md 1.6 steps 2 and 10; docs/build-decisions.md Q07, Q09,
+people. DESIGN.md 1.6 steps 2 and 10; docs/build-decisions.md Q07, Q09,
 Q13, Q14, Q26.
 
 The golden set is drawn by titlestd.golden, which these tests leave out: the

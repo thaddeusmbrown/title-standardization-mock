@@ -1,6 +1,6 @@
 """Simulated people: one label per title, and when a person does not name a role.
 
-docs/design.md 2.4 and docs/build-decisions.md Q27 (the label and its error
+DESIGN.md 2.4 and docs/build-decisions.md Q27 (the label and its error
 rate), Q01 ("could not decide"), Q03 ("no suitable role") and S05 (family
 codes are compared after trimming).
 """

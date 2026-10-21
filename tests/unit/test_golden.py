@@ -1,6 +1,6 @@
 """The golden set: which titles can be drawn, the seeded draw, and the scoring.
 
-docs/design.md 1.2 and 2.4 ("Wrong"); docs/build-decisions.md Q08 (size, frame
+DESIGN.md 1.2 and 2.4 ("Wrong"); docs/build-decisions.md Q08 (size, frame
 and scoring), Q14 and Q26 (a title with a person's name or no usable family
 code is out of the frame), Q22 (the draw depends only on the seed and the
 title keys).

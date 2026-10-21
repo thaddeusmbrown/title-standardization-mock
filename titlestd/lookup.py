@@ -1,7 +1,7 @@
 """The look-up table and the ML model's examples, with the golden-set guard.
 
 Owner: feat/lookup-ml-match (stage 2).
-Governed by: docs/design.md 1.2 (look-up table, golden set), 1.6 steps 2 and
+Governed by: DESIGN.md 1.2 (look-up table, golden set), 1.6 steps 2 and
 10; docs/build-decisions.md Q07 (the guard), Q09 (the seed file holds raw
 titles), Q13 (a hit takes its role with no model; seed entries are examples
 from the start), Q14 (a name-bearing title joins the look-up, never the

@@ -1,7 +1,7 @@
 """The golden set: its draw and its scoring.
 
 Owner: feat/golden-audit-status (stage 2).
-Governed by: docs/design.md 1.2 (golden set), 1.10 (drawn in set-up, labeled
+Governed by: DESIGN.md 1.2 (golden set), 1.10 (drawn in set-up, labeled
 in Wave 1), 2.4 ("Wrong"), 2.6 (footer); docs/build-decisions.md Q07 (golden
 titles are released like any long-tail title; their labels are never learned),
 Q08 (size, frame, the three scorings), Q14 and Q26 (a title with a person's

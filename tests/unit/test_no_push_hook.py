@@ -663,9 +663,8 @@ def matches(rule: str, command: str) -> bool:
     command equal to it or followed by a space. Otherwise * stands for any run of characters, and
     a rule whose one * is a trailing " *" also meets the command without it. In those two forms
     runs of spaces or tabs count as one, in the rule and in the command. This models one plain
-    command only: the real matcher also splits a compound command and, for a deny rule, strips
-    wrappers, assignments and a program's path, which no entry here uses
-    (test_each_entry_is_one_plain_command).
+    command only: the real matcher also splits a compound command and strips wrappers and
+    assignments, which no entry here uses (test_each_entry_is_one_plain_command).
     """
     pattern = rule.removeprefix("Bash(").removesuffix(")")
     command = command.strip()

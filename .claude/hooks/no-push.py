@@ -11,11 +11,12 @@ only as the whole command line, word for word: no other remote, branch, refspec
 or option, no wrapper and no path before the program, no second command,
 redirection, comment, line break, control or format character, and nothing a
 shell would expand outside quotes. A title may be quoted as bash quotes it. In
-single quotes it holds any text but a control or format character. In double
-quotes it holds no $, backtick or backslash. Outside quotes a backslash makes
-the next character text. A title made only of shell operators, or holding text
-that Claude Code's Bash tool would rewrite (>nul), is refused. Every other push
-and gh call is refused.
+single quotes it holds any text but a control or format character, a lone
+surrogate, or a line or paragraph separator. In double quotes it holds no $,
+backtick or backslash. Outside quotes a backslash makes the next character
+text. A title made only of shell operators, or holding text that Claude Code's
+Bash tool would rewrite (>nul), is refused. Every other push and gh call is
+refused.
 
 The deny rules beside this hook refuse the plain spellings of many pushes and
 gh calls that the flow never makes, not all of them, and miss other spellings
@@ -33,20 +34,24 @@ It reads text, so it guards against a slip and is not a wall. A push made from
 inside a script, a make recipe or another program is not seen here. Neither is
 one hidden behind a variable or a git alias, a program named by a command
 substitution ("$(command -v git)" push), one given to a shell through a pipe or
-a here-string, a gh that xargs runs with its words from standard input, or one that stands between two here-documents whose texts each
-hold an apostrophe. The flow's own scripts call git and gh inside, unseen here:
-the preflight fetches from the claude remote and reads the repository's
-visibility, and two scripts list pull requests and review threads. Nor does it
-read git's configuration, which decides where the claude remote points and can
-also add refs to a push: push.followTags sends annotated tags along with the
-build. gh's own resolution, GH_REPO or the default that set-default records,
-decides which repository a gh call reaches. A shell function or alias named git
-or gh, from the profile the Bash tool sources, would run in place of the
-program. The title, the body file, the pull request's number and the run's id
-are taken on the skill's word: nothing here ties them to what /pr-open's
-preflight checked or to the App's own pull request. Once the owner has imported
-the rulesets /pr-setup writes, they are the boundary for what reaches the
-repository.
+a here-string, or one in a spelling it does not split, such as words piped to
+another program or here-documents. The flow's own scripts call git and gh
+inside, unseen here: the preflight fetches from the claude remote and reads the
+repository's visibility, and two scripts list pull requests and review threads.
+Nor does it read git's configuration, which decides where the claude remote
+points and can also add refs to a push: push.followTags sends annotated tags
+along with the build. gh's own resolution, GH_REPO or the default that
+set-default records, decides which repository a gh call reaches. Nor does it
+see a function or alias that stands in for git or gh. The title, the body file,
+the pull request's number, the run's id and the repository a read names are
+taken on the skill's word: nothing here ties them to what /pr-open's preflight
+checked or to the App's own pull request. Nor does it refuse a title character
+that shows as nothing, or as something else, without being one of the
+characters refused above, such as a combining mark, a private-use or unassigned
+code point, or a blank letter. Behind another word it misses gh's other aliases
+and options other than -R or --repo that take a value. Once the owner has
+imported the rulesets /pr-setup writes, they are the boundary on GitHub for
+main, the tags and the branches the App may write.
 
 It errs the other way too: text that only mentions a push or a gh command can
 be refused where a shell would not run it, as in a here-document, a comment, a
@@ -221,10 +226,10 @@ SHAPES = (
 # refused with them.
 CONTROL_OR_FORMAT = frozenset({"Cc", "Cf", "Cs", "Zl", "Zp"})
 # Text that Claude Code's Bash tool rewrites before bash reads the line, inside quotes too: a
-# redirection to nul, the Windows null device, becomes one to /dev/null. The rule is this pattern,
-# as read from the 2.1.310 binary on 2026-10-23, which skips a line holding <, $ or a backtick;
-# plain_line refuses a line it meets whatever else the line holds. Re-check with
-# printf '[%s]\n' 'Send 2>nul output', which printed [Send 2>/dev/null output] that day.
+# redirection to nul, the Windows null device, becomes one to /dev/null. The rule is this pattern
+# in Claude Code 2.1.310, which skips a line holding <, $ or a backtick; plain_line refuses a line
+# it meets whatever else the line holds. Re-check with printf '[%s]\n' 'Send 2>nul output', which
+# printed [Send 2>/dev/null output] on 2026-10-23.
 NUL_REDIRECTION = re.compile(r"(\d?&?>+[ \t]*)[Nn][Uu][Ll](?=\s|$|[|&;)\n])")
 # What bash expands inside double quotes: a variable or substitution, a backtick and a backslash.
 EXPANDED_IN_DOUBLE_QUOTES = frozenset("$`\\")

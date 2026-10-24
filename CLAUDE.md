@@ -87,15 +87,15 @@ record leaves open is settled in its module's docstring, under "Decided here" (r
 - The PR flow runs only from a checkout whose `.claude/` lets it through. The hook and deny
   rules in force are those of the checkout the session started in, and a checkout of an
   older branch keeps the old rules, which refuse every push and `gh` call.
-- Once the flow is set up, `/pr-open build/<topic>` runs when the owner asks for it. It runs
-  its preflight over what the push would publish, pushes the build to the `claude` remote
-  and opens a draft pull request into main. On this public repository the push and the pull
-  request each wait for the owner's approval at the ask. `/pr-watch build/<topic>` then
+- Once the flow is set up, a build's first `/pr-open build/<topic>` runs when the owner asks
+  for it. It runs its preflight over what the push would publish, pushes the build to the
+  `claude` remote and opens a draft pull request into main. `/pr-watch build/<topic>` then
   tends CI and review: each fix is a branch cut from the build's tip, landed with `/land` and
-  pushed with `/pr-open` again. A lone branch is landed first in a `build/<topic>` of its
-  own. The owner marks the pull request ready, merges it on GitHub and pulls. Once the
-  default-branch ruleset is active, main is not promoted locally, because it refuses a push
-  of main.
+  pushed with `/pr-open` again, which the watch runs itself. On this public repository every
+  push, the first and each fix's, and the pull request wait for the owner's approval at the
+  ask. A lone branch is landed first in a `build/<topic>` of its own. The owner marks the
+  pull request ready, merges it on GitHub and pulls. Once the default-branch ruleset is
+  active, main is not promoted locally, because it refuses a push of main.
 - If the land cannot fast-forward a branch that is checked out because an untracked file is
   in the way, move that file aside with one `mv` per literal path and land again.
 - Claude pushes only `build/<topic>`, only to `claude` and only through `/pr-open`, and runs

@@ -68,6 +68,8 @@ REFUSED = [
     "uv run gh ext list",
     "timeout 5 gh help pr",
     "env gh version",
+    # more options before gh's command than the search for it reads
+    "uv run gh " + "-R owner/mock " * 16 + "pr merge 12",
 ]
 
 ALLOWED = [
@@ -888,3 +890,19 @@ def test_a_long_line_the_splitter_cannot_read_is_read_quickly(hook):
     started = time.monotonic()
     assert hook.refused(command) is None
     assert time.monotonic() - started < 1
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        # a run of > that the nul pattern backtracks over: 5 seconds at this length unbounded
+        "git push origin main " + ">" * 20_000,
+        # many gh words, each searched for its command to the end: 6 seconds unbounded
+        "echo " + "gh -R " * 12_000 + "; git push origin main",
+    ],
+    ids=["a run of >", "many gh words"],
+)
+def test_a_long_flagged_line_is_refused_quickly(hook, command):
+    started = time.monotonic()
+    assert hook.refused(command) is not None
+    assert time.monotonic() - started < 2

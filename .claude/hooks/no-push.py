@@ -118,6 +118,8 @@ GH_COMMANDS = frozenset(
 )
 # Options of gh itself whose value is the next word.
 GH_OPTIONS_WITH_A_VALUE = frozenset({"-R", "--repo"})
+# How many words after a gh word the search for its command reads.
+GH_SCAN = 32
 
 # Options of git itself whose value is the next word.
 GIT_OPTIONS_WITH_A_VALUE = frozenset(
@@ -494,6 +496,11 @@ def lone_command(command: str) -> list[str] | None:
 
 def in_flow(command: str) -> bool:
     """Whether the whole command line is one of the PR flow's commands."""
+    # No flow command comes near this (about 1,300 characters at most, a 256-character title
+    # written with '\'' included), and on a longer line a long word or a run of > costs the
+    # splitter and the nul pattern time past the hook's 10-second timeout.
+    if len(command) > 4096:
+        return False
     words = lone_command(command)
     return words is not None and any(shape(words) for shape in FLOW)
 
@@ -556,8 +563,13 @@ def refused_words(command: str, depth: int, coarse: bool) -> str | None:
             # when one of its commands follows it and its own options, so a search for the word
             # gh is not refused.
             if program(words[at]) == "gh":
-                called = subcommand(words, at, GH_OPTIONS_WITH_A_VALUE)
-                if called is not None and words[called] in GH_COMMANDS:
+                # A window of words, so that a line of many gh words costs linear time; a search
+                # that runs past it counts as a gh call.
+                window = words[at : at + GH_SCAN]
+                called = subcommand(window, 0, GH_OPTIONS_WITH_A_VALUE)
+                if (called is None and len(window) == GH_SCAN) or (
+                    called is not None and window[called] in GH_COMMANDS
+                ):
                     return " ".join(words[at:])
             text = shell_command(words, at, first)
             if text is not None and (found := found_in(text, depth + 1)):

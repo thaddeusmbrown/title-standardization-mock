@@ -1,7 +1,8 @@
 """The coding tool's push guard, .claude/hooks/no-push.py: the spellings it refuses, the
 commands that only mention the words, and the PR flow's commands, the only pushes and gh calls
 it lets through, each with near misses it refuses. Also the deny rules of .claude/settings.json:
-none of them stops a command of the flow, each is live, and the plain spellings in DENIED meet
+none of them stops a command of the flow, each is the only rule to meet one of the plain
+spellings in DENIED, so none is dead or covered by another, and each of those spellings meets
 one. And the wiring that runs the hook.
 
 The hook is tooling, not part of titlestd, and .claude/ is kept out of collection and of ruff
@@ -57,6 +58,16 @@ REFUSED = [
     "ssh host gh pr list",
     "systemd-run --user gh pr list",
     "xargs gh pr close",
+    # gh after another word, with its own options before its command, or one of its aliases
+    "uv run gh -R owner/mock pr merge 12",
+    "systemd-run --user gh --repo owner/mock pr merge 12",
+    "timeout 5 gh -R owner/mock pr merge 12",
+    "uv run gh --repo=owner/mock pr merge 12",
+    "uv run gh co 12",
+    "nice gh cs list",
+    "uv run gh ext list",
+    "timeout 5 gh help pr",
+    "env gh version",
 ]
 
 ALLOWED = [
@@ -70,6 +81,8 @@ ALLOWED = [
     "uv run pytest -k gh",
     "git ls-files | xargs grep -ln gh",
     "timeout 60 grep -rnw gh docs",
+    # options after a gh that is only a word, as gh's own would be: no command of gh follows
+    "grep -c gh -r docs",
     "uv run --isolated python -m titlestd run --out-dir /tmp/gh",
     "nice -n 10 ls ~/.config/gh",
     "sudo dnf info gh",
@@ -120,10 +133,12 @@ PULL_REQUEST = pull_request(TITLE)
 RUN_REPOSITORY = run_repository(REPOSITORY)
 CHECK_RUNS = check_runs(REPOSITORY)
 
-# Titles a shell passes unchanged, which /pr-open's preflight accepts: in single quotes any text
-# but a control character, $, backticks, backslashes, globs, braces and tildes included; in double
-# quotes globs, braces and tildes; and the words of gh's options, which no deny rule may meet
-# inside a title.
+# Titles quoted as bash quotes them, which /pr-open's preflight accepts and bash hands to gh as
+# the hook reads them: in single quotes any text but a control or format character, $, backticks,
+# backslashes, globs, braces and tildes included; in double quotes globs, braces and tildes;
+# outside quotes a character that a backslash makes text; a redirection to a file that only
+# starts with nul, which the Bash tool leaves alone; an emoji on its own; and the words of gh's
+# options, which no deny rule may meet inside a title (DROPPED_RULES).
 TITLES = [
     "'Fix #12 (and #13)'",
     "'Read ~/.config at start'",
@@ -138,12 +153,30 @@ TITLES = [
     "'Normalize C:\\Users paths'",
     '"Match *.md, [x] and {a,b} under ~?"',
     "'Don'\"'\"'t say \"push\"'",
+    "'Don'\\''t push main'",
+    "Fix\\*",
+    "'Write 2>null and >nul.txt'",
     "'Keep a\u00a0no-break space'",
+    "'Ship it \U0001f680'",
     "'Deny --web, -w and -R in the push guard'",
     "'Drop --repo and --hostname from the notes'",
-    "'Refuse --fill, --body and -b'",
+    "'Refuse --fill, --body and -b flags'",
     "'Rebase --base build/x handling'",
     f"'{'a' * 256}'",
+]
+
+# Rules that .claude/settings.json once held on the options of gh and of gh pr create, dropped
+# because a title is free text: each meets one of TITLES, so
+# test_no_deny_rule_stops_a_command_of_the_pr_flow fails if one comes back.
+DROPPED_RULES = [
+    "Bash(gh * -R *)",
+    "Bash(gh *--repo*)",
+    "Bash(gh *--hostname*)",
+    "Bash(gh *--web*)",
+    "Bash(gh pr create *--fill*)",
+    "Bash(gh pr create *--body *)",
+    "Bash(gh pr create * -b *)",
+    "Bash(gh pr create *--base build/*)",
 ]
 
 # Repository names holding a word that a deny rule names: an option of gh api, or an endpoint that
@@ -191,6 +224,17 @@ def draft(title: str = "t", body: str = BODY) -> str:
     """A draft pull request of build/x with the given title and body file, as written."""
     return f"gh pr create --draft --head build/x --base main --title {title} --body-file {body}"
 
+
+# Characters that plain_line refuses wherever they stand, as each can make a title read otherwise
+# than it reaches gh: format characters (Cf: bidi embeddings, overrides and isolates, zero-width
+# characters and marks, the byte-order mark, a soft hyphen, a word joiner and a tag character),
+# the line and paragraph separators (Zl, Zp) and a lone surrogate (Cs), which json.load gives for
+# a \ud800 escape.
+UNSEEN = (
+    "\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069"
+    "\u200b\u200c\u200d\u200e\u200f\ufeff\u00ad\u2060\U000e0041"
+    "\u2028\u2029\ud800"
+)
 
 # Near misses of the flow's commands, all refused: another remote, main, a force, a tag, another
 # refspec or option, a wrapper or path before the program, a second command, a redirection, a
@@ -298,10 +342,11 @@ NEAR_MISSES = [
     draft("~"),
     draft("$HOME"),
     draft("`id`"),
-    draft("C:\\Users"),
     draft('"$(id)"'),
     draft('"Quote `id`"'),
     draft('"C:\\Users"'),
+    # a backslash that ends the line, with nothing for it to make text
+    f"gh pr create --draft --head build/x --base main --body-file {BODY} --title t\\",
     # a title out of bounds: too long, empty, or holding a control character (C0, DEL, C1)
     draft(f"'{'a' * 257}'"),
     draft("''"),
@@ -310,9 +355,27 @@ NEAR_MISSES = [
     draft("'a\x7fb'"),
     draft("'a\x85b'"),
     draft("'a\x9fb'"),
-    # a title that a shell reads as the end of the command, or as a comment
+    # a title holding a format character, a separator or a lone surrogate, an emoji joined with a
+    # zero-width joiner among them
+    *(draft(f"'a{char}b'") for char in UNSEEN),
+    draft("'Pair \U0001f469\u200d\U0001f4bb in review'"),
+    # a title that Claude Code's Bash tool would change to a redirection to /dev/null, inside
+    # quotes too, and whether or not the line holds the <, $ or backtick that its rewrite skips
+    draft("'Send 2>nul output'"),
+    draft('"Send >>NUL output"'),
+    draft("'Drop &>Nul| tail'"),
+    draft("'Close it > nul)'"),
+    draft("'Stop >nul;now'"),
+    draft("a\\>nul"),
+    draft("'Pay $5 >nul now'"),
+    draft("'Read <in >nul now'"),
+    draft("'Quote `x` >nul now'"),
+    # a title that a shell reads as the end of the command, or as a comment, or one made only of
+    # operators, which the hook takes for the end of the command even quoted
     f"gh pr create --draft --head build/x --base main --body-file {BODY} --title ;",
     f"gh pr create --draft --head build/x --base main --body-file {BODY} --title #",
+    draft("';'"),
+    draft("'&&'"),
     # a body file outside the coding tool's per-user temporary folder, or out of its shape
     draft(body="pr-body.md"),
     draft(body="/tmp/pr-body.md"),
@@ -385,41 +448,80 @@ NEAR_MISSES = [
 ]
 
 # Plain spellings outside the flow that a deny rule of .claude/settings.json meets, so they are
-# refused even where the hook is not run.
+# refused even where the hook is not run. Each rule is the only one to meet at least one of them.
 DENIED = [
     "git push",
+    "git push origin",
     "git push origin main",
     "git push origin build/pr-flow:refs/heads/build/pr-flow",
     "git push https://example.com/mock.git build/pr-flow:refs/heads/build/pr-flow",
     "git push . build/pr-flow:main",
+    "git push ../mock build/pr-flow:refs/heads/build/pr-flow",
+    "git push /srv/git/mock.git build/pr-flow:refs/heads/build/pr-flow",
+    # a tilde that bash expands, which plain_line refuses (test_each_entry_is_one_plain_command)
+    "git push ~/mock.git build/pr-flow:refs/heads/build/pr-flow",
     "git push claude",
     "git push claude main",
+    "git push claude main build/pr-flow",
     "git push claude main:refs/heads/main",
     "git push claude main:build/x",
+    "git push claude build/pr-flow:main",
+    "git push claude build/pr-flow:main build/pr-flow",
     "git push claude build/pr-flow:refs/heads/main",
     "git push claude HEAD:refs/heads/build/pr-flow",
+    "git push claude @:refs/heads/build/pr-flow",
     "git push --force claude build/pr-flow:refs/heads/build/pr-flow",
     f"{PUSH} --force",
     "git push claude +build/pr-flow:refs/heads/build/pr-flow",
     "git push claude :refs/heads/build/pr-flow",
     "git push claude :build/x",
+    "git push claude refs/heads/build/pr-flow:refs/heads/build/pr-flow",
     "git push claude refs/tags/v1:refs/tags/v1",
+    "git push claude v1:refs/tags/v1",
+    "git push claude tag v1",
     "git push --tags claude",
     "gh",
     "gh --version",
     "gh version",
     "gh help",
+    "gh agent-task list",
+    "gh alias list",
+    "gh attestation verify mock.tar.gz --owner owner",
     "gh auth token",
+    "gh browse",
+    "gh cache list",
+    "gh cs list",
+    "gh ext list",
+    "gh gist create notes.md",
+    "gh gpg-key list",
     "gh issue create",
+    "gh label list",
+    "gh org list",
+    "gh preview prompter",
+    "gh project list",
     "gh release create v1",
+    "gh ruleset list",
+    "gh search prs --author owner",
+    "gh ssh-key list",
+    "gh status",
+    "gh variable list",
     "gh workflow run ci.yml",
     "gh secret set NAME",
     "gh codespace list",
     "gh -R owner/mock pr list",
+    "gh pr",
+    "gh pr --help",
     "gh pr list",
     "gh pr ls",
+    "gh pr diff 12",
+    "gh pr lock 12",
     "gh pr merge 12",
     "gh pr ready 12",
+    "gh pr reopen 12",
+    "gh pr revert 12",
+    "gh pr status",
+    "gh pr unlock 12",
+    "gh pr update-branch 12",
     "gh pr comment 12 --body 'Done'",
     "gh pr review 12 --approve",
     "gh pr close 12",
@@ -427,7 +529,9 @@ DENIED = [
     "gh pr checkout 12",
     f"gh pr new --draft --head build/pr-flow --base main --title {TITLE} --body-file {BODY}",
     "gh pr view 12 --comments",
+    "gh pr view 12 -c",
     "gh pr view 12 --json body",
+    "gh pr view 12 --json reviews",
     "gh pr view 12 --json latestReviews",
     "gh pr view 12 --web",
     "gh pr view -w 12",
@@ -456,7 +560,23 @@ DENIED = [
     "gh run view 12345678901 --log --job 1",
     "gh run rerun 12345678901",
     "gh run cancel 12345678901",
+    "gh run delete 12345678901",
+    "gh run download 12345678901",
+    "gh run watch 12345678901",
     "gh repo ls",
+    "gh repo list owner",
+    "gh repo archive owner/mock",
+    "gh repo unarchive owner/mock",
+    "gh repo autolink list",
+    "gh repo clone owner/mock",
+    "gh repo create owner/other --public",
+    "gh repo new other --private",
+    "gh repo deploy-key list",
+    "gh repo fork owner/mock",
+    "gh repo gitignore list",
+    "gh repo license list",
+    "gh repo rename other",
+    "gh repo sync",
     "gh repo delete owner/mock --yes",
     "gh repo edit owner/mock --visibility private",
     "gh repo view owner/mock --web",
@@ -465,11 +585,15 @@ DENIED = [
     "gh repo view owner/mock -w",
     "gh api graphql -f query='mutation { resolveReviewThread }'",
     "gh api --paginate graphql -F owner=owner",
+    # -i and -f run together, which no rule on -f meets: only the graphql rules do
+    "gh api graphql -if query='query { viewer { login } }'",
+    "gh api --paginate graphql -if query='query { viewer { login } }'",
     "gh api -X DELETE repos/owner/mock/actions/runs/1",
     "gh api repos/owner/mock/actions/runs/1 -X DELETE",
     "gh api --method PATCH repos/owner/mock/actions/runs/1",
     "gh api repos/owner/mock/actions/runs/1 --method PATCH",
     "gh api -f state=success repos/owner/mock/statuses/1",
+    "gh api repos/owner/mock/statuses/1 -f state=success",
     "gh api --raw-field state=success repos/owner/mock/statuses/1",
     "gh api repos/owner/mock/statuses/1 --raw-field state=success",
     "gh api -F state=success repos/owner/mock/statuses/1",
@@ -485,6 +609,7 @@ DENIED = [
     "gh api --hostname github.example.com user",
     "gh api user --hostname github.example.com",
     "gh api repos/owner/mock/issues/1/comments -f body=Done",
+    "gh api repos/owner/mock/issues/7",
     "gh api repos/owner/mock/issues/7/comments",
     "gh api repos/owner/mock/pulls/7/comments",
     "gh api repos/owner/mock/pulls/7/reviews",
@@ -632,6 +757,16 @@ def test_single_quotes_hold_text_and_double_quotes_a_glob_brace_or_tilde(hook):
     assert hook.plain_line("x '$`\\*?[]{}~\"' \"*?[]{}~'\" '\u00a0'") is True
 
 
+@pytest.mark.parametrize("char", UNSEEN)
+def test_a_format_character_a_separator_or_a_lone_surrogate_is_not_a_plain_line(hook, char):
+    assert hook.plain_line(f"gh pr view 'a{char}b'") is False
+
+
+def test_outside_quotes_a_backslash_makes_the_next_character_text(hook):
+    assert hook.plain_line("x Fix\\* \\$HOME \\~ a\\{b\\} 'Don'\\''t' \\\\ \\'") is True
+    assert hook.plain_line("x t\\") is False
+
+
 def test_a_fault_in_the_allowance_refuses_the_call(hook, monkeypatch):
     def fault(command):
         raise RuntimeError(command)
@@ -649,7 +784,9 @@ def test_the_hook_refuses_a_spelling_that_a_deny_rule_meets(hook, command):
 def test_each_entry_is_one_plain_command(hook, command):
     words = command.split(" ")
     assert words[:2] == ["git", "push"] or words[0] == "gh"
-    assert hook.lone_command(command) is not None
+    # The tilde that the git push ~* rule needs bare is read escaped, as text: bash expands it in
+    # place, and the line is still one command of the same words.
+    assert hook.lone_command(command.replace("git push ~", "git push \\~")) is not None
 
 
 @pytest.mark.parametrize("command", FLOW)
@@ -660,6 +797,24 @@ def test_no_deny_rule_stops_a_command_of_the_pr_flow(deny_rules, command):
 @pytest.mark.parametrize("command", DENIED)
 def test_a_plain_spelling_outside_the_pr_flow_meets_a_deny_rule(deny_rules, command):
     assert any(matches(rule, command) for rule in deny_rules)
+
+
+def test_each_deny_rule_is_the_only_one_to_meet_a_plain_spelling(deny_rules):
+    # Without a rule its own spelling meets none, and
+    # test_a_plain_spelling_outside_the_pr_flow_meets_a_deny_rule fails. A rule that the others
+    # already cover can have no spelling of its own, as git push origin had none beside
+    # git push origin *, whose trailing " *" also meets the bare command.
+    met_alone = set()
+    for command in DENIED:
+        met = [rule for rule in deny_rules if matches(rule, command)]
+        if len(met) == 1:
+            met_alone.update(met)
+    assert [rule for rule in deny_rules if rule not in met_alone] == []
+
+
+@pytest.mark.parametrize("rule", DROPPED_RULES)
+def test_a_dropped_rule_would_stop_a_title_of_the_pr_flow(rule):
+    assert [command for command in FLOW if matches(rule, command)] != []
 
 
 def test_each_deny_rule_meets_a_command_that_the_hook_refuses(hook, deny_rules):
@@ -702,6 +857,17 @@ def test_the_hook_refuses_with_exit_status_2_and_says_why(hook_path):
     result = run_hook(hook_path, json.dumps({"tool_input": {"command": "git -C . push"}}))
     assert result.returncode == 2
     assert result.stderr.startswith("Refused: this command would run `git -C . push`.")
+
+
+def test_a_read_refused_for_a_pipe_is_run_again_alone_and_read_whole(hook_path):
+    # /pr-watch finds a failure in the tail of the log, which invites the pipe that is refused.
+    result = run_hook(hook_path, json.dumps({"tool_input": {"command": f"{LOG} | tail -n 80"}}))
+    assert result.returncode == 2
+    assert result.stderr.startswith(f"Refused: this command would run `{LOG}`.")
+    assert (
+        "is run again alone and spelled as its skill spells it, and its whole output read. "
+        "Never respell a refused command any other way"
+    ) in result.stderr
 
 
 def test_the_hook_lets_the_pr_flows_push_through_with_exit_status_0(hook_path):

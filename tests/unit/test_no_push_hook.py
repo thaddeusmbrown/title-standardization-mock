@@ -3,7 +3,8 @@ commands that only mention the words, and the PR flow's commands, the only pushe
 it lets through, each with near misses it refuses. Also the deny rules of .claude/settings.json:
 none of them stops a command of the flow, each is the only rule to meet one of the plain
 spellings in DENIED, so none is dead or covered by another, and each of those spellings meets
-one. And the wiring that runs the hook.
+one. And the wiring that runs the hook, and that the settings neither turn it off nor approve
+what it refuses.
 
 The hook is tooling, not part of titlestd, and .claude/ is kept out of collection and of ruff
 (S14), so it is loaded here by its path. A build reaches main as a pull request, and only the
@@ -415,6 +416,11 @@ NEAR_MISSES = [
     "gh api repos/owner/mock/actions/runs/1/rerun -X POST",
     "gh api -X DELETE repos/owner/mock/actions/runs/1",
     f"{RUN_REPOSITORY} --method PATCH",
+    # a method before the run's path, a run id with a leading zero, check runs of another branch
+    f"gh api --method GET {RUN_REPOSITORY.removeprefix('gh api ')}",
+    f"gh api -X GET {RUN_REPOSITORY.removeprefix('gh api ')}",
+    "gh api repos/owner/mock/actions/runs/012345678901 --jq .head_repository.full_name",
+    f"gh api repos/owner/mock/commits/dev/check-runs --jq {CHECK_RUNS_JQ}",
     "gh api repos/owner/../actions/runs/1 --jq .head_repository.full_name",
     "gh api repos/owner/mock/pulls/1/actions/runs/1 --jq .head_repository.full_name",
     "gh api repos/owner/mock/actions/runs/1/logs --jq .head_repository.full_name",
@@ -450,7 +456,9 @@ NEAR_MISSES = [
 ]
 
 # Plain spellings outside the flow that a deny rule of .claude/settings.json meets, so they are
-# refused even where the hook is not run. Each rule is the only one to meet at least one of them.
+# refused even where the hook is not run. Each rule is the only one to meet at least one of them,
+# and a rule that ends in * meets one with text after the word before its *, so that it cannot
+# lose that * unseen.
 DENIED = [
     "git push",
     "git push origin",
@@ -470,6 +478,7 @@ DENIED = [
     "git push claude build/pr-flow:main",
     "git push claude build/pr-flow:main build/pr-flow",
     "git push claude build/pr-flow:refs/heads/main",
+    "git push claude build/pr-flow:refs/heads/main build/pr-flow",
     "git push claude HEAD:refs/heads/build/pr-flow",
     "git push claude @:refs/heads/build/pr-flow",
     "git push --force claude build/pr-flow:refs/heads/build/pr-flow",
@@ -485,12 +494,15 @@ DENIED = [
     "gh",
     "gh --version",
     "gh version",
+    "gh version --help",
     "gh help",
+    "gh help pr",
     "gh agent-task list",
     "gh alias list",
     "gh attestation verify mock.tar.gz --owner owner",
     "gh auth token",
     "gh browse",
+    "gh browse 12",
     "gh cache list",
     "gh cs list",
     "gh ext list",
@@ -506,6 +518,7 @@ DENIED = [
     "gh search prs --author owner",
     "gh ssh-key list",
     "gh status",
+    "gh status --org owner",
     "gh variable list",
     "gh workflow run ci.yml",
     "gh secret set NAME",
@@ -514,7 +527,9 @@ DENIED = [
     "gh pr",
     "gh pr --help",
     "gh pr list",
+    "gh pr list --state open",
     "gh pr ls",
+    "gh pr ls --state open",
     "gh pr diff 12",
     "gh pr lock 12",
     "gh pr merge 12",
@@ -522,6 +537,7 @@ DENIED = [
     "gh pr reopen 12",
     "gh pr revert 12",
     "gh pr status",
+    "gh pr status --json url",
     "gh pr unlock 12",
     "gh pr update-branch 12",
     "gh pr comment 12 --body 'Done'",
@@ -531,29 +547,41 @@ DENIED = [
     "gh pr checkout 12",
     f"gh pr new --draft --head build/pr-flow --base main --title {TITLE} --body-file {BODY}",
     "gh pr view 12 --comments",
+    "gh pr view 12 --comments --json url",
     "gh pr view 12 -c",
+    "gh pr view 12 -c --json url",
     "gh pr view 12 --json body",
+    "gh pr view 12 --json body,title",
     "gh pr view 12 --json reviews",
+    "gh pr view 12 --json reviews,title",
     "gh pr view 12 --json latestReviews",
+    "gh pr view 12 --json latestReviews,title",
     "gh pr view 12 --web",
+    "gh pr view 12 --web --json url",
     "gh pr view -w 12",
     "gh pr view 12 -w",
+    "gh pr view 12 -w --json url",
     "gh pr view -R owner/other 12",
     "gh pr view 12 -R owner/other",
     "gh pr view 12 --repo owner/other",
     "gh pr checks 12 --web",
+    "gh pr checks 12 --web --json name",
     "gh pr checks -w 12",
     "gh pr checks 12 -w",
+    "gh pr checks 12 -w --json name",
     "gh pr checks -R owner/other 12",
     "gh pr checks 12 -R owner/other",
     "gh pr checks 12 --repo owner/other",
     "gh run ls",
+    "gh run ls --limit 5",
     "gh run list -R owner/other",
     "gh run list --limit 5 -R owner/other",
     "gh run list --repo owner/other",
     "gh run view 12345678901 --web",
+    "gh run view 12345678901 --web --json url",
     "gh run view -w 12345678901",
     "gh run view 12345678901 -w",
+    "gh run view 12345678901 -w --json url",
     "gh run view -R owner/other 12345678901",
     "gh run view 12345678901 -R owner/other",
     "gh run view 12345678901 --repo owner/other",
@@ -566,6 +594,7 @@ DENIED = [
     "gh run download 12345678901",
     "gh run watch 12345678901",
     "gh repo ls",
+    "gh repo ls owner",
     "gh repo list owner",
     "gh repo archive owner/mock",
     "gh repo unarchive owner/mock",
@@ -579,12 +608,15 @@ DENIED = [
     "gh repo license list",
     "gh repo rename other",
     "gh repo sync",
+    "gh repo sync owner/mock",
     "gh repo delete owner/mock --yes",
     "gh repo edit owner/mock --visibility private",
     "gh repo view owner/mock --web",
+    "gh repo view owner/mock --web --json name",
     "gh repo view --web owner/mock",
     "gh repo view -w owner/mock",
     "gh repo view owner/mock -w",
+    "gh repo view owner/mock -w --json name",
     "gh api graphql -f query='mutation { resolveReviewThread }'",
     "gh api --paginate graphql -F owner=owner",
     # -i and -f run together, which no rule on -f meets: only the graphql rules do
@@ -833,16 +865,51 @@ def test_no_deny_rule_mixes_a_wildcard_with_the_prefix_form(deny_rules):
     assert [pattern for pattern in patterns if pattern.endswith(":*") and "*" in pattern[:-2]] == []
 
 
+@pytest.mark.parametrize(
+    ("rule", "command", "met"),
+    [
+        # the legacy prefix form: its text is literal, a * in it included, then the end or a space
+        ("Bash(gh * pr:*)", "gh * pr list", True),
+        ("Bash(gh * pr:*)", "gh * pr", True),
+        ("Bash(gh * pr:*)", "gh x pr list", False),
+        ("Bash(gh * pr:*)", "gh * prs", False),
+        # runs of spaces or tabs count as one, and the command's ends are trimmed
+        ("Bash(gh pr list *)", "gh  pr\tlist --state open", True),
+        ("Bash(gh pr list)", " gh pr list ", True),
+    ],
+)
+def test_the_model_of_the_matcher_reads_a_rule_as_its_docstring_says(rule, command, met):
+    # No deny rule or spelling above needs these readings, so without them a change to matches()
+    # could pass the tests of the rules.
+    assert matches(rule, command) is met
+
+
+# The command that runs the hook: nothing when the file is missing, else python3 in isolated mode.
+HOOK_COMMAND = (
+    'f="$CLAUDE_PROJECT_DIR/.claude/hooks/no-push.py"; [ -r "$f" ] || exit 0; exec python3 -I "$f"'
+)
+
+
 def test_the_hook_runs_before_each_bash_and_monitor_call(settings):
-    matchers = [
-        entry["matcher"]
+    handlers = [
+        (entry["matcher"], handler)
         for entry in settings["hooks"]["PreToolUse"]
         for handler in entry["hooks"]
-        if handler["type"] == "command"
-        and '"$CLAUDE_PROJECT_DIR/.claude/hooks/no-push.py"' in handler["command"]
-        and 'exec python3 -I "$f"' in handler["command"]
+        if "no-push.py" in handler.get("command", "")
     ]
-    assert matchers == ["Bash|Monitor"]
+    # This handler and no other key: an async hook cannot block, an if condition narrows the calls
+    # it runs on, and a shorter timeout lets more lines past it unread.
+    assert handlers == [
+        ("Bash|Monitor", {"type": "command", "command": HOOK_COMMAND, "timeout": 10})
+    ]
+
+
+def test_the_settings_turn_off_no_hook_and_approve_nothing(settings):
+    # disableAllHooks would turn the hook off. An allow rule or a default mode would approve, when
+    # the hook does not run, spellings that only the hook refuses, and an ask rule on a command of
+    # the flow would stop an unattended /pr-watch at a prompt.
+    assert "disableAllHooks" not in settings
+    assert list(settings["permissions"]) == ["deny"]
 
 
 def run_hook(hook_path: Path, stdin: str) -> subprocess.CompletedProcess:

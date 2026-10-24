@@ -84,9 +84,11 @@ record leaves open is settled in its module's docstring, under "Decided here" (r
   rulesets it writes. Until then, main moves as before: the owner runs `/promote <branch>`
   and pushes main, and a lone `feat/`, `docs/` or `chore/` branch goes the same way. Where
   the user-level `/land`'s report names `/promote` as the next step, that holds until then.
-- The PR flow runs only from a checkout whose `.claude/` lets it through. The hook and deny
-  rules in force are those of the checkout the session started in, and a checkout of an
-  older branch keeps the old rules, which refuse every push and `gh` call.
+- The PR flow runs only from a session started at the top level of a checkout whose
+  `.claude/` lets it through: the hook and the deny rules in force are those of the folder
+  the session started in, even after the session moves into a worktree. A checkout of a
+  branch from before this change has no such rules, and one from between the setup and this
+  change refuses every push and `gh` call.
 - Once the flow is set up, a build's first `/pr-open build/<topic>` runs when the owner asks
   for it. It runs its preflight over what the push would publish, pushes the build to the
   `claude` remote and opens a draft pull request into main. `/pr-watch build/<topic>` then

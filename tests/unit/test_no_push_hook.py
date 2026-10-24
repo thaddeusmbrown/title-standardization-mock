@@ -1,7 +1,8 @@
 """The coding tool's push guard, .claude/hooks/no-push.py: the spellings it refuses, the
 commands that only mention the words, and the PR flow's commands, the only pushes and gh calls
 it lets through, each with near misses it refuses. Also the deny rules of .claude/settings.json:
-none of them stops a command of the flow, and the plain spellings outside it meet one.
+none of them stops a command of the flow, each is live, and the plain spellings in DENIED meet
+one. And the wiring that runs the hook.
 
 The hook is tooling, not part of titlestd, and .claude/ is kept out of collection and of ruff
 (S14), so it is loaded here by its path. A build reaches main as a pull request, and only the
@@ -10,12 +11,14 @@ user-level /pr-open, /pr-watch and /pr-setup push or call gh (owner decision 11;
 
 from __future__ import annotations
 
-import importlib.util
 import json
+import os
 import re
+import shlex
 import subprocess
 import sys
 import time
+import types
 from pathlib import Path
 
 import pytest
@@ -75,53 +78,124 @@ ALLOWED = [
     "nice -n 5 grep -c 'gh pr' README.md",
 ]
 
+UID = os.getuid()
+# A session scratchpad, where /pr-open's preflight writes the body: the coding tool's per-user
+# temporary folder, the project's path in dashes, and the session's id.
+SCRATCHPAD = f"/tmp/claude-{UID}/-home-owner-mock/0123abcd-0000-4000-8000-000000000000/scratchpad"
+BODY = f"{SCRATCHPAD}/pr-body.md"
+REPOSITORY = "owner-name/title-standardization-mock"
 PUSH = "git push claude build/pr-flow:refs/heads/build/pr-flow"
-BODY = "/tmp/scratchpad/pr-body.md"
-PULL_REQUEST = (
-    f"gh pr create --draft --head build/pr-flow --base main --title 'Add the PR flow' "
-    f"--body-file {BODY}"
-)
+TITLE = "'Open the PR flow'"
 FIELDS = "url,state,mergeStateStatus,headRefOid,isCrossRepository,headRepositoryOwner,baseRefName"
 VIEW = f"gh pr view 12 --json {FIELDS}"
 WATCH = "gh pr checks 12 --watch --fail-fast"
 CHECKS = "gh pr checks 12 --json name,bucket,link"
 SHA = "0123456789abcdef0123456789abcdef01234567"
-RUNS = f"gh run list --commit {SHA} --json databaseId,event,headSha,status,conclusion,workflowName"
-RUN_REPOSITORY = "gh api repos/owner/mock/actions/runs/12345678901 --jq .head_repository.full_name"
+SHA256 = "0123456789abcdef" * 4
+RUN_FIELDS = "databaseId,event,headSha,status,conclusion,workflowName"
+RUNS = f"gh run list --commit {SHA} --json {RUN_FIELDS}"
 LOG = "gh run view 12345678901 --log-failed"
 INSTALLATION = "gh api --paginate installation/repositories --jq '.repositories[].full_name'"
-VISIBILITY = "gh repo view owner/mock --json visibility --jq .visibility"
-SET_DEFAULT = "gh repo set-default owner/mock"
-CHECK_RUNS = (
-    "gh api repos/owner/mock/commits/main/check-runs --jq "
-    "'.check_runs[] | select(.app.slug == \"github-actions\") | .name'"
-)
+VISIBILITY = f"gh repo view {REPOSITORY} --json visibility --jq .visibility"
+SET_DEFAULT = f"gh repo set-default {REPOSITORY}"
+CHECK_RUNS_JQ = "'.check_runs[] | select(.app.slug == \"github-actions\") | .name'"
 
-# The PR flow's commands, word for word as the user-level skills spell them: /pr-open's push and
-# draft pull request, /pr-watch's reads, and /pr-setup's, which the owner runs once.
+
+def pull_request(title: str) -> str:
+    """/pr-open's draft pull request with the given title, as the command line spells it."""
+    return (
+        f"gh pr create --draft --head build/pr-flow --base main --title {title} --body-file {BODY}"
+    )
+
+
+def run_repository(repository: str) -> str:
+    return f"gh api repos/{repository}/actions/runs/12345678901 --jq .head_repository.full_name"
+
+
+def check_runs(repository: str) -> str:
+    return f"gh api repos/{repository}/commits/main/check-runs --jq {CHECK_RUNS_JQ}"
+
+
+PULL_REQUEST = pull_request(TITLE)
+RUN_REPOSITORY = run_repository(REPOSITORY)
+CHECK_RUNS = check_runs(REPOSITORY)
+
+# Titles a shell passes unchanged, which /pr-open's preflight accepts: in single quotes any text
+# but a control character, $, backticks, backslashes, globs, braces and tildes included; in double
+# quotes globs, braces and tildes; and the words of gh's options, which no deny rule may meet
+# inside a title.
+TITLES = [
+    "'Fix #12 (and #13)'",
+    "'Read ~/.config at start'",
+    "'Treat * as text'",
+    "'a*'",
+    "'Why is the cap 256?'",
+    "'Match the [x] marker'",
+    "'Expand {owner} in the report'",
+    "'Price in $'",
+    "'$(id)'",
+    "'Quote `make check` in the README'",
+    "'Normalize C:\\Users paths'",
+    '"Match *.md, [x] and {a,b} under ~?"',
+    "'Don'\"'\"'t say \"push\"'",
+    "'Keep a\u00a0no-break space'",
+    "'Deny --web, -w and -R in the push guard'",
+    "'Drop --repo and --hostname from the notes'",
+    "'Refuse --fill, --body and -b'",
+    "'Rebase --base build/x handling'",
+    f"'{'a' * 256}'",
+]
+
+# Repository names holding a word that a deny rule names: an option of gh api, or an endpoint that
+# /pr-watch never reads.
+AWKWARD_REPOSITORIES = [
+    "owner/data-feed",
+    "owner/Hub-X",
+    "owner/x-Frontend",
+    "owner/web-Hooks",
+    "owner/my-graphql-api",
+    "owner/pulls",
+    "owner/issues-tracker",
+    "owner/comments",
+]
+
+# The PR flow's commands, word for word as the user-level skills spell them, with invented values
+# in their placeholders, main for <default> and gh pr create's options in any order: /pr-open's
+# push and draft pull request, /pr-watch's reads, and /pr-setup's, which the owner runs once.
 FLOW = [
     PUSH,
     "git push claude build/web/app.v2:refs/heads/build/web/app.v2",
     PULL_REQUEST,
-    'gh pr create --title "Don\'t push main" --body-file /tmp/pr-body.md --base main '
+    *map(pull_request, TITLES),
+    f'gh pr create --title "Don\'t push main" --body-file {BODY} --base main '
     "--head build/pr-flow --draft",
-    "gh pr create --draft --head build/pr-flow --base main --title 'Fix #12 (and #13)' "
-    f"--body-file {BODY}",
+    "gh pr create --draft --head build/pr-flow --base main --title t "
+    f"--body-file /tmp/claude-{UID}/pr-body",
     VIEW,
     WATCH,
     CHECKS,
     RUNS,
+    f"gh run list --commit {SHA256} --json {RUN_FIELDS}",
     RUN_REPOSITORY,
     LOG,
     INSTALLATION,
     VISIBILITY,
     SET_DEFAULT,
     CHECK_RUNS,
+    *map(run_repository, AWKWARD_REPOSITORIES),
+    *map(check_runs, AWKWARD_REPOSITORIES),
 ]
+
+
+def draft(title: str = "t", body: str = BODY) -> str:
+    """A draft pull request of build/x with the given title and body file, as written."""
+    return f"gh pr create --draft --head build/x --base main --title {title} --body-file {body}"
+
 
 # Near misses of the flow's commands, all refused: another remote, main, a force, a tag, another
 # refspec or option, a wrapper or path before the program, a second command, a redirection, a
-# comment, a variable, a substitution, a continued line.
+# comment, a line break or another control character, something a shell expands, a value out of
+# its shape.
 NEAR_MISSES = [
     # the push
     "git push origin build/pr-flow:refs/heads/build/pr-flow",
@@ -141,6 +215,13 @@ NEAR_MISSES = [
     "git push claude build/-x:refs/heads/build/-x",
     "git push claude build/x.lock:refs/heads/build/x.lock",
     "git push claude build/:refs/heads/build/",
+    "git push claude build/x/:refs/heads/build/x/",
+    # a build name that git reads as a pattern or a revision, quoted so that only its shape decides
+    "git push claude 'build/*:refs/heads/build/*'",
+    "git push claude build/*:refs/heads/build/*",
+    "git push claude 'build/x~1:refs/heads/build/x~1'",
+    "git push claude build/x~1:refs/heads/build/x~1",
+    "git push claude 'build/x@{1}:refs/heads/build/x@{1}'",
     "git push --force claude build/pr-flow:refs/heads/build/pr-flow",
     f"{PUSH} --force",
     f"{PUSH} -f",
@@ -175,12 +256,21 @@ NEAR_MISSES = [
     f"{PUSH} &",
     f"{PUSH} # the build",
     f"{PUSH}\ngit status",
+    # one command split by a line break, which a shell runs as two
+    "git push claude\nbuild/pr-flow:refs/heads/build/pr-flow",
     "git push claude \\\n  build/pr-flow:refs/heads/build/pr-flow",
     "git push claude $BRANCH:refs/heads/build/pr-flow",
     # a carriage return, which the splitter takes for a space and a shell keeps in the word
     f"{PUSH}\r",
-    # the draft pull request
-    f"gh pr create --head build/pr-flow --base main --title 'Add the PR flow' --body-file {BODY}",
+    # the draft pull request, without each of its options in turn, and with others
+    f"gh pr create --head build/pr-flow --base main --title {TITLE} --body-file {BODY}",
+    f"gh pr create --draft --base main --title {TITLE} --body-file {BODY}",
+    f"gh pr create --draft --head build/pr-flow --title {TITLE} --body-file {BODY}",
+    f"gh pr create --draft --head build/pr-flow --base main --body-file {BODY}",
+    f"gh pr create --draft --head build/pr-flow --base main --title {TITLE}",
+    f"gh pr new --draft --head build/pr-flow --base main --title {TITLE} --body-file {BODY}",
+    f"gh pr create --draft --base main --title t --body-file {BODY} --head",
+    f"gh pr create --draft --head build/x --base main --body-file {BODY} --title",
     f"{PULL_REQUEST} --draft",
     f"{PULL_REQUEST} --web",
     f"{PULL_REQUEST} -R owner/mock",
@@ -188,23 +278,53 @@ NEAR_MISSES = [
     f"{PULL_REQUEST} --fill",
     f"{PULL_REQUEST} --label ready",
     f"{PULL_REQUEST} --reviewer owner",
-    "gh pr create --draft --head main --base main --title t --body-file /tmp/pr-body.md",
-    "gh pr create --draft --head feat/x --base main --title t --body-file /tmp/pr-body.md",
-    "gh pr create --draft --head owner:build/x --base main --title t --body-file /tmp/pr-body.md",
-    "gh pr create --draft --head build/x --base build/y --title t --body-file /tmp/pr-body.md",
+    f"gh pr create --draft --head main --base main --title t --body-file {BODY}",
+    f"gh pr create --draft --head feat/x --base main --title t --body-file {BODY}",
+    f"gh pr create --draft --head owner:build/x --base main --title t --body-file {BODY}",
+    f"gh pr create --draft --head build/x --base build/y --title t --body-file {BODY}",
     "gh pr create --draft --head build/x --base main --title t --body 'Text'",
-    "gh pr create --draft --head build/x --base main --title t --body-file pr-body.md",
-    "gh pr create --draft --head build/x --base main --title t --body-file /tmp/notes.md",
-    "gh pr create --draft --head build/x --base main --title t --body-file /tmp/../pr-body.md",
-    "gh pr create --draft --head build/x --base main --title t --body-file /srv/pr-body.md",
-    "gh pr create --draft --head build/x --base main --title --body-file /tmp/pr-body.md",
-    "gh pr create --draft=true --head build/x --base main --title t --body-file /tmp/pr-body.md",
-    "gh pr create -d -H build/x -B main -t t -F /tmp/pr-body.md",
-    "gh pr create --draft --head build/x --base main --title '$(id)' --body-file /tmp/pr-body.md",
-    "gh pr create --draft --head build/x --base main --title 'a*' --body-file /tmp/pr-body.md",
+    f"gh pr create --draft --head build/x --base main --title --body-file {BODY}",
+    f"gh pr create --draft=true --head build/x --base main --title t --body-file {BODY}",
+    f"gh pr create -d -H build/x -B main -t t -F {BODY}",
+    # a title that a shell expands: unquoted, or in double quotes
+    draft("a?"),
+    draft("a*"),
+    draft("[ab]"),
+    draft("a[b"),
+    draft("a]b"),
+    draft("{t,--repo=other/mock}"),
+    draft("a{b"),
+    draft("a}b"),
+    draft("~"),
+    draft("$HOME"),
+    draft("`id`"),
+    draft("C:\\Users"),
+    draft('"$(id)"'),
+    draft('"Quote `id`"'),
+    draft('"C:\\Users"'),
+    # a title out of bounds: too long, empty, or holding a control character (C0, DEL, C1)
+    draft(f"'{'a' * 257}'"),
+    draft("''"),
+    draft("'a\tb'"),
+    draft("'a\x01b'"),
+    draft("'a\x7fb'"),
+    draft("'a\x85b'"),
+    draft("'a\x9fb'"),
     # a title that a shell reads as the end of the command, or as a comment
-    "gh pr create --draft --head build/x --base main --body-file /tmp/pr-body.md --title ;",
-    "gh pr create --draft --head build/x --base main --body-file /tmp/pr-body.md --title #",
+    f"gh pr create --draft --head build/x --base main --body-file {BODY} --title ;",
+    f"gh pr create --draft --head build/x --base main --body-file {BODY} --title #",
+    # a body file outside the coding tool's per-user temporary folder, or out of its shape
+    draft(body="pr-body.md"),
+    draft(body="/tmp/pr-body.md"),
+    draft(body="/srv/pr-body.md"),
+    draft(body="/tmpfs/pr-body.md"),
+    draft(body=f"/tmp/claude-{UID + 1}/x/pr-body.md"),
+    draft(body=f"/tmp/claude-{UID}0/pr-body.md"),
+    draft(body=f"/tmp/claude-{UID}/notes.md"),
+    draft(body=f"/tmp/claude-{UID}/../pr-body.md"),
+    draft(body=f"/tmp/claude-{UID}/./pr-body.md"),
+    draft(body=f"/tmp/claude-{UID}/pr-body/notes.md"),
+    draft(body=f"/tmp/claude-{UID}/pr-body/../../etc/hostname"),
     f"/usr/bin/gh {PULL_REQUEST.removeprefix('gh ')}",
     f"GH_REPO=owner/other {PULL_REQUEST}",
     f"command {PULL_REQUEST}",
@@ -213,21 +333,30 @@ NEAR_MISSES = [
     "gh pr view 12 --json url,state,body",
     "gh pr view 12 --comments",
     f"gh pr view build/pr-flow --json {FIELDS}",
+    f"gh pr view 12345678901234567890 --json {FIELDS}",
     f"{VIEW} --web",
     f"{VIEW} -R owner/other",
+    f"/usr/bin/gh pr view 12 --json {FIELDS}",
     "gh pr checks 12 --watch",
     "gh pr checks build/pr-flow --watch --fail-fast",
     "gh pr checks 012 --json name,bucket,link",
+    "gh pr checks 12\n--watch --fail-fast",
     f"{WATCH} > /tmp/checks.txt",
     f"{CHECKS},description",
-    "gh run list --commit 0123456 --json databaseId,event,headSha,status,conclusion,workflowName",
-    "gh run list --json databaseId,event,headSha,status,conclusion,workflowName",
+    f"gh run list --commit 0123456 --json {RUN_FIELDS}",
+    f"gh run list --commit {'g' * 40} --json {RUN_FIELDS}",
+    f"gh run list --commit {SHA.upper()} --json {RUN_FIELDS}",
+    f"gh run list --json {RUN_FIELDS}",
     "gh api repos/owner/mock/actions/runs/1/rerun -X POST",
     "gh api -X DELETE repos/owner/mock/actions/runs/1",
     f"{RUN_REPOSITORY} --method PATCH",
+    "gh api repos/owner/../actions/runs/1 --jq .head_repository.full_name",
+    "gh api repos/owner/mock/pulls/1/actions/runs/1 --jq .head_repository.full_name",
+    "gh api repos/owner/mock/actions/runs/1/logs --jq .head_repository.full_name",
     "gh api repos/owner/mock/issues/1/comments --jq .head_repository.full_name",
     "gh api graphql -f query='mutation { resolveReviewThread }'",
     "gh run view 12345678901 --log",
+    f"{LOG} | tail -n 80",
     "gh run rerun 12345678901",
     "gh run cancel 12345678901",
     "gh pr merge 12",
@@ -240,10 +369,15 @@ NEAR_MISSES = [
     # /pr-setup's reads
     "gh api --paginate installation/repositories",
     "gh repo view owner/mock --json visibility,description --jq .visibility",
+    "gh repo view owner/.. --json visibility --jq .visibility",
     "gh repo set-default owner/mock/../other",
+    "gh repo set-default owner/..",
+    "gh repo set-default -owner/mock",
     "gh repo set-default --unset",
-    "gh api repos/owner/mock/commits/build/x/check-runs --jq "
-    "'.check_runs[] | select(.app.slug == \"github-actions\") | .name'",
+    "gh repo sync owner/mock",
+    "gh repo fork owner/mock",
+    f"gh api repos/owner/mock/commits/build/x/check-runs --jq {CHECK_RUNS_JQ}",
+    f"gh api repos/owner/mock/pulls/1/commits/main/check-runs --jq {CHECK_RUNS_JQ}",
     "gh repo edit owner/mock --visibility private",
     "gh repo delete owner/mock --yes",
     "gh auth status",
@@ -261,16 +395,20 @@ DENIED = [
     "git push claude",
     "git push claude main",
     "git push claude main:refs/heads/main",
+    "git push claude main:build/x",
     "git push claude build/pr-flow:refs/heads/main",
     "git push claude HEAD:refs/heads/build/pr-flow",
     "git push --force claude build/pr-flow:refs/heads/build/pr-flow",
     f"{PUSH} --force",
     "git push claude +build/pr-flow:refs/heads/build/pr-flow",
     "git push claude :refs/heads/build/pr-flow",
+    "git push claude :build/x",
     "git push claude refs/tags/v1:refs/tags/v1",
     "git push --tags claude",
     "gh",
     "gh --version",
+    "gh version",
+    "gh help",
     "gh auth token",
     "gh issue create",
     "gh release create v1",
@@ -279,6 +417,7 @@ DENIED = [
     "gh codespace list",
     "gh -R owner/mock pr list",
     "gh pr list",
+    "gh pr ls",
     "gh pr merge 12",
     "gh pr ready 12",
     "gh pr comment 12 --body 'Done'",
@@ -286,36 +425,137 @@ DENIED = [
     "gh pr close 12",
     "gh pr edit 12 --title 'Other'",
     "gh pr checkout 12",
-    f"{PULL_REQUEST} -R owner/mock",
-    f"{PULL_REQUEST} --web",
+    f"gh pr new --draft --head build/pr-flow --base main --title {TITLE} --body-file {BODY}",
     "gh pr view 12 --comments",
     "gh pr view 12 --json body",
     "gh pr view 12 --json latestReviews",
+    "gh pr view 12 --web",
+    "gh pr view -w 12",
+    "gh pr view 12 -w",
+    "gh pr view -R owner/other 12",
+    "gh pr view 12 -R owner/other",
+    "gh pr view 12 --repo owner/other",
+    "gh pr checks 12 --web",
+    "gh pr checks -w 12",
+    "gh pr checks 12 -w",
+    "gh pr checks -R owner/other 12",
+    "gh pr checks 12 -R owner/other",
+    "gh pr checks 12 --repo owner/other",
+    "gh run ls",
+    "gh run list -R owner/other",
+    "gh run list --limit 5 -R owner/other",
+    "gh run list --repo owner/other",
+    "gh run view 12345678901 --web",
+    "gh run view -w 12345678901",
+    "gh run view 12345678901 -w",
+    "gh run view -R owner/other 12345678901",
+    "gh run view 12345678901 -R owner/other",
+    "gh run view 12345678901 --repo owner/other",
+    "gh run view 12345678901 --log",
+    "gh run view --log 12345678901",
+    "gh run view 12345678901 --log --job 1",
     "gh run rerun 12345678901",
     "gh run cancel 12345678901",
+    "gh repo ls",
     "gh repo delete owner/mock --yes",
     "gh repo edit owner/mock --visibility private",
+    "gh repo view owner/mock --web",
+    "gh repo view --web owner/mock",
+    "gh repo view -w owner/mock",
+    "gh repo view owner/mock -w",
     "gh api graphql -f query='mutation { resolveReviewThread }'",
+    "gh api --paginate graphql -F owner=owner",
     "gh api -X DELETE repos/owner/mock/actions/runs/1",
+    "gh api repos/owner/mock/actions/runs/1 -X DELETE",
+    "gh api --method PATCH repos/owner/mock/actions/runs/1",
+    "gh api repos/owner/mock/actions/runs/1 --method PATCH",
+    "gh api -f state=success repos/owner/mock/statuses/1",
+    "gh api --raw-field state=success repos/owner/mock/statuses/1",
+    "gh api repos/owner/mock/statuses/1 --raw-field state=success",
+    "gh api -F state=success repos/owner/mock/statuses/1",
+    "gh api repos/owner/mock/statuses/1 -F state=success",
+    "gh api --field state=success repos/owner/mock/statuses/1",
+    "gh api repos/owner/mock/statuses/1 --field state=success",
+    "gh api --input body.json repos/owner/mock/statuses/1",
+    "gh api repos/owner/mock/statuses/1 --input body.json",
+    "gh api -H 'Accept: text/plain' user",
+    "gh api user -H 'Accept: text/plain'",
+    "gh api --header 'Accept: text/plain' user",
+    "gh api user --header 'Accept: text/plain'",
+    "gh api --hostname github.example.com user",
+    "gh api user --hostname github.example.com",
     "gh api repos/owner/mock/issues/1/comments -f body=Done",
+    "gh api repos/owner/mock/issues/7/comments",
+    "gh api repos/owner/mock/pulls/7/comments",
+    "gh api repos/owner/mock/pulls/7/reviews",
+    "gh api repos/owner/mock/comments/1",
 ]
+
+SPACES = re.compile(r"[ \t]+")
 
 
 def matches(rule: str, command: str) -> bool:
-    """Whether a Bash permission rule matches a command, as Claude Code's permission docs describe
-    the wildcard: * stands for any run of characters, spaces included, and a rule with none must
-    equal the command. A rule ending in " *" is also taken to match the command without it, which
-    errs toward a match for the test that no rule meets a command of the flow."""
+    """Whether a Bash rule of .claude/settings.json meets one plain command, as Claude Code
+    2.1.310 matches it: read from its binary and from code.claude.com/docs/en/permissions on
+    2026-10-23 (re-check with claude --version and that page).
+
+    The command's ends are trimmed. A rule with no * must equal it. A rule ending in ":*" is the
+    legacy prefix form: the text before ":*" is literal, a * in it included, and meets the
+    command equal to it or followed by a space. Otherwise * stands for any run of characters, and
+    a rule whose one * is a trailing " *" also meets the command without it. In those two forms
+    runs of spaces or tabs count as one, in the rule and in the command. This models one plain
+    command only: the real matcher also splits a compound command and, for a deny rule, strips
+    wrappers, assignments and a program's path, which no entry here uses
+    (test_each_entry_is_one_plain_command).
+    """
     pattern = rule.removeprefix("Bash(").removesuffix(")")
-    regex = ".*".join(map(re.escape, pattern.split("*")))
-    if pattern.endswith(" *"):
-        regex = f"(?:{regex}|{re.escape(pattern[:-2])})"
+    command = command.strip()
+    if "*" not in pattern:
+        return command == pattern
+    pattern, command = SPACES.sub(" ", pattern), SPACES.sub(" ", command)
+    if pattern.endswith(":*"):
+        prefix = pattern.removesuffix(":*")
+        return command == prefix or command.startswith(f"{prefix} ")
+    if pattern.count("*") == 1 and pattern.endswith(" *"):
+        regex = re.escape(pattern.removesuffix(" *")) + "(?: .*)?"
+    else:
+        regex = ".*".join(map(re.escape, pattern.split("*")))
     return re.fullmatch(regex, command, re.DOTALL) is not None
 
 
+def one_word_changed(command: str) -> list[str]:
+    """The command with each word in turn made x, but the title, which is free text.
+
+    The program becomes a path to it and git push's push becomes send-pack, so that each line is
+    still a push or a gh call for the hook to refuse.
+    """
+    words = shlex.split(command)
+    changed = []
+    for at, word in enumerate(words):
+        if at and words[at - 1] == "--title":
+            continue
+        if at == 0:
+            new = f"/usr/bin/{word}"
+        elif words[:2] == ["git", "push"] and at == 1:
+            new = "send-pack"
+        else:
+            new = "x"
+        changed.append(shlex.join([*words[:at], new, *words[at + 1 :]]))
+    return changed
+
+
+ONE_WORD_CHANGED = list(
+    dict.fromkeys(line for command in FLOW for line in one_word_changed(command))
+)
+
+
 @pytest.fixture(scope="module")
-def deny_rules(repo_root: Path) -> list[str]:
-    settings = json.loads((repo_root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+def settings(repo_root: Path) -> dict:
+    return json.loads((repo_root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="module")
+def deny_rules(settings) -> list[str]:
     return settings["permissions"]["deny"]
 
 
@@ -326,9 +566,12 @@ def hook_path(repo_root: Path) -> Path:
 
 @pytest.fixture(scope="module")
 def hook(hook_path):
-    spec = importlib.util.spec_from_file_location("no_push", hook_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    # Compiled from the source each time, with no bytecode written or read: a cached file is
+    # checked only by the source's size and time to the second, so a quick edit of the same size
+    # could run the old code.
+    module = types.ModuleType("no_push")
+    module.__file__ = str(hook_path)
+    exec(compile(hook_path.read_text(encoding="utf-8"), str(hook_path), "exec"), module.__dict__)
     return module
 
 
@@ -347,9 +590,66 @@ def test_a_command_of_the_pr_flow_is_let_through(hook, command):
     assert hook.refused(command) is None
 
 
-@pytest.mark.parametrize("command", list(dict.fromkeys(NEAR_MISSES + DENIED)))
+@pytest.mark.parametrize("command", NEAR_MISSES)
 def test_a_near_miss_of_the_pr_flow_is_refused(hook, command):
+    assert hook.in_flow(command) is False
     assert hook.refused(command) is not None
+
+
+@pytest.mark.parametrize("command", ONE_WORD_CHANGED)
+def test_a_command_of_the_pr_flow_with_one_word_changed_is_refused(hook, command):
+    assert hook.in_flow(command) is False
+    assert hook.refused(command) is not None
+
+
+@pytest.mark.parametrize(
+    "title", ["", "a" * 257, "a\tb", "a\nb", "a\x01b", "a\x7fb", "a\x85b", "a\x9fb"]
+)
+def test_a_title_out_of_bounds_is_outside_the_flow(hook, title):
+    words = [
+        *("gh", "pr", "create", "--draft", "--head", "build/x", "--base", "main"),
+        *("--title", title, "--body-file", BODY),
+    ]
+    assert hook.draft_pull_request(words) is False
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "gh pr view 'a",
+        'gh pr view "a',
+        "gh pr view 'a'\"b",
+        *(f"gh pr view 'a{char}b'" for char in "\t\n\r\x01\x1f\x7f\x80\x85\x9f"),
+    ],
+)
+def test_a_quote_left_open_or_a_control_character_is_not_a_plain_line(hook, line):
+    # The splitter refuses an open quote, and the shapes a control character, on their own;
+    # plain_line refuses both before them.
+    assert hook.plain_line(line) is False
+
+
+def test_single_quotes_hold_text_and_double_quotes_a_glob_brace_or_tilde(hook):
+    assert hook.plain_line("x '$`\\*?[]{}~\"' \"*?[]{}~'\" '\u00a0'") is True
+
+
+def test_a_fault_in_the_allowance_refuses_the_call(hook, monkeypatch):
+    def fault(command):
+        raise RuntimeError(command)
+
+    monkeypatch.setattr(hook, "in_flow", fault)
+    assert hook.refused(PUSH) is not None
+
+
+@pytest.mark.parametrize("command", DENIED)
+def test_the_hook_refuses_a_spelling_that_a_deny_rule_meets(hook, command):
+    assert hook.refused(command) is not None
+
+
+@pytest.mark.parametrize("command", FLOW + DENIED)
+def test_each_entry_is_one_plain_command(hook, command):
+    words = command.split(" ")
+    assert words[:2] == ["git", "push"] or words[0] == "gh"
+    assert hook.lone_command(command) is not None
 
 
 @pytest.mark.parametrize("command", FLOW)
@@ -360,6 +660,32 @@ def test_no_deny_rule_stops_a_command_of_the_pr_flow(deny_rules, command):
 @pytest.mark.parametrize("command", DENIED)
 def test_a_plain_spelling_outside_the_pr_flow_meets_a_deny_rule(deny_rules, command):
     assert any(matches(rule, command) for rule in deny_rules)
+
+
+def test_each_deny_rule_meets_a_command_that_the_hook_refuses(hook, deny_rules):
+    instances = {
+        rule: rule.removeprefix("Bash(").removesuffix(")").replace("*", "x") for rule in deny_rules
+    }
+    assert [rule for rule, command in instances.items() if not matches(rule, command)] == []
+    assert [rule for rule, command in instances.items() if hook.refused(command) is None] == []
+
+
+def test_no_deny_rule_mixes_a_wildcard_with_the_prefix_form(deny_rules):
+    # Claude Code reads such a rule as a literal prefix, with its * not expanded.
+    patterns = [rule.removeprefix("Bash(").removesuffix(")") for rule in deny_rules]
+    assert [pattern for pattern in patterns if pattern.endswith(":*") and "*" in pattern[:-2]] == []
+
+
+def test_the_hook_runs_before_each_bash_and_monitor_call(settings):
+    matchers = [
+        entry["matcher"]
+        for entry in settings["hooks"]["PreToolUse"]
+        for handler in entry["hooks"]
+        if handler["type"] == "command"
+        and '"$CLAUDE_PROJECT_DIR/.claude/hooks/no-push.py"' in handler["command"]
+        and 'exec python3 -I "$f"' in handler["command"]
+    ]
+    assert matchers == ["Bash|Monitor"]
 
 
 def run_hook(hook_path: Path, stdin: str) -> subprocess.CompletedProcess:

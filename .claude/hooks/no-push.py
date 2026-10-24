@@ -5,21 +5,24 @@ A PreToolUse hook on the Bash and Monitor tools, wired in .claude/settings.json.
 A build reaches main as a pull request (owner decision 11; CLAUDE.md, Git): the
 user-level /pr-open pushes build/<topic> to the claude remote and opens a draft
 pull request into main, /pr-watch reads its checks, and /pr-setup, which the
-owner runs once, reads the repository. Their commands, in FLOW below, are the
-only pushes and gh calls let through, and each only as the whole command line,
-word for word: no other remote, branch, refspec or option, no wrapper and no
-path before the program, and no second command, redirection, comment, variable,
-substitution, backslash or line break. Every other push and gh call is refused.
+owner runs once, reads the repository and sets gh's default repository. Their
+commands, in FLOW below, are the only pushes and gh calls let through, and each
+only as the whole command line, word for word: no other remote, branch, refspec
+or option, no wrapper and no path before the program, no second command,
+redirection, comment, line break or control character, and nothing a shell
+would expand outside quotes. A title in single quotes is text, as bash reads it;
+in double quotes it holds no $, ` or \\. Every other push and gh call is refused.
 
-The deny rules beside this hook refuse the plain spellings that the flow never
-uses, and miss other spellings such as git -C <dir> push. This file splits the
-command into words much as a shell does, so it also finds the other spellings:
-an option before the subcommand (git -C <dir> push), a path before the program
-(/usr/bin/git push), git's dashed programs (git-push), the pushes of git
-subtree and git lfs, gh after any other word (flock <file> gh pr create), a
-command handed to another shell (bash -c "git push", su -c, script -c,
-env -S) and a command substitution. tests/unit/test_no_push_hook.py holds the
-spellings, the flow's commands and a near miss of each.
+The deny rules beside this hook refuse the plain spellings of many pushes and
+gh calls that the flow never makes, not all of them, and miss other spellings
+such as git -C <dir> push. This file splits the command into words much as a
+shell does, so it also finds the other spellings: an option before the
+subcommand (git -C <dir> push), a path before the program (/usr/bin/git push),
+git's dashed programs (git-push), the pushes of git subtree and git lfs, gh
+after any other word (flock <file> gh pr create), a command handed to another
+shell (bash -c "git push", su -c, script -c, env -S) and a command
+substitution. tests/unit/test_no_push_hook.py holds the spellings, the flow's
+commands and a near miss of each.
 
 It reads text, so it guards against a slip and is not a wall. A push made from
 inside a script, a make recipe or another program is not seen here. Neither is
@@ -29,8 +32,16 @@ a here-string, or one that stands between two here-documents whose texts each
 hold an apostrophe. The flow's own scripts call git and gh inside, unseen here:
 the preflight fetches from the claude remote and reads the repository's
 visibility, and two scripts list pull requests and review threads. Nor does it
-read git's configuration, which decides where the claude remote points. The
-rulesets on GitHub are the boundary for what reaches the repository.
+read git's configuration, which decides where the claude remote points and can
+also add refs to a push: push.followTags sends annotated tags along with the
+build. gh's own resolution, GH_REPO or the default that set-default records,
+decides which repository a gh call reaches. A shell function or alias named git
+or gh, from the profile the Bash tool sources, would run in place of the
+program. The title, the body file, the pull request's number and the run's id
+are taken on the skill's word: nothing here ties them to what /pr-open's
+preflight checked or to the App's own pull request. Once the owner has imported
+the rulesets /pr-setup writes, they are the boundary for what reaches the
+repository.
 
 It errs the other way too: text that only mentions a push or a gh command can
 be refused where a shell would not run it, as in a here-document, a comment, a
@@ -38,7 +49,8 @@ command substitution inside single quotes, or an argument of echo or man. The
 message says what to do then.
 
 Exit status 2 refuses the call, and the message on standard error goes back to
-the model. A fault of this file's own lets the call through.
+the model. A fault of this file's own lets the call through, but for a fault in
+the PR flow's allowance, which refuses a call already found to push or call gh.
 """
 
 from __future__ import annotations
@@ -183,21 +195,30 @@ SHAPES = (
         '.check_runs[] | select(.app.slug == "github-actions") | .name',
     ),
 )
-# A pull request's title: up to GitHub's 256 characters, with no control character and nothing a
-# shell may expand outside quotes ($, `, \, a glob, a brace or a tilde), quoted or not.
-TITLE = re.compile(r"[^\x00-\x1f\x7f$`\\*?\[\]{}~]{1,256}")
-# The body file /pr-open's preflight writes: a pr-body file under /tmp, with no . or .. folder.
-BODY_FILE = re.compile(r"/tmp(?:/(?!\.\.?/)[A-Za-z0-9._-]+)*/pr-body[A-Za-z0-9._-]*")
-# What a shell may expand, join or end a command at, which the shapes never hold: a control
-# character, a line break among them, a variable or substitution, and a backslash.
-UNREAD = re.compile(r"[\x00-\x1f\x7f$`\\]")
+# A control character: C0, DEL and C1. A line break, a carriage return and a tab are among them.
+CONTROL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+# What bash expands inside double quotes: a variable or substitution, a backtick and a backslash.
+EXPANDED_IN_DOUBLE_QUOTES = frozenset("$`\\")
+# What bash expands outside quotes: those, and a glob, a brace or a tilde.
+EXPANDED_OUTSIDE_QUOTES = EXPANDED_IN_DOUBLE_QUOTES | frozenset("*?[]{}~")
+# A pull request's title: 1 to GitHub's 256 characters, with no control character. plain_line
+# refuses whatever a shell would expand in it, so a title in single quotes may hold anything else.
+TITLE = re.compile(r"[^\x00-\x1f\x7f-\x9f]{1,256}")
+# The body file /pr-open's preflight writes to the session scratchpad: a pr-body file under the
+# coding tool's per-user temporary folder, /tmp/claude-<uid>, with no . or .. folder. That folder
+# is the user's own, mode 0700, while /tmp itself is open to every account to write in.
+BODY_FILE = re.compile(
+    rf"/tmp/claude-{os.getuid()}(?:/(?!\.\.?/)[A-Za-z0-9._-]+)*/pr-body[A-Za-z0-9._-]*"
+)
 
 MESSAGE = (
     "Refused: this command would run `{found}`. In this repository only the PR flow pushes or "
-    "calls gh (CLAUDE.md, Git; owner decision 11): the commands of the user-level /pr-open, "
-    "/pr-watch and /pr-setup, each alone on the command line and spelled as the skill spells "
-    "it, such as `git push claude build/<topic>:refs/heads/build/<topic>`. Do not respell a "
-    "refused one: stop at the local commit and say what is ready to push. "
+    "calls gh (CLAUDE.md, Git; owner decision 11). A command of the user-level /pr-open, "
+    "/pr-watch or /pr-setup passes only alone on the command line and spelled as its skill "
+    "spells it, such as `git push claude build/<topic>:refs/heads/build/<topic>`. Never respell "
+    "a refused command to get past this. If it was spelled so and is still refused, stop and "
+    "say what is committed but not pushed, or, if /pr-open's push already went out, that the "
+    "build is pushed and which command was refused. "
     "If the command only mentions these words, keep them off the command line: write the text "
     "to a file outside the repository with the Write tool, not with a here-document, and pass "
     "the file (git commit -F <file>), or use the search tool to look for them."
@@ -326,12 +347,12 @@ def build_push(words: list[str]) -> bool:
     """git push claude build/<name>:refs/heads/build/<name>, /pr-open's push.
 
     The destination is spelled out and is the source's own name, so no configuration of the
-    remote picks where the push lands.
+    remote picks where the branch lands, though push.followTags can still send tags with it.
     """
     if len(words) != 4 or words[:3] != ["git", "push", "claude"]:
         return False
-    source, colon, destination = words[3].partition(":")
-    return bool(colon) and build_branch(source) and destination == f"refs/heads/{source}"
+    source, _, destination = words[3].partition(":")
+    return build_branch(source) and destination == f"refs/heads/{source}"
 
 
 PULL_REQUEST_OPTIONS = {
@@ -379,13 +400,40 @@ def one_of_the_shapes(words: list[str]) -> bool:
 FLOW = (build_push, draft_pull_request, one_of_the_shapes)
 
 
+def plain_line(command: str) -> bool:
+    """Whether a shell takes every character of a command line as written, quotes aside.
+
+    False for a control character anywhere, in quotes or not; for $, ` or \\ inside double
+    quotes, where bash expands them; for those and a glob, brace or tilde character outside
+    quotes; and for a quote left open. Inside single quotes everything else is text, as in bash,
+    and so is a ' inside double quotes or a " inside single quotes.
+    """
+    if CONTROL.search(command):
+        return False
+    quote = ""
+    for char in command:
+        if quote == "'":
+            if char == "'":
+                quote = ""
+        elif quote == '"':
+            if char == '"':
+                quote = ""
+            elif char in EXPANDED_IN_DOUBLE_QUOTES:
+                return False
+        elif char in "'\"":
+            quote = char
+        elif char in EXPANDED_OUTSIDE_QUOTES:
+            return False
+    return not quote
+
+
 def lone_command(command: str) -> list[str] | None:
     """The words of a command line that is one simple command a shell runs as written, or None.
 
     None when the line holds an operator (a second command, a pipe, a redirection, a background
-    job), a comment, or something a shell would expand or join (UNREAD).
+    job), a comment, a control character, or something a shell would expand (plain_line).
     """
-    if UNREAD.search(command):
+    if not plain_line(command):
         return None
     try:
         words = words_of(command)
@@ -404,9 +452,19 @@ def in_flow(command: str) -> bool:
 
 
 def refused(command: str) -> str | None:
-    """What makes a command a push or a gh call outside the PR flow, or None when nothing does."""
+    """What makes a command a push or a gh call outside the PR flow, or None when nothing does.
+
+    A fault in reading the flow's commands counts as outside the flow, so the call is refused
+    rather than let through by main()'s handling of a fault.
+    """
     found = found_in(command)
-    return None if found is None or in_flow(command) else found
+    if found is None:
+        return None
+    try:
+        allowed = in_flow(command)
+    except Exception:
+        allowed = False
+    return None if allowed else found
 
 
 def found_in(command: str, depth: int = 0) -> str | None:

@@ -2,7 +2,7 @@
 
 The README says that Claude Code ran the build of this mock end to end. This note says what
 this repository carries for Claude Code and how the build was driven. It describes the setup
-as of 2026-10-21.
+as of 2026-10-23.
 
 ## In short
 
@@ -28,9 +28,9 @@ A clone carries its own configuration, placed by the same rule.
 | `.claude/rules/package.md` | The rules for the package, loaded only when Claude Code reads a file they concern. |
 | `.claude/merge-gate.sh` | What `/land` and `/promote` run on a branch and on its merge: `make check-all`, the gate and then the suite on Python 3.13 and 3.14. |
 | `.claude/check.sh` | What "green" means for the Stop-hook gate: `make check`, the gate CI runs. It refuses first while another `make` or `pytest` run is going in the checkout, and while a file that is not ignored is untracked, because the hygiene tests scan only the files git tracks. |
-| `.claude/settings.json` | Deny rules for the plain spellings of the pushes and `gh` calls that the PR flow of owner decision 11 never makes: another remote, main, a force, a delete, a tag, and every `gh` command but the flow's. No pattern can name everything but the flow's own commands, so the rules are a floor and `no-push.py` decides. Two hooks: `no-push.py`, below, and `.claude/hooks/ruff-format.sh`, which formats a Python file after each edit with the checkout's locked ruff. |
-| `.claude/hooks/no-push.py` | Reads each shell command and refuses every push and every `gh` call except the PR flow's: the push of `build/<topic>` to the `claude` remote and the draft pull request into main that the user-level `/pr-open` makes, and the read-only `gh` calls of `/pr-watch` and `/pr-setup`, each only word for word and alone on the command line. It finds the spellings the deny rules miss, such as `git -C <dir> push`. `tests/unit/test_no_push_hook.py` holds the spellings, each command of the flow and near misses of each, and checks that no deny rule stops the flow. |
-| `.claude/skills/` | Five skills, below. Merging is left to the user-level `/land` and `/promote`. |
+| `.claude/settings.json` | Deny rules, a floor for when the hook does not run, for the plain spellings of what the PR flow of owner decision 11 never does: a push to `origin`, a URL or a path; main as a destination; a force, a delete, `--tags` or `--all`; a tag given as a ref; the `gh` command groups the flow never uses; another repository or `--web` in the groups it does use; `gh api` writes, `graphql`, and the comment, review and issue endpoints; and a run log read other than `--log-failed`. Every other push or `gh` call is the hook's alone, such as another branch on `claude`, a tag by name, the options of `gh pr create` (its title is free text, so no pattern can scope them) and `gh pr view <n>` without `--json`. No rule ends in `:*` while holding another `*`, since Claude Code reads that as a literal prefix. Two hooks: `no-push.py`, below, and `.claude/hooks/ruff-format.sh`, which formats a Python file after each edit with the checkout's locked ruff. |
+| `.claude/hooks/no-push.py` | Reads each shell command and, as a guard against a slip, refuses every push and `gh` call it can read on the command line but the PR flow's own commands. Those pass only alone on the line and word for word as the user-level skills spell them: the push of `build/<topic>` to the `claude` remote; `gh pr create` with exactly `--draft`, `--head build/<topic>`, `--base main`, `--title` and `--body-file` with a `pr-body` file under the coding tool's per-user temporary folder, the title any text inside single quotes, or inside double quotes without `$`, a backtick or a backslash; and the `gh` calls of `/pr-watch` and `/pr-setup`: reads, but for `/pr-setup`'s `gh repo set-default`, which writes the checkout's git config. The title, the body file, a PR number and a run id are taken on the skill's word. It finds the spellings the deny rules miss, such as `git -C <dir> push`. It does not see a push from a script, an alias or a variable, or one that git or `gh` configuration shapes (`push.followTags` adds tags; `GH_REPO` or `set-default` picks the repository). `tests/unit/test_no_push_hook.py` holds the spellings, each command of the flow and a near miss of each and of each word. It checks the hook's wiring and, on a model of Claude Code 2.1.310's rule matcher, that no deny rule stops the flow and that every deny rule is live. |
+| `.claude/skills/` | Five skills, below. Landing is the user-level `/land`'s; main moves by the owner's `/promote` until the PR flow of owner decision 11 is set up, and then through pull requests. |
 
 | Skill | What it does |
 |---|---|
@@ -93,8 +93,11 @@ the check script's refusal of untracked files and the push guard's tests, and th
 
 A third session, on 2026-10-18, replaced the project's merge skill. `/init` had made it one
 only a person could start, following its own advice for skills with side effects. So every
-build stopped at each branch. Branches now land in a build branch through the user-level
-`/land`, and main moves only through `/promote`, which the owner starts.
+build stopped at each branch. Since then, branches land in a build branch through the
+user-level `/land`, and main has moved only through `/promote`, which the owner starts.
+Owner decision 11, of 2026-10-19, sends builds to main as pull requests instead, once the
+owner has set that flow up: the user-level `/pr-open` pushes a build and opens a draft pull
+request, `/pr-watch` tends it, and the owner merges it on GitHub.
 
 ## Check it
 

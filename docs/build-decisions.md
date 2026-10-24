@@ -71,7 +71,8 @@ hand-written data set in `tests/fixtures/mini`.
     main moves as before, through the owner's `/promote` and the owner's own push of main.
     Locally, `.claude/hooks/no-push.py` refuses the other pushes and `gh` calls it can read on
     the command line, and the deny rules in `.claude/settings.json` refuse many of their plain
-    spellings. They guard against a slip; the rulesets are the boundary.
+    spellings. They guard against a slip; on GitHub, the rulesets are the boundary for main,
+    the tags and the branches Claude may write.
 
 ---
 

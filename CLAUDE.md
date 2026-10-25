@@ -63,7 +63,10 @@ record leaves open is settled in its module's docstring, under "Decided here" (r
 ## Hygiene
 
 - No real company, client or person in code, data, docs, branch names or commit messages
-  (design 2.8). Write "the owner". Technology vendors and the coding tool may be named.
+  (design 2.8). Write "the owner". Technology vendors and the coding tool may be named. The
+  notices inside `static/vendor/` are the one exception.
+- `static/vendor/` holds the two browser libraries 2.8 allows, unchanged. Add, edit or upgrade
+  a file there only when the owner asks; `tests/unit/test_hygiene_vendor.py` checks their bytes.
 - Every tracked file is scanned, this one and `.claude/` included: no email address outside
   `example.com`, no key-shaped string, no symbolic link, no `.env` file. So never paste the
   commit trailer lines or an SSH remote address into a file.

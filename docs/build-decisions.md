@@ -961,7 +961,10 @@ the design names them or the code needs them. The repository's git identity stay
 configured. Commits keep the coding tool's co-author trailer line; the session trailer line
 was dropped on 2026-10-21 (owner decision 7). No hygiene
 test searches for vendor names; the tests check instead that mock emails use `example.com` and
-that no key-shaped strings or `.env` files are committed.
+that no key-shaped strings or `.env` files are committed. The copyright and licence notices
+inside the two browser libraries that 2.8 allows under `static/vendor/` are kept as their
+licences require (2.8, amended by the owner on 2026-10-21: the rule governs the mock's data and
+processing, not licensing).
 
 **Basis.** 2.8 (quoted above). Opening paragraph: "mock data, a mock workflow, no real
 employer and no real people". 2.3: "All names, emails and companies are invented; use the
@@ -1801,9 +1804,10 @@ which settles the findings of a final review of the finished main and owns no fi
    through `/pr-open` (owner decision 11). A branch also passes `make check-all` before it is
    merged, and main passes it after the last merge of each stage: that is where the suite runs
    on Python 3.13 and 3.14 during this build (Q38).
-8. **Hygiene** (2.8, Q28): nothing from outside the repository folder; no real company, client
-   or person in code, data, docs, branch names or commit messages; no secrets, keys or `.env`
-   files; invented emails use `example.com`.
+8. **Hygiene** (2.8, Q28): nothing from outside the repository folder but the two browser
+   libraries 2.8 allows under `static/vendor/`; no real company, client or person in code, data,
+   docs, branch names or commit messages, outside those libraries' notices; no secrets, keys or
+   `.env` files; invented emails use `example.com`.
 9. **A defect in a module merged in an earlier stage is fixed by the branch that finds it.**
    The owner branch is finished by then, so nobody else will. Fix it in a commit of its own,
    with a test that fails without the fix, and report the module and the defect for the merge

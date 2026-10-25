@@ -35,7 +35,7 @@ commands from above, any guidance, and this brief:
 - Read the whole of a touched file where the diff alone does not show the effect.
 - The lenses of this repository:
   - `DESIGN.md` is the design and is firm. A change that departs from it is a finding.
-  - `docs/build-decisions.md` settles owner decisions 1 to 10, Q01 to Q40 and S01 to S16,
+  - `docs/build-decisions.md` settles owner decisions 1 to 11, Q01 to Q40 and S01 to S16,
     and holds the rules for every branch. A change that re-decides an entry is a finding:
     cite it.
   - `.claude/rules/package.md`: the rules for the package.

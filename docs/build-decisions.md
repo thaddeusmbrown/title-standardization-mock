@@ -27,7 +27,9 @@ hand-written data set in `tests/fixtures/mini`.
 1. **Local only.** Nothing is pushed and there are no hosted pull requests. Each component is
    built on its own feature branch and merged into main locally with a merge commit (`--no-ff`)
    after the check command passes on the branch and again on the merge result. A CI workflow
-   file is committed and takes effect only when the owner pushes.
+   file is committed and takes effect only when the owner pushes. (Amended by decision 11 for
+   the work after the build: once the owner has set up its pull-request flow, a build reaches
+   main as a pull request.)
 2. **One live recording.** The build makes one live run on `claude-haiku-4-5` and commits the
    recording. The program reads the key only from the `ANTHROPIC_API_KEY` environment variable,
    as the design says, and never from a file; on the build machine the variable is set from a
@@ -55,6 +57,22 @@ hand-written data set in `tests/fixtures/mini`.
     An observation from the live run is kept as a note under `docs/`. This was decided during
     stage 5, and it decides wherever an entry below asks more of the README ("What the README
     must say").
+11. **Builds reach main as pull requests** (decided by the owner on 2026-10-19, for the work
+    after the build, once the repository was public). Features still land in a build branch,
+    `build/<topic>`, through the local merge gate. Claude then pushes the build only as that
+    branch, only to the `claude` remote, which the user-level `/pr-setup` adds beside the
+    owner's `origin`, and only through the user-level `/pr-open`, after its preflight has
+    checked everything the push would publish. `/pr-open` opens the pull request into main as a
+    draft, and CI runs `make check` on it. Only the owner marks it ready and merges it, on
+    GitHub. Claude never pushes main, never pushes to `origin` and never pushes a tag. Once the
+    owner has imported the three rulesets that `/pr-setup` writes, they hold this on GitHub:
+    main changes only through a merged pull request, Claude can write only `build/*` branches,
+    and tags are the owner's. Until then, and until `/pr-setup` has added the `claude` remote,
+    main moves as before, through the owner's `/promote` and the owner's own push of main.
+    Locally, `.claude/hooks/no-push.py` refuses the other pushes and `gh` calls it can read on
+    the command line, and the deny rules in `.claude/settings.json` refuse many of their plain
+    spellings. They guard against a slip; on GitHub, the rulesets are the boundary for main,
+    the tags and the branches Claude may write.
 
 ---
 
@@ -1114,16 +1132,28 @@ reported ID is not known before the call. Owner decision 8.
 **Open point.** The design has no delivery section. It says nothing about pushing, pull
 requests or merge style.
 
-**Decision.** A local gate; nothing is pushed and the hosting service's command-line tool is
-never invoked. One feature branch per component; rebase on main; run the single check command
-(lint, unit and integration tests) on the branch and again on the merge result in a separate
-integration worktree; merge with `--no-ff`; merges are serialized; never force-push and never
-rewrite main. A CI workflow that runs the same command is committed; it takes effect only once
-the owner pushes.
+**Decision.** During the build, a local gate; nothing is pushed and the hosting service's
+command-line tool is never invoked. One feature branch per component; rebase on main; run the
+single check command (lint, unit and integration tests) on the branch and again on the merge
+result in a separate integration worktree; merge with `--no-ff`; merges are serialized; never
+force-push and never rewrite main. A CI workflow that runs the same command is committed; it
+takes effect only once the owner pushes.
+
+After the build, owner decision 11: once the owner has set up its pull-request flow, a build
+reaches main only as a pull request. Its features land in `build/<topic>` through the same
+local gate. Claude pushes only `build/<topic>` branches, only to the `claude` remote and only
+through the user-level `/pr-open` after its preflight passes, and opens the pull request as a
+draft; the committed CI runs `make check` on Python 3.12, 3.13 and 3.14 for it. Only the owner
+merges, on GitHub, and Claude never pushes main. The command-line tool runs only as
+`/pr-open`, `/pr-watch` and `/pr-setup` run it. Never force-push and never rewrite main still
+hold.
 
 **Basis.** The design is silent. The build was asked for feature branches with unit and
 integration tests when merging components to main, which local merges behind tests meet;
-pushing publishes the repository and is the owner's step. Owner decision 1.
+pushing publishes the repository and is the owner's step. Owner decision 1. Owner decision
+11, made once the repository was public, kept main the owner's: until its pull-request flow
+is set up the owner promotes and pushes main, and afterwards Claude's work reaches it only
+through a pull request that the owner merges.
 
 ### Q35. Counts and reference data in the mock data set
 
@@ -1767,7 +1797,8 @@ which settles the findings of a final review of the finished main and owns no fi
 6. **Randomness and order** go through `titlestd/seeding.py` (S04, S15). Sort before letting a
    set reach an output.
 7. **The gate is `make check`** (S14), on the branch and again on the merge result; merge
-   with `--no-ff`; nothing is pushed (Q34). A branch also passes `make check-all` before it is
+   with `--no-ff`; nothing is pushed during the build (Q34), and after it only a build branch,
+   through `/pr-open` (owner decision 11). A branch also passes `make check-all` before it is
    merged, and main passes it after the last merge of each stage: that is where the suite runs
    on Python 3.13 and 3.14 during this build (Q38).
 8. **Hygiene** (2.8, Q28): nothing from outside the repository folder; no real company, client

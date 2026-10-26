@@ -28,13 +28,17 @@ Decided here, where the record is silent:
   read-only.
 - The counts are held to the run itself (RunResult), so a change to the
   schema of the state file shows here (S08). Where RunResult holds no such
-  count (the kinds and routes of the answers, the occasions of people's
-  decisions, the stage a title was learned at), each set of counts that
-  splits a total is held to add up to it, which a count that read a wrong
-  value would break.
+  count, a set of counts that splits a total is held to add up to it, which
+  a count that read a wrong value would break: the LLM's answers by kind
+  and by route, the agent's by kind and by route, the titles of Wave 2 by
+  path, people's decisions by occasion, the close's by answer, the titles
+  matched by stage, and the look-up entries and the examples by the stage
+  they joined at. A count no such sum or RunResult holds is shown only on
+  the pages the tests walk.
 - "A run that did not finish" is a copy of the state with the tables that
   store.save_run writes at the end of a run emptied: what a run that stopped
-  after its last scoring leaves.
+  after its last scoring leaves. Every count that reads one of those tables
+  shows explorer.NOT_YET, and every other count is the finished run's.
 """
 
 from __future__ import annotations
@@ -69,15 +73,12 @@ HOSTILE = (
 )
 COUNT_ROW = re.compile(r'<tr><th scope="row">(.*?)</th><td>(.*?)</td></tr>')
 LATER_STAGES = (Stage.WAVE1, Stage.WAVE2, Stage.CLOSE)
-# What store.save_run writes in one step at the end of a run.
-WRITTEN_AT_THE_END = (
-    "decisions",
-    "audits",
-    "audit_samples",
-    "golden_scores",
-    "review_queue",
-    "answer_labels",
-)
+# The facts of each page, by address.
+FACTS = {
+    "/": explorer.OVERVIEW_FACTS,
+    **{f"/stage/{stage.slug}": stage.facts for stage in explorer.STAGES},
+    **{f"/component/{component.slug}": component.facts for component in explorer.COMPONENTS},
+}
 
 
 @pytest.fixture(scope="module")
@@ -340,14 +341,13 @@ def test_the_counts_that_split_a_total_add_up_to_it(request, data):
     app = request.getfixturevalue("app" if data == "mini" else "default_app")
     fallback = numbers(app, "/component/llm-fallback")
     answers = sum(fallback[f"LLM answers in {stage.value}"] for stage in LATER_STAGES)
-    kinds = ("Answered with a number", "Answered no match", "Answered insufficient data")
-    assert answers == sum(fallback[kind] for kind in (*kinds, "No usable answer"))
+    kinds = ("with a number", "of no match", "of insufficient data", "not usable")
+    assert answers == sum(fallback[f"LLM answers {kind}"] for kind in kinds)
 
     agent = numbers(app, "/component/agent")
     reviews = agent["Reviews in Wave 1"] + agent["Reviews in Wave 2"]
-    assert (
-        reviews == agent["Answered with a number"] + agent["Escalated"] + agent["No usable answer"]
-    )
+    kinds = ("with a number", "that escalate", "not usable")
+    assert reviews == sum(agent[f"Agent answers {kind}"] for kind in kinds)
 
     rules = numbers(app, "/component/rules")
     assert answers == sum(
@@ -374,9 +374,27 @@ def test_the_counts_that_split_a_total_add_up_to_it(request, data):
         close[answer] for answer in ("Given a role", "Could not decide", "No suitable role")
     )
 
+    wave2 = numbers(app, "/stage/wave-2")
+    assert wave2["Titles scored by the models"] == sum(
+        wave2[route]
+        for route in (
+            "On the models-agree path",
+            "On the agent-settled path",
+            "Scored and sent to a person",
+        )
+    )
+
+    state = numbers(app, "/component/state-file")
+    matched = numbers(app, "/component/ml-match")
+    assert state["Rows in scorings"] == sum(
+        matched[f"Titles matched in {stage.value}"] for stage in LATER_STAGES
+    )
     lookup, learning = numbers(app, "/component/look-up"), numbers(app, "/component/learning")
-    assert lookup["Entries at the end of the run"] == lookup["Entries from the seed look-up"] + sum(
+    assert lookup["Entries in the look-up table"] == lookup["Entries from the seed look-up"] + sum(
         learning[f"Look-up entries learned in {stage.value}"] for stage in LATER_STAGES
+    )
+    assert state["Rows in examples"] == lookup["Examples from the seed look-up"] + sum(
+        learning[f"Examples learned in {stage.value}"] for stage in LATER_STAGES
     )
 
 
@@ -415,18 +433,27 @@ def test_a_run_that_did_not_finish_is_shown_as_it_stood(run, tmp_path):
     shutil.copyfile(run[1], copy)
     connection = sqlite3.connect(copy)
     with connection:
-        for table in WRITTEN_AT_THE_END:
+        for table in explorer.WRITTEN_AT_THE_END:
             connection.execute(f"DELETE FROM {table}")
     connection.close()
-    app = explorer.make_app(copy)
+    finished, stopped = explorer.make_app(run[1]), explorer.make_app(copy)
+    not_yet = 0
     for path in explorer.PAGES:
-        status, _, body = call(app, path)
+        status, _, body = call(stopped, path)
         assert status == "200 OK", path
         assert explorer._e(explorer.UNFINISHED_HEADING).encode() in body, path
         assert explorer._e(explorer.FINISHED_HEADING).encode() not in body, path
+        shown, before = counts(body), counts(call(finished, path)[2])
+        for fact in FACTS[path]:
+            if explorer.written_at_the_end(fact):
+                assert shown[fact.label] == explorer.NOT_YET, (path, fact.label)
+                not_yet += 1
+            else:  # what the run recorded before its end, as the finished run shows it
+                assert shown[fact.label] == before[fact.label], (path, fact.label)
+    assert not_yet > 0
     # The model answers carry their own labels before the run writes the answer labels.
-    assert counts(call(app, "/")[2])["Answers came from"] == "stand-ins"
-    assert numbers(app, "/component/llm-fallback")["LLM answers in Wave 2"] > 0
+    assert counts(call(stopped, "/")[2])["Answers came from"] == "stand-ins"
+    assert numbers(stopped, "/stage/wave-2")["Audit labels"] > 0
 
 
 # --- Hostile text ------------------------------------------------------------------
@@ -503,7 +530,7 @@ def test_the_hostile_check_sees_a_page_that_shows_a_value_of_the_state(run, tmp_
     # Positive control for the test above: let one count show a stored label instead.
     copy = hostile_copy(run[1], tmp_path / "state", add_row=True)
 
-    def shows_a_label(connection, fact):
+    def shows_a_label(connection, fact, *, finished):
         query = "SELECT label FROM answer_labels WHERE label LIKE ?"
         return connection.execute(query, (f"%{MARKER}%",)).fetchone()[0]
 

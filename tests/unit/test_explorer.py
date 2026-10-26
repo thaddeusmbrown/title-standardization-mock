@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import ast
 import hashlib
+import inspect
 import re
 import socket
 import sqlite3
@@ -192,6 +193,8 @@ def test_the_flowcharts_draw_none_of_the_diagram_rules_not_to_copy():
     wave1, wave2 = explorer.WAVE1_FLOWCHART, explorer.WAVE2_FLOWCHART
     assert "ml_match[ML match]" in wave1  # the ML match runs from Wave 1 on
     assert "at most 2 wrong of 60" in wave2 and "13 or more wrong of 60" in wave2
+    # A path of 60 titles or fewer is labeled in full and gets no status (2.4).
+    assert "|60 titles or fewer, all audited| nostatus([The path gets no status])" in wave2
     # A look-up hit goes to no model and not through the rules.
     assert "lookup -->|hit, no model| hit(" in wave1 and "hit -->" not in wave1
     # "No suitable role" goes to the catalog owner, never to a generic role.
@@ -228,7 +231,9 @@ def test_every_quoted_passage_is_word_for_word_in_design(design_words: str):
     for component in explorer.COMPONENTS:
         passages += component.job
     for stage in explorer.STAGES:
-        passages += [stage.design, *stage.left_out]
+        passages.append(stage.design)
+        if stage.left_out:
+            passages.append(stage.left_out)
     for passage in passages:
         assert collapsed(passage) in design_words, passage
 
@@ -248,6 +253,36 @@ def test_a_component_quotes_only_the_sections_it_cites(component, design_section
     cited = [design_sections[number] for number, _ in component.design]
     for passage in component.job:
         assert any(collapsed(passage) in section for section in cited), passage
+
+
+@pytest.mark.parametrize("component", explorer.COMPONENTS, ids=lambda c: c.slug)
+def test_each_section_a_component_cites_holds_one_of_its_passages(component, design_sections):
+    for number, _ in component.design:
+        section = design_sections[number]
+        assert any(collapsed(passage) in section for passage in component.job), number
+
+
+def test_a_label_names_one_fact_on_every_page():
+    # A stage page's count of its own stage is that stage's: its label is read with the stage.
+    pages = [
+        (None, explorer.OVERVIEW_FACTS),
+        *((stage.stage, stage.facts) for stage in explorer.STAGES),
+        *((None, component.facts) for component in explorer.COMPONENTS),
+    ]
+    named = {}
+    for stage, facts in pages:
+        for fact in facts:
+            if isinstance(fact, explorer.Count):
+                counted = (fact.sql, fact.params)
+                label = (fact.label, stage) if stage in fact.params else fact.label
+            else:
+                counted, label = fact.options, fact.label
+            assert named.setdefault(label, counted) == counted, label
+
+
+def test_the_tables_written_at_the_end_are_those_store_save_run_writes():
+    written = re.findall(r"INSERT INTO (\w+)", inspect.getsource(store.save_run))
+    assert sorted(written) == sorted(explorer.WRITTEN_AT_THE_END)
 
 
 def test_the_sections_check_finds_a_passage_cited_to_the_wrong_section(design_sections):
@@ -403,6 +438,9 @@ def test_the_script_loads_in_full_an_address_htmx_could_not_load(app_js):
         assert f'"{event}"' in app_js, event
     assert "window.location.assign(event.detail.pathInfo.requestPath)" in app_js
     assert "window.location.reload()" in app_js
+    # A history restore that cannot reach the page fires no htmx event of its own.
+    assert '"htmx:historyCacheMiss"' in app_js
+    assert 'event.detail.xhr.addEventListener("error"' in app_js
 
 
 def test_the_script_writes_no_markup_and_evaluates_nothing(app_js):
@@ -495,9 +533,14 @@ def test_a_free_runs_state_is_served(tmp_path: Path, llm, labels):
 
 
 def test_a_state_with_no_final_decisions_says_its_run_has_not_finished(tmp_path: Path):
-    _, _, body = call(explorer.make_app(empty_state(tmp_path, LABEL_STAND_IN)))
+    app = explorer.make_app(empty_state(tmp_path, LABEL_STAND_IN))
+    body = call(app)[2]
     assert explorer._e(explorer.UNFINISHED_HEADING).encode() in body
     assert explorer._e(explorer.FINISHED_HEADING).encode() not in body
+    # A count of what a run writes at its end is not there yet, rather than 0.
+    report = call(app, "/component/report")[2].decode()
+    rows = re.findall(r'<th scope="row">Titles in the row [^<]*</th><td>([^<]*)</td>', report)
+    assert rows == [explorer._e(explorer.NOT_YET)] * len(explorer.TableRow)
 
 
 def test_the_state_is_opened_read_only(tmp_path: Path):

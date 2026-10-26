@@ -29,3 +29,9 @@ for (const name of ["htmx:responseError", "htmx:sendError"]) {
 document.addEventListener("htmx:historyCacheMissLoadError", function () {
   window.location.reload();
 });
+// A history restore that cannot reach the page fires no htmx event of its own.
+document.addEventListener("htmx:historyCacheMiss", function (event) {
+  event.detail.xhr.addEventListener("error", function () {
+    window.location.reload();
+  });
+});

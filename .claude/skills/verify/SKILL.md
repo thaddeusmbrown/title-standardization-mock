@@ -44,4 +44,4 @@ purpose: this recipe gates a merge.
      own.
 6. **Report** what ran and what was seen: the gate's result, the runs of step 3 with the
    lines that show the change, and anything still open. Before a merge the gate is
-   `make check-all`, which `/merge-branch` runs.
+   `make check-all`, which the user-level `/land` runs through `.claude/merge-gate.sh`.

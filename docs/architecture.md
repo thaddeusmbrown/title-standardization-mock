@@ -20,7 +20,9 @@ pass the page the same `--out-dir`. It does not start without a state file, and 
 free run: one whose `llm` setting is `offline` or `replay` and none of whose answers is labelled
 live. A later run replaces the file, and the page then shows the new one. While that run is
 under way, or when a run stopped, the page shows the state as it stood at the last completed
-step, and says so above each table of counts.
+step, and says so above each table of counts. What a run writes only at its end, such as the
+final decisions and the audits, then reads "not yet". Until set-up has recorded the run's
+settings, the page answers that the state is not a free run's.
 
 ## What it shows
 
@@ -102,6 +104,7 @@ flowchart TD
     settled --> audit
     people[People] -->|blind labels| audit
     audit -->|every title audited| labeled([Approved, each with its label])
+    audit -->|60 titles or fewer, all audited| nostatus([The path gets no status])
     audit -->|at most 2 wrong of 60| confirmed([The rest Confirmed])
     audit -->|3 to 12 wrong of 60| provisional([The rest Provisional])
     audit -->|13 or more wrong of 60| stopped([Stopped, the rest kept on legacy titles by default])

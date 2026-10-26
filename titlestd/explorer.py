@@ -41,18 +41,21 @@ Decided here, where the record is silent:
   open, so every page checks the same again and answers 503 with a fixed
   text when the state no longer passes. htmx swaps no error into the page,
   so static/app.js then loads the address in full, and the 503 or a 404 is
-  seen.
+  seen; so it does when a history restore cannot reach the page.
 - Read-only. Each request opens the file with SQLite's read-only mode and
   closes it again, so the page never writes the state, and shows the state as
   it is now.
 - A run that did not finish. A run writes its final decisions, audits,
   golden-set scores, review queue and answer labels in one step at its end
-  (store.save_run); one that stopped, or one still under way, leaves the
-  state as it stood at its last completed step. The page shows that state
-  as it is, and the heading of every table of counts says so. The labels of
-  the answers are read from the model answers, each of which carries its
-  own: the answer labels a finished run writes are the same set (Q40), and
-  a run that stopped has none.
+  (store.save_run, WRITTEN_AT_THE_END); one that stopped, or one still under
+  way, leaves the state as it stood at its last completed step. The page
+  shows that state as it is, and the heading of every table of counts says
+  so. A count that reads one of those tables shows NOT_YET instead of a 0
+  that would say the step never ran. The labels of the answers are read from
+  the model answers, each of which carries its own: the answer labels a
+  finished run writes are the same set (Q40), and a run that stopped has
+  none. Until set-up has recorded the settings, the state holds no llm
+  setting, and the page refuses it as above.
 - Counts and code-defined labels only. Every query returns COUNT(*), and
   every value it compares with is a parameter taken from a table in the code
   (the stages, the routes, the occasions of titlestd.pipeline and so on). A
@@ -101,7 +104,8 @@ Decided here, where the record is silent:
   generic role, a look-up hit goes to no model and not through the rules,
   and the audit samples 60 with the lines 2 and 12. The audited titles of a
   path take their labels as Approved, and its outcome applies to the rest
-  (Q21).
+  (Q21); a path of 60 titles or fewer is audited in full and gets no status
+  (2.4).
 - The components are the steps of 1.6 as the mock builds them, plus the five
   parts the mock adds around them: the golden set, the generic family role
   of the close, the model switch and the state file, and the report that
@@ -222,9 +226,34 @@ class Found:
 
 Fact = Count | Found
 
+# A replayed answer's label (contracts.recorded_label), as a LIKE pattern.
+_RECORDED_PATTERN = recorded_label("%", "%")
+# The llm settings of a free run (2.5): the deterministic stand-in and recorded answers.
+_FREE_LLMS = ("offline", "replay")
+_CHOOSE, _REVIEW = store.STEP_CHOOSE, store.STEP_REVIEW
+# The stages after set-up: the models score titles and people's decisions are learned.
+_LATER_STAGES = (Stage.WAVE1, Stage.WAVE2, Stage.CLOSE)
+# The stages whose golden-set pass calls no agent (titlestd.pipeline); in Wave 2
+# the golden titles are scored for release with the rest of the long tail.
+_GOLDEN_PASS_STAGES = (Stage.WAVE1, Stage.CLOSE)
+# The tables store.save_run writes in one step at the end of a run.
+WRITTEN_AT_THE_END = (
+    "decisions",
+    "audits",
+    "audit_samples",
+    "golden_scores",
+    "review_queue",
+    "answer_labels",
+)
+
+
+def _marks(values: Iterable[object]) -> str:
+    """One SQL parameter mark per value."""
+    return ", ".join("?" for _ in values)
+
+
 _TABLES_MADE = (
-    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'"
-    f" AND name IN ({', '.join('?' for _ in TABLES)})"
+    f"SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ({_marks(TABLES)})"
 )
 # Each model answer carries its label, so a run that stopped holds them too; a
 # finished run also writes them in answer_labels, the same set (Q40).
@@ -249,9 +278,10 @@ _ROUTED = "SELECT COUNT(*) FROM scorings WHERE stage = ? AND route = ?"
 _ANSWERS = "SELECT COUNT(*) FROM model_answers WHERE stage = ? AND step = ?"
 _ANSWERED = "SELECT COUNT(*) FROM model_answers WHERE step = ? AND answer = ?"
 # An answer of the golden-set passes, which call no agent: a golden title's
-# answer at one of the two stages given (_GOLDEN_PASS_STAGES).
+# answer at one of the stages given (_GOLDEN_PASS_STAGES).
 _IN_GOLDEN_PASS = (
-    "a.stage IN (?, ?) AND EXISTS (SELECT 1 FROM title_rows AS t WHERE t.in_golden_set = 1"
+    f"a.stage IN ({_marks(_GOLDEN_PASS_STAGES)}) AND EXISTS (SELECT 1 FROM title_rows AS t"
+    " WHERE t.in_golden_set = 1"
     " AND t.family_code = a.family_code AND t.cleaned_title = a.cleaned_title)"
 )
 _RULED = (
@@ -267,20 +297,9 @@ _AUDITED = "SELECT COUNT(*) FROM audit_samples WHERE path = ?"
 _AUDIT_OUTCOME = "SELECT COUNT(*) FROM audits WHERE path = ? AND outcome = ?"
 _IN_ROW = "SELECT COUNT(*) FROM decisions WHERE table_row = ?"
 _WITH_STATUS = "SELECT COUNT(*) FROM decisions WHERE status = ?"
-_FREE_SETTING = "SELECT COUNT(*) FROM settings WHERE name = ? AND value IN (?, ?)"
+_FREE_SETTING = f"SELECT COUNT(*) FROM settings WHERE name = ? AND value IN ({_marks(_FREE_LLMS)})"
 # One query per table: the state file's own page, and every plain count of a table.
 _ROWS_IN = {table: "SELECT COUNT(*) FROM " + table for table in TABLES}
-
-# A replayed answer's label (contracts.recorded_label), as a LIKE pattern.
-_RECORDED_PATTERN = recorded_label("%", "%")
-# The llm settings of a free run (2.5): the deterministic stand-in and recorded answers.
-_FREE_LLMS = ("offline", "replay")
-_CHOOSE, _REVIEW = store.STEP_CHOOSE, store.STEP_REVIEW
-# The stages after set-up: the models score titles and people's decisions are learned.
-_LATER_STAGES = (Stage.WAVE1, Stage.WAVE2, Stage.CLOSE)
-# The stages whose golden-set pass calls no agent (titlestd.pipeline); in Wave 2
-# the golden titles are scored for release with the rest of the long tail.
-_GOLDEN_PASS_STAGES = (Stage.WAVE1, Stage.CLOSE)
 
 
 def _setting(label: str, name: str, values: Iterable[str]) -> Found:
@@ -366,10 +385,10 @@ DESIGN_SECTIONS = {
 class Component:
     """One part of the program, as its page shows it.
 
-    node is its name in the flowcharts, module the file that builds it.
-    design lists (section, detail) pairs:
-    the sections of DESIGN.md it builds. job is text from DESIGN.md, one
-    paragraph per item, word for word. entries are those of
+    node is its name in the flowcharts, module the file that builds it. job
+    is text from DESIGN.md, one paragraph per item, word for word, and
+    design lists the (section, detail) pairs it is quoted from, each section
+    the source of at least one paragraph. entries are those of
     docs/build-decisions.md that govern it, each named in its module's
     docstring.
     """
@@ -420,7 +439,8 @@ COMPONENTS = (
         facts=(
             _LOOKUP_HITS,
             _SEED_ENTRIES,
-            Count("Entries at the end of the run", _ROWS_IN["lookup"]),
+            Count("Examples from the seed look-up", _EXAMPLES_JOINED, (Stage.SETUP,)),
+            Count("Entries in the look-up table", _ROWS_IN["lookup"]),
         ),
     ),
     Component(
@@ -462,10 +482,14 @@ COMPONENTS = (
                 Count(f"LLM answers in {stage.value}", _ANSWERS, (stage, _CHOOSE))
                 for stage in _LATER_STAGES
             ),
-            Count("Answered with a number", _ANSWERED, (_CHOOSE, ChooseKind.ROLE)),
-            Count("Answered no match", _ANSWERED, (_CHOOSE, ChooseKind.NO_MATCH)),
-            Count("Answered insufficient data", _ANSWERED, (_CHOOSE, ChooseKind.INSUFFICIENT_DATA)),
-            Count("No usable answer", _ANSWERED, (_CHOOSE, ChooseKind.INVALID)),
+            Count("LLM answers with a number", _ANSWERED, (_CHOOSE, ChooseKind.ROLE)),
+            Count("LLM answers of no match", _ANSWERED, (_CHOOSE, ChooseKind.NO_MATCH)),
+            Count(
+                "LLM answers of insufficient data",
+                _ANSWERED,
+                (_CHOOSE, ChooseKind.INSUFFICIENT_DATA),
+            ),
+            Count("LLM answers not usable", _ANSWERED, (_CHOOSE, ChooseKind.INVALID)),
         ),
     ),
     Component(
@@ -521,9 +545,9 @@ COMPONENTS = (
                 Count(f"Reviews in {stage.value}", _ANSWERS, (stage, _REVIEW))
                 for stage in (Stage.WAVE1, Stage.WAVE2)
             ),
-            Count("Answered with a number", _ANSWERED, (_REVIEW, ReviewKind.ROLE)),
-            Count("Escalated", _ANSWERED, (_REVIEW, ReviewKind.ESCALATE)),
-            Count("No usable answer", _ANSWERED, (_REVIEW, ReviewKind.INVALID)),
+            Count("Agent answers with a number", _ANSWERED, (_REVIEW, ReviewKind.ROLE)),
+            Count("Agent answers that escalate", _ANSWERED, (_REVIEW, ReviewKind.ESCALATE)),
+            Count("Agent answers not usable", _ANSWERED, (_REVIEW, ReviewKind.INVALID)),
         ),
     ),
     Component(
@@ -531,7 +555,7 @@ COMPONENTS = (
         node="people",
         name="People",
         module="titlestd/people.py",
-        design=(("1.6", "step 7"), ("1.8", ""), ("2.4", "People are simulated")),
+        design=(("1.6", "step 7"), ("2.4", "People are simulated")),
         entries=("Q01", "Q03", "Q27"),
         job=(
             "HR SMEs and reviewers decide everything no machine may settle (1.8).",
@@ -544,7 +568,11 @@ COMPONENTS = (
             _AUDIT_LABELS,
             _QUEUE_DECISIONS,
             _UNDECIDED,
-            Count("No suitable role", _ANSWERED_BY_PEOPLE, (HumanAnswer.NO_SUITABLE_ROLE,)),
+            Count(
+                "No suitable role, at any occasion",
+                _ANSWERED_BY_PEOPLE,
+                (HumanAnswer.NO_SUITABLE_ROLE,),
+            ),
             Count("Marked as simulated", _SIMULATED),
         ),
     ),
@@ -553,7 +581,7 @@ COMPONENTS = (
         node="golden",
         name="Golden set",
         module="titlestd/golden.py",
-        design=(("1.2", "Golden set"), ("1.10", "")),
+        design=(("1.2", "Golden set"),),
         entries=("Q07", "Q08"),
         job=(
             "A fixed random sample of long-tail titles that HR SMEs label without seeing the "
@@ -595,6 +623,8 @@ COMPONENTS = (
         design=(("1.2", "Generic family role"), ("1.8", "")),
         entries=("Q01", "Q03", "Q25", "Q26"),
         job=(
+            "One catalog entry per family that names the family and no job. Only code "
+            "assigns it, as a last resort.",
             "At the close, a title nobody could decide takes its family's generic role, "
             "marked provisional and capped at 2% of employees. A widely held or "
             "compliance-flagged title never does.",
@@ -608,7 +638,7 @@ COMPONENTS = (
         node="release",
         name="Release",
         module="titlestd/release.py",
-        design=(("1.6", "step 9"), ("2.6", "")),
+        design=(("1.6", "step 9"),),
         entries=("Q05", "Q16", "Q27", "Q40"),
         job=(
             "After the HR lead signs, the system writes a load file (one row per employee: "
@@ -783,6 +813,7 @@ flowchart TD
     settled --> audit
     people[People] -->|blind labels| audit
     audit -->|every title audited| labeled([Approved, each with its label])
+    audit -->|60 titles or fewer, all audited| nostatus([The path gets no status])
     audit -->|at most 2 wrong of 60| confirmed([The rest Confirmed])
     audit -->|3 to 12 wrong of 60| provisional([The rest Provisional])
     audit -->|13 or more wrong of 60| stopped([Stopped, the rest kept on legacy titles by default])
@@ -1049,30 +1080,43 @@ def _quote(texts: Iterable[str], source: str) -> _Html:
     )
 
 
-def _value(connection: sqlite3.Connection, fact: Fact) -> str:
+def _queries(fact: Fact) -> tuple[str, ...]:
+    return (fact.sql,) if isinstance(fact, Count) else tuple(sql for sql, _, _ in fact.options)
+
+
+def written_at_the_end(fact: Fact) -> bool:
+    """Whether a fact reads a table that a run writes only at its end."""
+    tables = set(WRITTEN_AT_THE_END)
+    return any(word in tables for sql in _queries(fact) for word in sql.split())
+
+
+def _value(connection: sqlite3.Connection, fact: Fact, *, finished: bool) -> str:
+    if not finished and written_at_the_end(fact):
+        return NOT_YET
     if isinstance(fact, Count):
         return str(_count(connection, fact.sql, fact.params))
     found = [shown for sql, params, shown in fact.options if _count(connection, sql, params)]
     return ", ".join(found) or "none"
 
 
-# The heading of a table of counts, by whether the run wrote its final decisions.
+# The heading of a table of counts, by whether the run wrote its final decisions,
+# and what a count shows that the run writes only at its end.
 FINISHED_HEADING = "From this run's state file"
 UNFINISHED_HEADING = (
     "From the state file of a run that has not finished, as it stood at its last completed step"
 )
+NOT_YET = "not yet: written when the run finishes"
 
 
 def _facts(connection: sqlite3.Connection, facts: Iterable[Fact]) -> _Html:
+    finished = bool(_count(connection, _ROWS_IN["decisions"], ()))
     rows = _join(
         _Html(
             f'<tr><th scope="row">{_e(fact.label)}</th>'
-            f"<td>{_e(_value(connection, fact))}</td></tr>\n"
+            f"<td>{_e(_value(connection, fact, finished=finished))}</td></tr>\n"
         )
         for fact in facts
     )
-    # The final decisions are written in one step at the end of a run (store.save_run).
-    finished = _count(connection, _ROWS_IN["decisions"], ())
     return _Html(
         f"<h2>{_e(FINISHED_HEADING if finished else UNFINISHED_HEADING)}</h2>\n"
         '<table class="counts">\n<tbody>\n'

@@ -110,9 +110,9 @@ EOF
 It prints one line per page: `200 OK`, the address and the page's counts (checked on
 2026-10-26 with this script). The run takes about 2 MB of `/tmp`: remove the folder by its path
 when done. A folder `smoke.sh` kept serves as well: pass its `default/` or `replay/` in place of
-`"$dir"` in the second command and skip the first. The rules' `LLM answers sent to the agent` equals the agent's
-`Reviews in Wave 1` plus `Reviews in Wave 2`. The script draws no flowchart: how the page looks
-in a browser is the owner's to check.
+`"$dir"` in the second command and skip the first. The rules' `LLM answers sent to the agent`
+equals the agent's `Reviews in Wave 1` plus `Reviews in Wave 2`. The script draws no flowchart:
+how the page looks in a browser is the owner's to check.
 
 ## Run (human path)
 

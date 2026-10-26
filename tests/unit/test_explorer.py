@@ -42,7 +42,7 @@ import sqlite3
 import sys
 import threading
 from pathlib import Path
-from wsgiref.simple_server import WSGIRequestHandler, make_server
+from wsgiref.simple_server import WSGIRequestHandler
 
 import pytest
 
@@ -616,8 +616,8 @@ def test_every_response_carries_the_fixed_policy(tmp_path: Path):
 class FakeServer:
     """Stands in for wsgiref's server: records where it would listen, serves nothing."""
 
-    def __init__(self, host, port, app, server_class):
-        self.address, self.app, self.server_class = (host, port), app, server_class
+    def __init__(self, host, port, app):
+        self.address, self.app = (host, port), app
 
     def __enter__(self):
         return self
@@ -634,8 +634,8 @@ def servers(monkeypatch) -> list[FakeServer]:
     """The servers main would have started, none of them listening."""
     made = []
 
-    def make_server(host, port, app, server_class):
-        made.append(FakeServer(host, port, app, server_class))
+    def make_server(host, port, app):
+        made.append(FakeServer(host, port, app))
         return made[-1]
 
     monkeypatch.setattr(explorer, "make_server", make_server)
@@ -667,7 +667,6 @@ def test_the_start_command_listens_only_on_the_loopback_address(
     monkeypatch.chdir(tmp_path)
     assert explorer.main([]) == 0
     assert [server.address for server in servers] == [("127.0.0.1", 7654)]
-    assert servers[0].server_class is explorer.ThreadingServer
     assert explorer.ADDRESS in capsys.readouterr().out
     assert hashlib.sha256(state.read_bytes()).hexdigest() == before
 
@@ -702,6 +701,18 @@ def test_a_bad_command_line_or_setting_exits_2(tmp_path: Path, monkeypatch, caps
     assert "setting llm must be one of" in capsys.readouterr().err
 
 
+def test_the_package_imports_wsgiref_only_when_the_page_starts(bare_python):
+    # wsgiref.simple_server imports platform, which looks for the Windows module
+    # _wmi; Python 3.12.3 does not name _wmi among its standard-library modules,
+    # so the package's import guard counted it (titlestd/explorer.py, Decided here).
+    script = (
+        "import sys, titlestd.explorer\nprint(sorted({'platform', 'wsgiref'} & set(sys.modules)))"
+    )
+    result = bare_python(script)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "[]"
+
+
 class QuietHandler(WSGIRequestHandler):
     def log_message(self, *args):
         pass
@@ -713,9 +724,7 @@ def test_an_idle_connection_holds_up_no_other_request():
         start_response("200 OK", [("Content-Type", "text/plain")])
         return [b"answered\n"]
 
-    server = make_server(
-        "127.0.0.1", 0, app, server_class=explorer.ThreadingServer, handler_class=QuietHandler
-    )
+    server = explorer.make_server("127.0.0.1", 0, app, handler_class=QuietHandler)
     serving = threading.Thread(
         target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True
     )

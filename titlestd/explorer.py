@@ -89,6 +89,12 @@ Decided here, where the record is silent:
   and a connection a browser opens ahead and leaves idle would hold up every
   other request; the page's server takes each in a thread of its own, and
   each request opens its own connection to the state.
+- wsgiref when the page starts. make_server imports wsgiref.simple_server,
+  not the package: that module imports platform, which on Python 3.12 looks
+  for the Windows module _wmi, and the sys.stdlib_module_names of some 3.12
+  releases (3.12.3, the one CI runs) does not name it. The package's import
+  guard (tests/integration/test_bare_interpreter.py) then counts _wmi as an
+  import from outside the standard library.
 - A module of its own. The page starts as python3 -m titlestd.explorer, not
   as a command of python3 -m titlestd, because cli.py is a shared file of
   rule 2. It takes --config and the setting flags of every command (S13),
@@ -125,7 +131,6 @@ import sys
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from wsgiref.simple_server import WSGIServer, make_server
 
 from titlestd import pipeline, store
 from titlestd.contracts import (
@@ -1323,10 +1328,17 @@ def make_app(state_path: Path) -> Callable:
     return application
 
 
-class ThreadingServer(socketserver.ThreadingMixIn, WSGIServer):
-    """wsgiref's server, taking each request in a thread of its own (Decided here)."""
+def make_server(host: str, port: int, app: Callable, **options: object) -> socketserver.TCPServer:
+    """wsgiref's server at host and port, taking each request in a thread of its
+    own; options go to wsgiref's make_server. wsgiref is imported here, when the
+    page starts (Decided here)."""
+    from wsgiref.simple_server import WSGIServer
+    from wsgiref.simple_server import make_server as wsgiref_server
 
-    daemon_threads = True
+    class ThreadingServer(socketserver.ThreadingMixIn, WSGIServer):
+        daemon_threads = True
+
+    return wsgiref_server(host, port, app, server_class=ThreadingServer, **options)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -1349,7 +1361,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stderr.write(f"titlestd.explorer: {error}\n")
         return 1
     try:
-        server = make_server(HOST, PORT, application, server_class=ThreadingServer)
+        server = make_server(HOST, PORT, application)
     except OSError as error:
         sys.stderr.write(f"titlestd.explorer: cannot listen at {ADDRESS}: {error}\n")
         return 1

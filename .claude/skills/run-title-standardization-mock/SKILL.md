@@ -1,11 +1,12 @@
 ---
 name: run-title-standardization-mock
-description: Run, start, smoke-test and drive the titlestd job-title standardization mock, from the command line or from Python. Covers the default offline run, replay of the recorded answers, a run with other settings, the local embedder, regenerating the mock data, and calling run_pipeline or a component directly. Use when asked to run, start, launch, try or demo the mock, to see a change working in the real program rather than in the tests, or to drive the pipeline from a script. Never for record or --llm anthropic, which call a paid API.
+description: Run, start, smoke-test and drive the titlestd job-title standardization mock, from the command line or from Python. Covers the default offline run, replay of the recorded answers, a run with other settings, the local embedder, regenerating the mock data, calling run_pipeline or a component directly, and the architecture page (titlestd.explorer). Use when asked to run, start, launch, try or demo the mock, to see a change working in the real program rather than in the tests, or to drive the pipeline from a script. Never for record or --llm anthropic, which call a paid API.
 ---
 
 # Run the mock
 
-A batch command line, `python3 -m titlestd`, with no server and no window. An agent drives it
+A batch command line, `python3 -m titlestd`, with no window, and a local page that shows a
+run's state (below, "The architecture page"). An agent drives the command line
 with `.claude/skills/run-title-standardization-mock/smoke.sh`, which runs every mode that costs
 nothing into a folder outside the repository and checks exit statuses and output. For a change
 to one module, call the module or `run_pipeline` directly (below). Paths are relative to the
@@ -76,6 +77,42 @@ EOF
 It prints `CleanedTitle(text='senior account manager', has_person_name=False)`, then the
 titles per table row, then each audited path with its audited and wrong counts: the same
 figures as the printed table.
+
+## The architecture page
+
+`python3 -m titlestd.explorer` serves the state file of a free run read-only at
+http://127.0.0.1:7654/ until Ctrl+C (`docs/architecture.md`). It takes the settings of every
+command and uses only `--out-dir`, the folder of the run, and it exits 1 on a state that is not
+a free run's. An agent does not start it: the port is fixed and the server runs until stopped.
+Call its WSGI application on a run in a scratch folder instead, as the tests do:
+
+```sh
+dir=$(mktemp -d)
+"$(uv python find 3.12)" -S -E -m titlestd run --out-dir "$dir" > /dev/null
+"$(uv python find 3.12)" -S -E - "$dir" <<'EOF'
+import html
+import re
+import sys
+from pathlib import Path
+
+from titlestd import explorer, store
+
+app = explorer.make_app(Path(sys.argv[1]) / store.STATE_FILE)
+for path in explorer.PAGES:
+    seen = []
+    environ = {"REQUEST_METHOD": "GET", "PATH_INFO": path, "HTTP_HOST": "127.0.0.1:7654"}
+    body = b"".join(app(environ, lambda status, headers: seen.append(status))).decode()
+    rows = re.findall(r'<th scope="row">(.*?)</th><td>(.*?)</td>', body)
+    print(seen[0], path, "; ".join(f"{html.unescape(k)}: {v}" for k, v in rows))
+EOF
+```
+
+It prints one line per page: `200 OK`, the address and the page's counts (checked on
+2026-10-26 with this script). The run takes about 2 MB of `/tmp`: remove the folder by its path
+when done. A folder `smoke.sh` kept serves as well: pass its `default/` or `replay/` in place of
+`"$dir"` in the second command and skip the first. The rules' `LLM answers sent to the agent`
+equals the agent's `Reviews in Wave 1` plus `Reviews in Wave 2`. The script draws no flowchart:
+how the page looks in a browser is the owner's to check.
 
 ## Run (human path)
 

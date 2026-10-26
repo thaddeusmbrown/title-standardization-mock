@@ -138,6 +138,7 @@ section 1.6 of the design as set-up, Wave 1, Wave 2 and the close:
 | Embedder, optional | model2vec with the model `minishlab/potion-base-8M` (extra `local`). |
 | LLM and agent, optional | The hosted model `claude-haiku-4-5` through its Python SDK (extra `live`). |
 | Tooling | Standard-library Python, SQLite, uv, pytest and ruff. |
+| Architecture page | htmx and Mermaid, kept in `static/vendor/`. |
 
 Three things to keep in mind when reading the table of a run:
 
@@ -159,6 +160,8 @@ Three things to keep in mind when reading the table of a run:
 - `DESIGN.md`: the design, and what the mock builds from it.
 - `docs/build-decisions.md`: every point the design left open and how it was settled.
 - `docs/live-run-observation.md`: what the one live run showed about the quote check.
+- `docs/architecture.md`: how to start the local page that shows each stage of a run and each
+  component's job, and the page's four flowcharts.
 - `PROMPT.md`: how the LLM fallback and the agent are prompted, and which limits code
   enforces.
 - `CLAUDE_CODE.md`: how Claude Code is set up for this repository, and how it ran the build.

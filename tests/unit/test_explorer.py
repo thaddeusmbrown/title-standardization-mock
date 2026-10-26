@@ -15,11 +15,17 @@ Decided here, where the record is silent:
 
 - "Text from DESIGN.md" is held word for word: each quoted passage, with
   its white space collapsed, is in DESIGN.md with its white space collapsed
-  and its bold and code marks taken out.
+  and its bold and code marks taken out. A component's passage is held to
+  the sections its page cites.
 - "One html.escape helper for every value" is held on the source: html.escape
-  is named once, inside _e, and every value put into an f-string that builds
-  markup is a call of _e. A checker that let a value through would pass on
+  is named once, inside _e, every value put into an f-string that builds
+  markup (one holding "<", or one wrapped in _Html) is a call of _e, and
+  _Html wraps only literals, such f-strings, a module constant or _join's
+  join of escaped parts. A checker that let a value through would pass on
   silence, so it is shown to find one first.
+- "One thread per request" is held on a real server bound to a free port of
+  the loopback address: an idle connection is held open while a second one
+  asks for a page.
 - A flowchart "free of directives, clicks and HTML" is held as a short list of
   characters a line may use, which has no room for a directive, an entity, a
   tag or a quoted label, and no line may name click, call or href.
@@ -30,15 +36,18 @@ from __future__ import annotations
 import ast
 import hashlib
 import re
+import socket
 import sqlite3
 import sys
+import threading
 from pathlib import Path
+from wsgiref.simple_server import WSGIRequestHandler, make_server
 
 import pytest
 
 from titlestd import datafiles, explorer, people, store
-from titlestd.contracts import LABEL_LIVE, LABEL_STAND_IN, recorded_label
-from titlestd.settings import LLMS
+from titlestd.contracts import LABEL_LIVE, LABEL_STAND_IN, Stage, recorded_label
+from titlestd.settings import EXAMPLE_LLM_MODEL, LLMS
 
 HOST = "127.0.0.1:7654"
 EXPLORER_SOURCE = Path(explorer.__file__)
@@ -52,6 +61,11 @@ def collapsed(text: str) -> str:
     return " ".join(text.split())
 
 
+def words(markdown: str) -> str:
+    """The text with its white space collapsed and its bold and code marks taken out."""
+    return collapsed(markdown.replace("**", "").replace("`", ""))
+
+
 @pytest.fixture(scope="module")
 def design(repo_root: Path) -> str:
     return (repo_root / "DESIGN.md").read_text(encoding="utf-8")
@@ -59,7 +73,14 @@ def design(repo_root: Path) -> str:
 
 @pytest.fixture(scope="module")
 def design_words(design: str) -> str:
-    return collapsed(design.replace("**", "").replace("`", ""))
+    return words(design)
+
+
+@pytest.fixture(scope="module")
+def design_sections(design: str) -> dict[str, str]:
+    """The words of each numbered section of DESIGN.md, by its number."""
+    parts = re.split(r"^### (\d\.\d+) .*$", design, flags=re.MULTILINE)
+    return {number: words(text) for number, text in zip(parts[1::2], parts[2::2], strict=True)}
 
 
 @pytest.fixture(scope="module")
@@ -86,13 +107,29 @@ def call(app, path: str = "/", method: str = "GET", host: str | None = HOST):
     return seen["status"], seen["headers"], body
 
 
-def empty_state(folder: Path, *labels: str) -> Path:
-    """A state file as titlestd.store makes it, holding only the given answer labels."""
+def add_answers(path: Path, *labels: str) -> None:
+    """One model answer for each label, as a run that stopped before its end holds them."""
+    connection = sqlite3.connect(path)
+    with connection:
+        connection.executemany(
+            "INSERT INTO model_answers (stage, family_code, cleaned_title, step, answer, quote,"
+            " source, detail, route, reasons) VALUES ('Wave 1', 'FIN', ?, 'choose', 'role', 'q',"
+            " ?, '', 'accept', '')",
+            [(f"title {at}", label) for at, label in enumerate(labels)],
+        )
+    connection.close()
+
+
+def empty_state(folder: Path, *labels: str, llm: str | None = "offline") -> Path:
+    """A state file as titlestd.store makes it, holding only the llm setting (none
+    when llm is None) and one model answer for each label given."""
     path = folder / store.STATE_FILE
     connection = store.create_store(path)
     with connection:
-        connection.executemany("INSERT INTO answer_labels VALUES (?)", [(x,) for x in labels])
+        if llm is not None:
+            connection.execute("INSERT INTO settings VALUES ('llm', ?)", (llm,))
     connection.close()
+    add_answers(path, *labels)
     return path
 
 
@@ -105,12 +142,7 @@ def test_each_flowchart_is_its_fence_in_docs_architecture(repo_root: Path):
 
 
 def test_the_stages_are_the_four_of_a_run_in_order():
-    assert [stage.stage.value for stage in explorer.STAGES] == [
-        "set-up",
-        "Wave 1",
-        "Wave 2",
-        "close",
-    ]
+    assert [stage.stage for stage in explorer.STAGES] == list(Stage)
 
 
 @pytest.mark.parametrize("stage", explorer.STAGES, ids=lambda stage: stage.slug)
@@ -179,14 +211,12 @@ def test_the_cited_design_sections_exist_with_their_headings(design: str):
 
 
 @pytest.mark.parametrize("component", explorer.COMPONENTS, ids=lambda c: c.slug)
-def test_a_component_cites_modules_that_exist_and_entries_they_name(
+def test_a_component_cites_a_module_that_exists_and_entries_it_names(
     component, repo_root: Path, record: str
 ):
-    docstrings = ""
-    for module in component.modules:
-        assert (repo_root / module).is_file(), module
-        tree = ast.parse((repo_root / module).read_text(encoding="utf-8"))
-        docstrings += ast.get_docstring(tree) or ""
+    assert (repo_root / component.module).is_file(), component.module
+    tree = ast.parse((repo_root / component.module).read_text(encoding="utf-8"))
+    docstrings = ast.get_docstring(tree) or ""
     assert component.entries
     for entry in component.entries:
         assert re.search(rf"^### {entry}\. ", record, re.MULTILINE), entry
@@ -213,6 +243,19 @@ def test_the_words_check_finds_a_passage_that_is_not_in_design(design_words: str
     assert collapsed("A model writes the Long Title itself.") not in design_words
 
 
+@pytest.mark.parametrize("component", explorer.COMPONENTS, ids=lambda c: c.slug)
+def test_a_component_quotes_only_the_sections_it_cites(component, design_sections):
+    cited = [design_sections[number] for number, _ in component.design]
+    for passage in component.job:
+        assert any(collapsed(passage) in section for section in cited), passage
+
+
+def test_the_sections_check_finds_a_passage_cited_to_the_wrong_section(design_sections):
+    # Positive control for the check above: a passage of 1.4, cited to 1.6 alone.
+    passage = collapsed("Names are masked before any text reaches a model.")
+    assert passage in design_sections["1.4"] and passage not in design_sections["1.6"]
+
+
 def test_the_page_reads_every_table_the_store_makes(tmp_path: Path):
     connection = sqlite3.connect(empty_state(tmp_path))
     made = [
@@ -225,28 +268,52 @@ def test_the_page_reads_every_table_the_store_makes(tmp_path: Path):
 # --- The source of the page ------------------------------------------------------
 
 
+def calls(node: ast.AST, name: str) -> bool:
+    return isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == name
+
+
+def wrapped_as_markup(node: ast.AST) -> bool:
+    """What _Html may wrap: a literal, an f-string (checked below), a module
+    constant, the result of html.escape in _e, or _join's join of escaped parts."""
+    if isinstance(node, ast.Constant | ast.JoinedStr):
+        return True
+    if isinstance(node, ast.Name):
+        return node.id.isupper()
+    if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)):
+        return False
+    if isinstance(node.func.value, ast.Name) and node.func.value.id == "html":
+        return node.func.attr == "escape"
+    return (
+        node.func.attr == "join"
+        and calls(node.func.value, "_e")
+        and len(node.args) == 1
+        and isinstance(node.args[0], ast.GeneratorExp)
+        and calls(node.args[0].elt, "_e")
+    )
+
+
 def unescaped_values(source: str) -> list[int]:
-    """Lines of f-strings that build markup and put in a value other than _e(...)."""
-    found = []
-    for node in ast.walk(ast.parse(source)):
+    """Lines where a value reaches markup other than through _e: in an f-string
+    that builds markup (one holding "<", or one wrapped in _Html), or wrapped
+    in _Html itself."""
+    tree = ast.parse(source)
+    wrapped = [arg for node in ast.walk(tree) if calls(node, "_Html") for arg in node.args]
+    found = [arg.lineno for arg in wrapped if not wrapped_as_markup(arg)]
+    markup = [node for node in wrapped if isinstance(node, ast.JoinedStr)]
+    for node in ast.walk(tree):
         if not isinstance(node, ast.JoinedStr):
             continue
         literal = "".join(part.value for part in node.values if isinstance(part, ast.Constant))
-        if "<" not in literal:
+        if "<" not in literal and not any(node is each for each in markup):
             continue
         for part in node.values:
             if isinstance(part, ast.FormattedValue):
-                call = part.value
                 escaped = (
-                    isinstance(call, ast.Call)
-                    and isinstance(call.func, ast.Name)
-                    and call.func.id == "_e"
-                    and part.conversion == -1
-                    and part.format_spec is None
+                    calls(part.value, "_e") and part.conversion == -1 and part.format_spec is None
                 )
                 if not escaped:
                     found.append(part.lineno)
-    return found
+    return sorted(found)
 
 
 def test_every_value_in_markup_passes_the_one_escape():
@@ -255,8 +322,14 @@ def test_every_value_in_markup_passes_the_one_escape():
 
 def test_the_escape_check_finds_a_value_put_in_unescaped():
     # Positive control: without it the test above could pass on silence.
-    source = 'title = "x"\npage = f"<h1>{_e(title)}</h1>" + f"<p>{title}</p>"\n'
-    assert unescaped_values(source) == [2]
+    source = (
+        'title = "x"\n'
+        'page = f"<h1>{_e(title)}</h1>" + f"<p>{title}</p>"\n'
+        "marks = _Html(f' id=\"{title}\"')\n"
+        "named = _Html(title)\n"
+        "kept = _Html(f' id=\"{_e(title)}\"') + _Html(HTMX_CONFIG_META) + _Html('')\n"
+    )
+    assert unescaped_values(source) == [2, 3, 4]
 
 
 def test_html_escape_is_named_once_inside_the_one_escape():
@@ -324,6 +397,14 @@ def test_the_script_sets_up_mermaid_and_htmx_as_the_vendor_readme_says(app_js, v
     assert app_js.index("mermaid.initialize(") < app_js.index("htmx.onLoad(")
 
 
+def test_the_script_loads_in_full_an_address_htmx_could_not_load(app_js):
+    # htmx swaps no error into the page (Decided here in titlestd/explorer.py).
+    for event in ("htmx:responseError", "htmx:sendError", "htmx:historyCacheMissLoadError"):
+        assert f'"{event}"' in app_js, event
+    assert "window.location.assign(event.detail.pathInfo.requestPath)" in app_js
+    assert "window.location.reload()" in app_js
+
+
 def test_the_script_writes_no_markup_and_evaluates_nothing(app_js):
     for words in (
         "innerHTML",
@@ -374,46 +455,49 @@ def test_a_file_that_is_no_state_file_is_refused(tmp_path: Path, content: bytes)
         explorer.make_app(path)
 
 
-def test_a_state_with_live_answers_is_refused(tmp_path: Path):
+def test_a_state_with_a_live_answer_is_refused(tmp_path: Path):
+    # Before its end a run has no answer labels, but each model answer carries its own.
     path = empty_state(tmp_path, LABEL_STAND_IN, LABEL_LIVE)
-    with pytest.raises(explorer.ExplorerError, match="live run"):
+    with pytest.raises(explorer.ExplorerError, match="not the state of a free run"):
         explorer.make_app(path)
 
 
 @pytest.mark.parametrize(
-    ("table", "row"),
+    "llm", [*(llm for llm in LLMS if llm not in {"offline", "replay"}), "bogus", "", None]
+)
+def test_a_state_whose_llm_setting_is_no_free_mode_is_refused(tmp_path: Path, llm):
+    # An allow-list: the live mode, a mode it does not name and no setting at all.
+    path = empty_state(tmp_path, LABEL_STAND_IN, llm=llm)
+    with pytest.raises(explorer.ExplorerError, match="not the state of a free run"):
+        explorer.make_app(path)
+
+
+def test_the_free_modes_are_the_two_of_design_2_5():
+    assert explorer._FREE_LLMS == ("offline", "replay")
+    assert set(explorer._FREE_LLMS) < set(LLMS)
+
+
+@pytest.mark.parametrize(
+    ("llm", "labels"),
     [
-        (
-            "model_answers",
-            ("Wave 1", "FIN", "t", "choose", "role", 1, "q", LABEL_LIVE, "", "R", "a", ""),
-        ),
-        ("settings", ("llm", "anthropic")),
+        ("offline", ()),
+        ("offline", (LABEL_STAND_IN,)),
+        ("replay", ()),
+        ("replay", (recorded_label("2026-10-05", EXAMPLE_LLM_MODEL),)),
     ],
-    ids=["a live answer", "the live llm setting"],
+    ids=["offline, no answers", "offline", "replay, no answers", "replay"],
 )
-def test_a_live_run_that_stopped_before_its_labels_is_refused(tmp_path: Path, table, row):
-    # The answer labels are written when a run finishes; a stopped live run has none.
-    path = empty_state(tmp_path)
-    connection = sqlite3.connect(path)
-    with connection:
-        connection.execute(f"INSERT INTO {table} VALUES ({', '.join('?' for _ in row)})", row)
-    connection.close()
-    with pytest.raises(explorer.ExplorerError, match="live run"):
-        explorer.make_app(path)
-
-
-def test_the_live_llm_setting_is_one_the_settings_take():
-    assert explorer._LIVE_LLM in LLMS and explorer._LIVE_LLM not in {"offline", "replay"}
-
-
-@pytest.mark.parametrize(
-    "labels",
-    [(), (LABEL_STAND_IN,), (recorded_label("2026-10-05", "claude-haiku-4-5"),)],
-    ids=["no answers", "stand-in", "recorded"],
-)
-def test_a_free_runs_state_is_served(tmp_path: Path, labels):
-    status, _, _ = call(explorer.make_app(empty_state(tmp_path, *labels)))
+def test_a_free_runs_state_is_served(tmp_path: Path, llm, labels):
+    status, _, body = call(explorer.make_app(empty_state(tmp_path, *labels, llm=llm)))
     assert status == "200 OK"
+    shown = {LABEL_STAND_IN: "stand-ins"}.get(labels[0], "a recording") if labels else "none"
+    assert f'<th scope="row">Answers came from</th><td>{shown}</td>'.encode() in body
+
+
+def test_a_state_with_no_final_decisions_says_its_run_has_not_finished(tmp_path: Path):
+    _, _, body = call(explorer.make_app(empty_state(tmp_path, LABEL_STAND_IN)))
+    assert explorer._e(explorer.UNFINISHED_HEADING).encode() in body
+    assert explorer._e(explorer.FINISHED_HEADING).encode() not in body
 
 
 def test_the_state_is_opened_read_only(tmp_path: Path):
@@ -458,10 +542,7 @@ def test_a_page_answers_503_once_the_state_is_gone_or_live(tmp_path: Path):
     path = empty_state(tmp_path)
     app = explorer.make_app(path)
     assert call(app)[0] == "200 OK"
-    connection = sqlite3.connect(path)
-    with connection:
-        connection.execute("INSERT INTO answer_labels VALUES (?)", (LABEL_LIVE,))
-    connection.close()
+    add_answers(path, LABEL_LIVE)
     assert call(app)[:1] == ("503 Service Unavailable",)
     path.unlink()
     status, _, body = call(app, "/stage/close")
@@ -492,8 +573,8 @@ def test_every_response_carries_the_fixed_policy(tmp_path: Path):
 class FakeServer:
     """Stands in for wsgiref's server: records where it would listen, serves nothing."""
 
-    def __init__(self, host, port, app):
-        self.address, self.app = (host, port), app
+    def __init__(self, host, port, app, server_class):
+        self.address, self.app, self.server_class = (host, port), app, server_class
 
     def __enter__(self):
         return self
@@ -505,10 +586,23 @@ class FakeServer:
         raise KeyboardInterrupt
 
 
+@pytest.fixture
+def servers(monkeypatch) -> list[FakeServer]:
+    """The servers main would have started, none of them listening."""
+    made = []
+
+    def make_server(host, port, app, server_class):
+        made.append(FakeServer(host, port, app, server_class))
+        return made[-1]
+
+    monkeypatch.setattr(explorer, "make_server", make_server)
+    return made
+
+
 def test_the_start_command_refuses_without_a_state_file(tmp_path: Path, monkeypatch, capsys):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(explorer, "make_server", pytest.fail)
-    assert explorer.main() == 1
+    assert explorer.main([]) == 1
     assert "no state file at out/state.sqlite" in capsys.readouterr().err
 
 
@@ -517,25 +611,81 @@ def test_the_start_command_refuses_a_live_state(tmp_path: Path, monkeypatch, cap
     empty_state(tmp_path / "out", LABEL_LIVE)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(explorer, "make_server", pytest.fail)
-    assert explorer.main() == 1
-    assert "live run" in capsys.readouterr().err
+    assert explorer.main([]) == 1
+    assert "not the state of a free run" in capsys.readouterr().err
 
 
 def test_the_start_command_listens_only_on_the_loopback_address(
-    tmp_path: Path, monkeypatch, capsys
+    tmp_path: Path, monkeypatch, capsys, servers
 ):
     (tmp_path / "out").mkdir()
     state = empty_state(tmp_path / "out", LABEL_STAND_IN)
     before = hashlib.sha256(state.read_bytes()).hexdigest()
-    servers = []
-
-    def make_server(host, port, app):
-        servers.append(FakeServer(host, port, app))
-        return servers[-1]
-
     monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr(explorer, "make_server", make_server)
-    assert explorer.main() == 0
+    assert explorer.main([]) == 0
     assert [server.address for server in servers] == [("127.0.0.1", 7654)]
+    assert servers[0].server_class is explorer.ThreadingServer
     assert explorer.ADDRESS in capsys.readouterr().out
     assert hashlib.sha256(state.read_bytes()).hexdigest() == before
+
+
+def test_the_start_command_serves_the_output_folder_it_is_given(
+    tmp_path: Path, monkeypatch, capsys, servers
+):
+    folder = tmp_path / "another run"
+    folder.mkdir()
+    empty_state(folder, LABEL_STAND_IN)
+    monkeypatch.chdir(tmp_path)
+    assert explorer.main(["--out-dir", str(folder)]) == 0
+    assert f"Serving {folder / store.STATE_FILE}," in capsys.readouterr().out
+    assert len(servers) == 1
+
+
+def test_the_start_command_takes_the_settings_of_every_command(capsys):
+    with pytest.raises(SystemExit) as stopped:
+        explorer.main(["--help"])
+    assert stopped.value.code == 0
+    shown = capsys.readouterr().out
+    assert "--config FILE" in shown and "--out-dir PATH" in shown and "--llm TEXT" in shown
+
+
+def test_a_bad_command_line_or_setting_exits_2(tmp_path: Path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setattr(explorer, "make_server", pytest.fail)
+    with pytest.raises(SystemExit) as stopped:
+        explorer.main(["--no-such-flag"])
+    assert stopped.value.code == 2
+    assert explorer.main(["--llm", "bogus"]) == 2
+    assert "setting llm must be one of" in capsys.readouterr().err
+
+
+class QuietHandler(WSGIRequestHandler):
+    def log_message(self, *args):
+        pass
+
+
+def test_an_idle_connection_holds_up_no_other_request():
+    # A browser may open a connection ahead of time and leave it idle.
+    def app(environ, start_response):
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b"answered\n"]
+
+    server = make_server(
+        "127.0.0.1", 0, app, server_class=explorer.ThreadingServer, handler_class=QuietHandler
+    )
+    serving = threading.Thread(
+        target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True
+    )
+    serving.start()
+    try:
+        with (
+            socket.create_connection(server.server_address, timeout=10),
+            socket.create_connection(server.server_address, timeout=10) as asking,
+        ):
+            asking.sendall(b"GET / HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n")
+            with asking.makefile("rb") as answer:
+                assert answer.readline().rstrip().endswith(b"200 OK")
+    finally:
+        server.shutdown()
+        server.server_close()
+        serving.join(timeout=10)

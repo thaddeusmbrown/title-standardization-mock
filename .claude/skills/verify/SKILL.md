@@ -30,7 +30,9 @@ purpose: this recipe gates a merge.
    runs every free mode and keeps each run under the folder: `default.txt`, then `default/`,
    `replay/` and the rest. For a setting it does not cover, use that skill's "One mode by
    hand". A `FAIL` on replay with "replay miss" means the change altered what a model is
-   asked: CLAUDE.md, "Paid calls and the recording", says what follows.
+   asked: CLAUDE.md, "Paid calls and the recording", says what follows. A change to the
+   architecture page (`titlestd/explorer.py`, `static/app.*`) is read with that skill's "The
+   architecture page".
 4. **If the printed table changed,** follow the `refresh-frozen-output` skill, then go back to
    step 2.
 5. **Check what no test checks:**

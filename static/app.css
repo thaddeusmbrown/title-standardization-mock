@@ -1,0 +1,251 @@
+/* The architecture page (titlestd/explorer.py). Nothing here moves on its own:
+   static/vendor/README.md asks for no CSS that eases a change over time. */
+
+:root {
+  color-scheme: light;
+  --ink: #1c1917;
+  --muted: #57534e;
+  --line: #d6d3d1;
+  --paper: #fafaf9;
+  --panel: #ffffff;
+  --hover: #f5f5f4;
+  --accent: #92400e;
+  --accent-soft: #fde68a;
+  --link: #1d4ed8;
+  font-family: "TX-02 SemiCondensed", "TX-02", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--link);
+}
+
+a:focus-visible {
+  outline: 3px solid var(--link);
+  outline-offset: 2px;
+}
+
+.masthead {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.masthead p {
+  margin: 0;
+}
+
+.kicker {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.site {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.site a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+nav h2 {
+  margin: 1.25rem 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+nav h2:first-child {
+  margin-top: 0;
+}
+
+nav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+nav li a {
+  display: block;
+  padding: 0.3rem 0.6rem;
+  border-left: 3px solid transparent;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+nav li a:hover {
+  background: var(--hover);
+  text-decoration: underline;
+}
+
+nav a[aria-current="page"] {
+  border-left-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 700;
+}
+
+main {
+  min-width: 0;
+  padding: 1.5rem 2rem 2rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 1.75rem;
+  line-height: 1.2;
+}
+
+h2 {
+  margin: 2rem 0 0.75rem;
+  font-size: 1.15rem;
+}
+
+blockquote.design {
+  max-width: 72ch;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--line);
+  background: var(--paper);
+}
+
+blockquote.design p {
+  margin: 0 0 0.5rem;
+}
+
+blockquote.design .source {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.left-out {
+  color: var(--muted);
+}
+
+figure.flowchart {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+}
+
+/* Until Mermaid draws it, the chart shows as its text. */
+pre.mermaid {
+  margin: 0;
+  text-align: center;
+}
+
+figcaption {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+ul.acting,
+ol.stages {
+  padding-left: 1.25rem;
+}
+
+ol.stages li {
+  margin-bottom: 0.5rem;
+}
+
+dl.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.4rem 1.25rem;
+  margin: 1rem 0;
+}
+
+dl.facts dt {
+  font-weight: 700;
+}
+
+dl.facts dd {
+  margin: 0;
+}
+
+table.counts {
+  width: 100%;
+  max-width: 40rem;
+  border-collapse: collapse;
+}
+
+table.counts th,
+table.counts td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+table.counts th {
+  font-weight: 400;
+}
+
+table.counts td {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+@media (max-width: 48rem) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  main {
+    padding: 1rem;
+  }
+
+  nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  nav li a {
+    border-bottom: 3px solid transparent;
+    border-left: 0;
+  }
+
+  nav a[aria-current="page"] {
+    border-bottom-color: var(--accent);
+  }
+
+  dl.facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

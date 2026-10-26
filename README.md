@@ -159,6 +159,7 @@ Three things to keep in mind when reading the table of a run:
 - `DESIGN.md`: the design, and what the mock builds from it.
 - `docs/build-decisions.md`: every point the design left open and how it was settled.
 - `docs/live-run-observation.md`: what the one live run showed about the quote check.
+- `docs/architecture.md`: a local page showing each stage of a run and each component's job.
 - `PROMPT.md`: how the LLM fallback and the agent are prompted, and which limits code
   enforces.
 - `CLAUDE_CODE.md`: how Claude Code is set up for this repository, and how it ran the build.

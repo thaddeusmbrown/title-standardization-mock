@@ -2,11 +2,12 @@
 
 Owner: feat/architecture-page (after the build).
 Governed by: DESIGN.md 1.6 (the flow), 1.10 (waves), 1.11 (architecture),
-2.2 (what is in the mock), 2.8 (the two browser libraries of the architecture
-page); docs/build-decisions.md Q16 (the rows of the table), Q40 (the answer
-labels), S08 (the schema of the state file is titlestd/store.py's), "Diagram
-rules not to copy"; static/vendor/README.md (how the page loads the two
-libraries).
+2.2 (what is in the mock), 2.5 (the free modes), 2.8 (the two browser
+libraries of the architecture page); docs/build-decisions.md Q16 (the rows of
+the table), Q21 (the audited titles of a path), Q40 (the answer labels), S08
+(the schema of the state file is titlestd/store.py's), S13 (the settings of a
+command), "Diagram rules not to copy"; static/vendor/README.md (how the page
+loads the two libraries).
 
 Start it from the repository root, after a free run:
 
@@ -14,7 +15,8 @@ Start it from the repository root, after a free run:
     python3 -m titlestd.explorer
 
 It serves the state file of that run, out/state.sqlite, at
-http://127.0.0.1:7654/ until it is stopped with Ctrl+C. There is a page for
+http://127.0.0.1:7654/ until it is stopped with Ctrl+C; --out-dir names the
+output folder of another run. There is a page for
 the overview, for each stage of a run (set-up, Wave 1, Wave 2, the close) and
 for each component. A stage page shows the stage's flowchart, with the
 components that act in it styled and listed as text; a component page shows
@@ -29,16 +31,31 @@ Decided here, where the record is silent:
   that a renamed address points here. Every method but GET gets 405 with
   "Allow: GET", HEAD included. It starts only on a free run's state: a
   missing file, a file that is not a state of this program and a state whose
-  answer labels hold "live" (contracts.LABEL_LIVE, Q40) stop it with one line
-  and exit status 1. So does a state of live mode that holds no such label:
-  the labels are written when a run finishes, and a live run that stopped
-  leaves its state with none, so a model answer marked "live" or the setting
-  llm = anthropic is refused as well. A later run may replace the file while
-  the page is open, so every page checks the same again and answers 503 with
-  a fixed text when the state no longer passes.
+  llm setting is not one of the two free modes, offline and replay (2.5),
+  stop it with one line and exit status 1. The free modes are a list of
+  their own, not "every mode but anthropic": set-up records the settings
+  before any scoring (Q37), so a state with no llm setting holds no answer,
+  and a mode added to settings.LLMS later is refused until this list names
+  it. A state with a model answer labelled "live" (contracts.LABEL_LIVE,
+  Q40) is refused too. A later run may replace the file while the page is
+  open, so every page checks the same again and answers 503 with a fixed
+  text when the state no longer passes. htmx swaps no error into the page,
+  so static/app.js then loads the address in full, and the 503 or a 404 is
+  seen; so it does when a history restore cannot reach the page.
 - Read-only. Each request opens the file with SQLite's read-only mode and
   closes it again, so the page never writes the state, and shows the state as
   it is now.
+- A run that did not finish. A run writes its final decisions, audits,
+  golden-set scores, review queue and answer labels in one step at its end
+  (store.save_run, WRITTEN_AT_THE_END); one that stopped, or one still under
+  way, leaves the state as it stood at its last completed step. The page
+  shows that state as it is, and the heading of every table of counts says
+  so. A count that reads one of those tables shows NOT_YET instead of a 0
+  that would say the step never ran. The labels of the answers are read from
+  the model answers, each of which carries its own: the answer labels a
+  finished run writes are the same set (Q40), and a run that stopped has
+  none. Until set-up has recorded the settings, the state holds no llm
+  setting, and the page refuses it as above.
 - Counts and code-defined labels only. Every query returns COUNT(*), and
   every value it compares with is a parameter taken from a table in the code
   (the stages, the routes, the occasions of titlestd.pipeline and so on). A
@@ -46,10 +63,19 @@ Decided here, where the record is silent:
   shown by counting the rows that hold each value the code knows, and
   showing the code's label of the one found. No title, description, quote,
   persona or role id reaches a page.
-- S08 makes the schema store.py's business. The page reads its tables by the
-  names store.py gives them, and the integration tests run the real pipeline
-  and compare the page's counts with that run, so a change to the schema
-  fails there rather than showing zeros.
+- S08 makes the schema store.py's business and not a contract for any other
+  part. The page is the one part that reads it, by the names store.py gives
+  its tables and columns, so a change to the schema changes the page's
+  queries with it. The integration tests run the real pipeline and hold the
+  page's counts to that run and to each other (each set of counts that
+  splits a total adds up to it), so such a change fails there rather than
+  showing zeros.
+- The golden-set passes. Wave 1 and the close put the golden titles through
+  the ML match, the LLM and the rules with no agent (titlestd.pipeline), and
+  their answers and routes are recorded like any other. The counts of the
+  rules leave those two passes out and show them on a row of their own, so
+  the LLM answers sent to the agent are the agent's reviews. In Wave 2 the
+  golden titles are scored for release with the rest of the long tail.
 - One escape. _e is the only caller of html.escape, and every value put into
   a page passes through it; markup this module built is marked as such
   (_Html) and passes through unchanged. The flowcharts are escaped too:
@@ -59,6 +85,15 @@ Decided here, where the record is silent:
   the same address and takes the panel and the navigation out of it
   (hx-select, hx-select-oob), so a response never depends on a request
   header, and history, with no cache, gets the same page.
+- One thread per request. wsgiref's server takes one connection at a time,
+  and a connection a browser opens ahead and leaves idle would hold up every
+  other request; the page's server takes each in a thread of its own, and
+  each request opens its own connection to the state.
+- A module of its own. The page starts as python3 -m titlestd.explorer, not
+  as a command of python3 -m titlestd, because cli.py is a shared file of
+  rule 2. It takes --config and the setting flags of every command (S13),
+  through titlestd.settings, and uses only out_dir. A bad command line or
+  setting exits 2.
 - The flowcharts are constants, equal to the fences of docs/architecture.md.
   Each draws one stage of titlestd.pipeline: its component nodes are exactly
   the components acting in it, styled with the class "acting"; the other
@@ -67,8 +102,11 @@ Decided here, where the record is silent:
   copy": there are two machine paths, the ML match runs from Wave 1 on, a
   title marked "no suitable role" goes to the catalog owner and never to a
   generic role, a look-up hit goes to no model and not through the rules,
-  and the audit samples 60 with the lines 2 and 12.
-- The components are the steps of 1.6 as the mock builds them, plus the four
+  and the audit samples 60 with the lines 2 and 12. The audited titles of a
+  path take their labels as Approved, and its outcome applies to the rest
+  (Q21); a path of 60 titles or fewer is audited in full and gets no status
+  (2.4).
+- The components are the steps of 1.6 as the mock builds them, plus the five
   parts the mock adds around them: the golden set, the generic family role
   of the close, the model switch and the state file, and the report that
   prints the table. Learning (1.6 step 10) is the component of
@@ -78,14 +116,16 @@ Decided here, where the record is silent:
 
 from __future__ import annotations
 
+import argparse
 import contextlib
 import html
+import socketserver
 import sqlite3
 import sys
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from wsgiref.simple_server import make_server
+from wsgiref.simple_server import WSGIServer, make_server
 
 from titlestd import pipeline, store
 from titlestd.contracts import (
@@ -101,8 +141,15 @@ from titlestd.contracts import (
     Status,
     TableRow,
     TitlestdError,
+    recorded_label,
 )
-from titlestd.settings import EMBEDDERS, LLMS, Settings
+from titlestd.settings import (
+    EMBEDDERS,
+    LLMS,
+    SettingsError,
+    add_setting_arguments,
+    settings_from_arguments,
+)
 
 HOST = "127.0.0.1"
 PORT = 7654
@@ -142,11 +189,10 @@ TABLES = (
 )
 
 # The files the page loads, by address: the only files it serves.
+_CONTENT_TYPES = {".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8"}
 STATIC_FILES = {
-    "/static/app.css": ("app.css", "text/css; charset=utf-8"),
-    "/static/app.js": ("app.js", "text/javascript; charset=utf-8"),
-    "/static/vendor/htmx.min.js": ("vendor/htmx.min.js", "text/javascript; charset=utf-8"),
-    "/static/vendor/mermaid.min.js": ("vendor/mermaid.min.js", "text/javascript; charset=utf-8"),
+    f"/static/{name}": (name, _CONTENT_TYPES[Path(name).suffix])
+    for name in ("app.css", "app.js", "vendor/htmx.min.js", "vendor/mermaid.min.js")
 }
 
 
@@ -180,12 +226,40 @@ class Found:
 
 Fact = Count | Found
 
-_TABLE_EXISTS = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = ?"
-_LABELLED = "SELECT COUNT(*) FROM answer_labels WHERE label = ?"
-_LABELLED_LIKE = "SELECT COUNT(*) FROM answer_labels WHERE label LIKE ?"
+# A replayed answer's label (contracts.recorded_label), as a LIKE pattern.
+_RECORDED_PATTERN = recorded_label("%", "%")
+# The llm settings of a free run (2.5): the deterministic stand-in and recorded answers.
+_FREE_LLMS = ("offline", "replay")
+_CHOOSE, _REVIEW = store.STEP_CHOOSE, store.STEP_REVIEW
+# The stages after set-up: the models score titles and people's decisions are learned.
+_LATER_STAGES = (Stage.WAVE1, Stage.WAVE2, Stage.CLOSE)
+# The stages whose golden-set pass calls no agent (titlestd.pipeline); in Wave 2
+# the golden titles are scored for release with the rest of the long tail.
+_GOLDEN_PASS_STAGES = (Stage.WAVE1, Stage.CLOSE)
+# The tables store.save_run writes in one step at the end of a run.
+WRITTEN_AT_THE_END = (
+    "decisions",
+    "audits",
+    "audit_samples",
+    "golden_scores",
+    "review_queue",
+    "answer_labels",
+)
+
+
+def _marks(values: Iterable[object]) -> str:
+    """One SQL parameter mark per value."""
+    return ", ".join("?" for _ in values)
+
+
+_TABLES_MADE = (
+    f"SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ({_marks(TABLES)})"
+)
+# Each model answer carries its label, so a run that stopped holds them too; a
+# finished run also writes them in answer_labels, the same set (Q40).
+_LABELLED = "SELECT COUNT(*) FROM model_answers WHERE source = ?"
+_LABELLED_LIKE = "SELECT COUNT(*) FROM model_answers WHERE source LIKE ?"
 _SETTING = "SELECT COUNT(*) FROM settings WHERE name = ? AND value = ?"
-_ANSWERED_BY = "SELECT COUNT(*) FROM model_answers WHERE source = ?"
-_TITLE_ROWS = "SELECT COUNT(*) FROM title_rows"
 _NAMED = "SELECT COUNT(*) FROM title_rows WHERE has_person_name = 1"
 _NO_FAMILY = "SELECT COUNT(*) FROM title_rows WHERE family_usable = 0"
 _ON_WAVE1_LIST = "SELECT COUNT(*) FROM title_rows WHERE on_wave1_list = 1"
@@ -197,46 +271,59 @@ _GOLDEN_LEARNED = (
     " OR EXISTS (SELECT 1 FROM examples AS e"
     " WHERE e.family_code = t.family_code AND e.cleaned_title = t.cleaned_title))"
 )
-_LOOKUP_ENTRIES = "SELECT COUNT(*) FROM lookup"
 _LOOKUP_JOINED = "SELECT COUNT(*) FROM lookup WHERE joined_at = ?"
 _EXAMPLES_JOINED = "SELECT COUNT(*) FROM examples WHERE joined_at = ?"
 _SCORED = "SELECT COUNT(*) FROM scorings WHERE stage = ?"
 _ROUTED = "SELECT COUNT(*) FROM scorings WHERE stage = ? AND route = ?"
 _ANSWERS = "SELECT COUNT(*) FROM model_answers WHERE stage = ? AND step = ?"
 _ANSWERED = "SELECT COUNT(*) FROM model_answers WHERE step = ? AND answer = ?"
-_RULED = "SELECT COUNT(*) FROM model_answers WHERE step = ? AND route = ?"
+# An answer of the golden-set passes, which call no agent: a golden title's
+# answer at one of the stages given (_GOLDEN_PASS_STAGES).
+_IN_GOLDEN_PASS = (
+    f"a.stage IN ({_marks(_GOLDEN_PASS_STAGES)}) AND EXISTS (SELECT 1 FROM title_rows AS t"
+    " WHERE t.in_golden_set = 1"
+    " AND t.family_code = a.family_code AND t.cleaned_title = a.cleaned_title)"
+)
+_RULED = (
+    "SELECT COUNT(*) FROM model_answers AS a WHERE a.step = ? AND a.route = ?"
+    f" AND NOT ({_IN_GOLDEN_PASS})"
+)
+_GOLDEN_PASS = f"SELECT COUNT(*) FROM model_answers AS a WHERE a.step = ? AND {_IN_GOLDEN_PASS}"
 _DECIDED = "SELECT COUNT(*) FROM human_decisions WHERE occasion = ?"
 _DECIDED_AS = "SELECT COUNT(*) FROM human_decisions WHERE occasion = ? AND answer = ?"
 _ANSWERED_BY_PEOPLE = "SELECT COUNT(*) FROM human_decisions WHERE answer = ?"
 _SIMULATED = "SELECT COUNT(*) FROM human_decisions WHERE simulated = 1"
-_GOLDEN_SCORED = "SELECT COUNT(*) FROM golden_scores"
 _AUDITED = "SELECT COUNT(*) FROM audit_samples WHERE path = ?"
 _AUDIT_OUTCOME = "SELECT COUNT(*) FROM audits WHERE path = ? AND outcome = ?"
 _IN_ROW = "SELECT COUNT(*) FROM decisions WHERE table_row = ?"
 _WITH_STATUS = "SELECT COUNT(*) FROM decisions WHERE status = ?"
-_QUEUE_FILE = "SELECT COUNT(*) FROM review_queue"
-# One query per table, for the state file's own page.
+_FREE_SETTING = f"SELECT COUNT(*) FROM settings WHERE name = ? AND value IN ({_marks(_FREE_LLMS)})"
+# One query per table: the state file's own page, and every plain count of a table.
 _ROWS_IN = {table: "SELECT COUNT(*) FROM " + table for table in TABLES}
-
-# A replayed answer's label starts so (contracts.recorded_label).
-_RECORDED_PATTERN = "recorded %"
-# The llm setting of live mode (settings.LLMS).
-_LIVE_LLM = "anthropic"
-_CHOOSE, _REVIEW = store.STEP_CHOOSE, store.STEP_REVIEW
-# The stages after set-up: the models score titles and people's decisions are learned.
-_LATER_STAGES = (Stage.WAVE1, Stage.WAVE2, Stage.CLOSE)
 
 
 def _setting(label: str, name: str, values: Iterable[str]) -> Found:
     return Found(label, tuple((_SETTING, (name, value), value) for value in values))
 
 
-def _audit_outcome(label: str, path: MachinePath) -> Found:
-    return Found(
-        label, tuple((_AUDIT_OUTCOME, (path, outcome), outcome.value) for outcome in AuditOutcome)
+def _audit(path: MachinePath, name: str) -> tuple[Count, Found]:
+    """How many titles of a path were audited, and the outcome of its audit."""
+    outcomes = tuple((_AUDIT_OUTCOME, (path, each), each.value) for each in AuditOutcome)
+    return (
+        Count(f"Audited on the {name} path", _AUDITED, (path,)),
+        Found(f"Outcome of the {name} path", outcomes),
     )
 
 
+def _learned(stage: Stage, where: str = "") -> tuple[Count, Count]:
+    """The look-up entries and the examples that joined at a stage."""
+    return (
+        Count(f"Look-up entries learned{where}", _LOOKUP_JOINED, (stage,)),
+        Count(f"Examples learned{where}", _EXAMPLES_JOINED, (stage,)),
+    )
+
+
+# The facts more than one page shows, each under one label.
 _LLM_SETTING = _setting("LLM setting", "llm", LLMS)
 _EMBEDDER_SETTING = _setting("Embedder setting", "embedder", EMBEDDERS)
 _ANSWER_LABELS = Found(
@@ -246,6 +333,27 @@ _ANSWER_LABELS = Found(
         (_LABELLED_LIKE, (_RECORDED_PATTERN,), "a recording"),
     ),
 )
+_TITLE_ROWS = Count("Title rows", _ROWS_IN["title_rows"])
+_GOLDEN_TITLES = Count("Titles in the golden set", _IN_GOLDEN_SET)
+_SEED_ENTRIES = Count("Entries from the seed look-up", _LOOKUP_JOINED, (Stage.SETUP,))
+_LOOKUP_HITS = Count("Look-up hits", _IN_ROW, (TableRow.LOOKUP,))
+_WAVE1_APPROVALS = Count("Wave 1 approvals", _DECIDED, (pipeline.OCCASION_WAVE1,))
+_GOLDEN_LABELS = Count("Golden-set labels", _DECIDED, (pipeline.OCCASION_GOLDEN,))
+_AUDIT_LABELS = Count("Audit labels", _DECIDED, (pipeline.OCCASION_AUDIT,))
+_QUEUE_DECISIONS = Count("Review-queue decisions", _DECIDED, (pipeline.OCCASION_QUEUE,))
+# A person could not decide at the close only (Q01).
+_UNDECIDED = Count(
+    "Could not decide", _DECIDED_AS, (pipeline.OCCASION_QUEUE, HumanAnswer.UNDECIDED)
+)
+_AUDITS = (
+    *_audit(MachinePath.MODELS_AGREE, "models-agree"),
+    *_audit(MachinePath.AGENT_SETTLED, "agent-settled"),
+    _AUDIT_LABELS,
+)
+_GOLDEN_TITLES_LEARNED = Count("Golden-set titles learned", _GOLDEN_LEARNED)
+_GENERIC = Count("Given a generic family role", _IN_ROW, (TableRow.GENERIC,))
+_LEGACY = Count("Left on a legacy title", _IN_ROW, (TableRow.LEGACY,))
+_QUEUE_FILE = Count("Titles in the review-queue file", _ROWS_IN["review_queue"])
 
 
 # --- The components ----------------------------------------------------------------
@@ -259,6 +367,7 @@ RUN_TEXT = (
 DESIGN_SECTIONS = {
     "1.1": "The idea in four lines",
     "1.2": "Vocabulary",
+    "1.4": "Inputs and what each is used for",
     "1.6": "The flow",
     "1.7": "The rules",
     "1.8": "What people always decide",
@@ -276,9 +385,10 @@ DESIGN_SECTIONS = {
 class Component:
     """One part of the program, as its page shows it.
 
-    node is its name in the flowcharts. design lists (section, detail) pairs:
-    the sections of DESIGN.md it builds. job is text from DESIGN.md, one
-    paragraph per item, word for word. entries are those of
+    node is its name in the flowcharts, module the file that builds it. job
+    is text from DESIGN.md, one paragraph per item, word for word, and
+    design lists the (section, detail) pairs it is quoted from, each section
+    the source of at least one paragraph. entries are those of
     docs/build-decisions.md that govern it, each named in its module's
     docstring.
     """
@@ -286,7 +396,7 @@ class Component:
     slug: str
     node: str
     name: str
-    modules: tuple[str, ...]
+    module: str
     design: tuple[tuple[str, str], ...]
     entries: tuple[str, ...]
     job: tuple[str, ...]
@@ -298,8 +408,8 @@ COMPONENTS = (
         slug="prepare",
         node="prepare",
         name="Prepare",
-        modules=("titlestd/prepare.py",),
-        design=(("1.6", "step 1"),),
+        module="titlestd/prepare.py",
+        design=(("1.6", "step 1"), ("1.4", "")),
         entries=("Q11", "Q14", "Q26"),
         job=(
             "Clean each title (lower-case, strip punctuation, locations and requisition "
@@ -309,7 +419,7 @@ COMPONENTS = (
             "person's name goes to a person and to no model.",
         ),
         facts=(
-            Count("Title rows", _TITLE_ROWS),
+            _TITLE_ROWS,
             Count("With a person's name", _NAMED),
             Count("With no usable family code", _NO_FAMILY),
         ),
@@ -318,8 +428,8 @@ COMPONENTS = (
         slug="look-up",
         node="lookup",
         name="Look-up",
-        modules=("titlestd/lookup.py",),
-        design=(("1.6", "step 2"),),
+        module="titlestd/lookup.py",
+        design=(("1.6", "step 2"), ("2.4", "The seed look-up")),
         entries=("Q09", "Q13"),
         job=(
             "Exact match on cleaned title plus family in the look-up table. A hit takes that "
@@ -327,16 +437,17 @@ COMPONENTS = (
             "The seed look-up exists so that the look-up step has hits to show.",
         ),
         facts=(
-            Count("Look-up hits", _IN_ROW, (TableRow.LOOKUP,)),
-            Count("Entries from the seed look-up", _LOOKUP_JOINED, (Stage.SETUP,)),
-            Count("Entries at the end of the run", _LOOKUP_ENTRIES),
+            _LOOKUP_HITS,
+            _SEED_ENTRIES,
+            Count("Examples from the seed look-up", _EXAMPLES_JOINED, (Stage.SETUP,)),
+            Count("Entries in the look-up table", _ROWS_IN["lookup"]),
         ),
     ),
     Component(
         slug="ml-match",
         node="ml_match",
         name="ML match",
-        modules=("titlestd/matcher.py",),
+        module="titlestd/matcher.py",
         design=(("1.6", "step 3"),),
         entries=("Q04", "Q12", "Q18"),
         job=(
@@ -354,8 +465,8 @@ COMPONENTS = (
         slug="llm-fallback",
         node="fallback",
         name="LLM fallback",
-        modules=("titlestd/fallback.py",),
-        design=(("1.6", "step 4"),),
+        module="titlestd/fallback.py",
+        design=(("1.6", "step 4"), ("2.4", "Role score")),
         entries=("Q11", "Q15", "Q18"),
         job=(
             "The ML model's choice may stand alone only if the margin clears a cut-off and "
@@ -371,17 +482,21 @@ COMPONENTS = (
                 Count(f"LLM answers in {stage.value}", _ANSWERS, (stage, _CHOOSE))
                 for stage in _LATER_STAGES
             ),
-            Count("Answered with a number", _ANSWERED, (_CHOOSE, ChooseKind.ROLE)),
-            Count("Answered no match", _ANSWERED, (_CHOOSE, ChooseKind.NO_MATCH)),
-            Count("Answered insufficient data", _ANSWERED, (_CHOOSE, ChooseKind.INSUFFICIENT_DATA)),
-            Count("No usable answer", _ANSWERED, (_CHOOSE, ChooseKind.INVALID)),
+            Count("LLM answers with a number", _ANSWERED, (_CHOOSE, ChooseKind.ROLE)),
+            Count("LLM answers of no match", _ANSWERED, (_CHOOSE, ChooseKind.NO_MATCH)),
+            Count(
+                "LLM answers of insufficient data",
+                _ANSWERED,
+                (_CHOOSE, ChooseKind.INSUFFICIENT_DATA),
+            ),
+            Count("LLM answers not usable", _ANSWERED, (_CHOOSE, ChooseKind.INVALID)),
         ),
     ),
     Component(
         slug="rules",
         node="rules",
         name="Rules",
-        modules=("titlestd/rules.py",),
+        module="titlestd/rules.py",
         design=(("1.6", "step 5"), ("1.7", "")),
         entries=("Q04", "Q15", "Q20", "Q39"),
         job=(
@@ -391,18 +506,28 @@ COMPONENTS = (
             "escalates, the title goes to a person.",
         ),
         facts=(
-            Count("LLM answers that passed every check", _RULED, (_CHOOSE, Route.ACCEPT)),
-            Count("LLM answers sent to the agent", _RULED, (_CHOOSE, Route.AGENT)),
-            Count("LLM answers sent to a person", _RULED, (_CHOOSE, Route.PERSON)),
-            Count("Agent answers that passed every check", _RULED, (_REVIEW, Route.ACCEPT)),
-            Count("Agent answers sent to a person", _RULED, (_REVIEW, Route.PERSON)),
+            *(
+                Count(label, _RULED, (step, route, *_GOLDEN_PASS_STAGES))
+                for label, step, route in (
+                    ("LLM answers that passed every check", _CHOOSE, Route.ACCEPT),
+                    ("LLM answers sent to the agent", _CHOOSE, Route.AGENT),
+                    ("LLM answers sent to a person", _CHOOSE, Route.PERSON),
+                    ("Agent answers that passed every check", _REVIEW, Route.ACCEPT),
+                    ("Agent answers sent to a person", _REVIEW, Route.PERSON),
+                )
+            ),
+            Count(
+                "LLM answers of the golden-set passes, only scored",
+                _GOLDEN_PASS,
+                (_CHOOSE, *_GOLDEN_PASS_STAGES),
+            ),
         ),
     ),
     Component(
         slug="agent",
         node="agent",
         name="Agent",
-        modules=("titlestd/agent.py",),
+        module="titlestd/agent.py",
         design=(("1.6", "step 6"), ("2.4", "The agent")),
         entries=("Q10", "Q19", "Q20"),
         job=(
@@ -416,19 +541,21 @@ COMPONENTS = (
             "answer. No agent framework.",
         ),
         facts=(
-            Count("Reviews in Wave 1", _ANSWERS, (Stage.WAVE1, _REVIEW)),
-            Count("Reviews in Wave 2", _ANSWERS, (Stage.WAVE2, _REVIEW)),
-            Count("Answered with a number", _ANSWERED, (_REVIEW, ReviewKind.ROLE)),
-            Count("Escalated", _ANSWERED, (_REVIEW, ReviewKind.ESCALATE)),
-            Count("No usable answer", _ANSWERED, (_REVIEW, ReviewKind.INVALID)),
+            *(
+                Count(f"Reviews in {stage.value}", _ANSWERS, (stage, _REVIEW))
+                for stage in (Stage.WAVE1, Stage.WAVE2)
+            ),
+            Count("Agent answers with a number", _ANSWERED, (_REVIEW, ReviewKind.ROLE)),
+            Count("Agent answers that escalate", _ANSWERED, (_REVIEW, ReviewKind.ESCALATE)),
+            Count("Agent answers not usable", _ANSWERED, (_REVIEW, ReviewKind.INVALID)),
         ),
     ),
     Component(
         slug="people",
         node="people",
         name="People",
-        modules=("titlestd/people.py",),
-        design=(("1.6", "step 7"), ("1.8", ""), ("2.4", "People are simulated")),
+        module="titlestd/people.py",
+        design=(("1.6", "step 7"), ("2.4", "People are simulated")),
         entries=("Q01", "Q03", "Q27"),
         job=(
             "HR SMEs and reviewers decide everything no machine may settle (1.8).",
@@ -436,12 +563,16 @@ COMPONENTS = (
             "every simulated decision is marked as simulated.",
         ),
         facts=(
-            Count("Wave 1 approvals", _DECIDED, (pipeline.OCCASION_WAVE1,)),
-            Count("Golden-set labels", _DECIDED, (pipeline.OCCASION_GOLDEN,)),
-            Count("Audit labels", _DECIDED, (pipeline.OCCASION_AUDIT,)),
-            Count("Review-queue decisions", _DECIDED, (pipeline.OCCASION_QUEUE,)),
-            Count("Could not decide", _ANSWERED_BY_PEOPLE, (HumanAnswer.UNDECIDED,)),
-            Count("No suitable role", _ANSWERED_BY_PEOPLE, (HumanAnswer.NO_SUITABLE_ROLE,)),
+            _WAVE1_APPROVALS,
+            _GOLDEN_LABELS,
+            _AUDIT_LABELS,
+            _QUEUE_DECISIONS,
+            _UNDECIDED,
+            Count(
+                "No suitable role, at any occasion",
+                _ANSWERED_BY_PEOPLE,
+                (HumanAnswer.NO_SUITABLE_ROLE,),
+            ),
             Count("Marked as simulated", _SIMULATED),
         ),
     ),
@@ -449,8 +580,8 @@ COMPONENTS = (
         slug="golden-set",
         node="golden",
         name="Golden set",
-        modules=("titlestd/golden.py",),
-        design=(("1.2", "Golden set"), ("1.10", "")),
+        module="titlestd/golden.py",
+        design=(("1.2", "Golden set"),),
         entries=("Q07", "Q08"),
         job=(
             "A fixed random sample of long-tail titles that HR SMEs label without seeing the "
@@ -458,17 +589,17 @@ COMPONENTS = (
             "entry or an example.",
         ),
         facts=(
-            Count("Titles in the golden set", _IN_GOLDEN_SET),
-            Count("Blind labels", _DECIDED, (pipeline.OCCASION_GOLDEN,)),
-            Count("Times scored", _GOLDEN_SCORED),
-            Count("In the look-up table or the examples", _GOLDEN_LEARNED),
+            _GOLDEN_TITLES,
+            _GOLDEN_LABELS,
+            Count("Times scored", _ROWS_IN["golden_scores"]),
+            _GOLDEN_TITLES_LEARNED,
         ),
     ),
     Component(
         slug="random-audit",
         node="audit",
         name="Random audit",
-        modules=("titlestd/audit.py",),
+        module="titlestd/audit.py",
         design=(("1.9", ""), ("2.4", "Audit at mock scale")),
         entries=("Q07", "Q16", "Q21", "Q23"),
         job=(
@@ -482,63 +613,50 @@ COMPONENTS = (
             "provisional. If a path holds 60 titles or fewer, every title in it is labeled: "
             "each takes its label with status Approved, and the path gets no status.",
         ),
-        facts=(
-            Count("Audited on the models-agree path", _AUDITED, (MachinePath.MODELS_AGREE,)),
-            _audit_outcome("Outcome of the models-agree path", MachinePath.MODELS_AGREE),
-            Count("Audited on the agent-settled path", _AUDITED, (MachinePath.AGENT_SETTLED,)),
-            _audit_outcome("Outcome of the agent-settled path", MachinePath.AGENT_SETTLED),
-            Count("Audit labels", _DECIDED, (pipeline.OCCASION_AUDIT,)),
-        ),
+        facts=_AUDITS,
     ),
     Component(
         slug="generic-role",
         node="generic",
         name="Generic family role",
-        modules=("titlestd/close.py",),
+        module="titlestd/close.py",
         design=(("1.2", "Generic family role"), ("1.8", "")),
         entries=("Q01", "Q03", "Q25", "Q26"),
         job=(
+            "One catalog entry per family that names the family and no job. Only code "
+            "assigns it, as a last resort.",
             "At the close, a title nobody could decide takes its family's generic role, "
             "marked provisional and capped at 2% of employees. A widely held or "
             "compliance-flagged title never does.",
             'A title marked "no suitable role" goes to the catalog owner, who adds a role or '
             "names one.",
         ),
-        facts=(
-            Count(
-                "Could not decide at the close",
-                _DECIDED_AS,
-                (pipeline.OCCASION_QUEUE, HumanAnswer.UNDECIDED),
-            ),
-            Count("Given a generic family role", _IN_ROW, (TableRow.GENERIC,)),
-            Count("Left on a legacy title", _IN_ROW, (TableRow.LEGACY,)),
-        ),
+        facts=(_UNDECIDED, _GENERIC, _LEGACY),
     ),
     Component(
         slug="release",
         node="release",
         name="Release",
-        modules=("titlestd/release.py",),
-        design=(("1.6", "step 9"), ("2.6", "")),
+        module="titlestd/release.py",
+        design=(("1.6", "step 9"),),
         entries=("Q05", "Q16", "Q27", "Q40"),
         job=(
             "After the HR lead signs, the system writes a load file (one row per employee: "
             "the new titles and their status) and a reverse file (how to restore each "
             "employee's legacy title). The employer's HR-system team loads them; the system "
             "never writes to the HR system.",
-            "It also writes the load file, the reverse file and the review queue.",
         ),
         facts=(
             *(Count(f"Status {status.value}", _WITH_STATUS, (status,)) for status in Status),
-            Count("Left on a legacy title", _IN_ROW, (TableRow.LEGACY,)),
-            Count("Titles in the review-queue file", _QUEUE_FILE),
+            _LEGACY,
+            _QUEUE_FILE,
         ),
     ),
     Component(
         slug="learning",
         node="learning",
         name="Learning",
-        modules=("titlestd/lookup.py",),
+        module="titlestd/lookup.py",
         design=(("1.6", "step 10"),),
         entries=("Q07", "Q13", "Q14"),
         job=(
@@ -547,22 +665,15 @@ COMPONENTS = (
             "approves it.",
         ),
         facts=(
-            *(
-                Count(f"Look-up entries learned in {stage.value}", _LOOKUP_JOINED, (stage,))
-                for stage in _LATER_STAGES
-            ),
-            *(
-                Count(f"Examples learned in {stage.value}", _EXAMPLES_JOINED, (stage,))
-                for stage in _LATER_STAGES
-            ),
-            Count("Golden-set titles learned", _GOLDEN_LEARNED),
+            *(fact for stage in _LATER_STAGES for fact in _learned(stage, f" in {stage.value}")),
+            _GOLDEN_TITLES_LEARNED,
         ),
     ),
     Component(
         slug="model-switch",
         node="switch",
         name="Model switch",
-        modules=("titlestd/switch.py",),
+        module="titlestd/switch.py",
         design=(("2.5", ""),),
         entries=("Q30", "Q31", "Q32", "Q40", "S09"),
         job=(
@@ -577,7 +688,7 @@ COMPONENTS = (
         slug="state-file",
         node="statefile",
         name="State file",
-        modules=("titlestd/store.py",),
+        module="titlestd/store.py",
         design=(("2.1", ""),),
         entries=("Q06", "Q38"),
         job=(
@@ -590,7 +701,7 @@ COMPONENTS = (
         slug="report",
         node="report",
         name="Report",
-        modules=("titlestd/report.py",),
+        module="titlestd/report.py",
         design=(("2.6", ""),),
         entries=("Q05", "Q08", "Q16", "Q40"),
         job=(
@@ -605,8 +716,50 @@ COMPONENTS = (
 
 # --- The stages --------------------------------------------------------------------
 
-# Each flowchart is fixed text, the same as its fence in docs/architecture.md.
+# Each flowchart is fixed text, the same as its fence in docs/architecture.md. Its
+# last two lines style the nodes of the components acting in its stage.
 ACTING_STYLE = "classDef acting fill:#fde68a,stroke:#92400e,stroke-width:3px,color:#1c1917"
+
+
+def _styled(acting: tuple[str, ...]) -> str:
+    return f"{ACTING_STYLE}\n    class {','.join(acting)} acting"
+
+
+SETUP_ACTING = ("prepare", "lookup", "golden", "switch", "statefile")
+WAVE1_ACTING = (
+    "lookup",
+    "ml_match",
+    "fallback",
+    "rules",
+    "agent",
+    "people",
+    "golden",
+    "learning",
+    "statefile",
+)
+WAVE2_ACTING = (
+    "ml_match",
+    "fallback",
+    "rules",
+    "agent",
+    "people",
+    "audit",
+    "golden",
+    "learning",
+    "statefile",
+)
+CLOSE_ACTING = (
+    "people",
+    "learning",
+    "golden",
+    "ml_match",
+    "fallback",
+    "rules",
+    "generic",
+    "release",
+    "report",
+    "statefile",
+)
 
 SETUP_FLOWCHART = f"""\
 flowchart TD
@@ -623,8 +776,7 @@ flowchart TD
     rows --> statefile
     wave1 --> statefile
     golden --> statefile
-    {ACTING_STYLE}
-    class prepare,lookup,golden,switch,statefile acting
+    {_styled(SETUP_ACTING)}
 """
 
 WAVE1_FLOWCHART = f"""\
@@ -643,8 +795,7 @@ flowchart TD
     people -->|an HR SME approves every one| learning[Learning]
     learning --> table([Look-up table and examples])
     rules -.->|answers and routes recorded| statefile[(State file)]
-    {ACTING_STYLE}
-    class lookup,ml_match,fallback,rules,agent,people,golden,learning,statefile acting
+    {_styled(WAVE1_ACTING)}
 """
 
 WAVE2_FLOWCHART = f"""\
@@ -661,15 +812,15 @@ flowchart TD
     agree --> audit[Random audit]
     settled --> audit
     people[People] -->|blind labels| audit
-    audit -->|at most 2 wrong of 60| confirmed([Confirmed])
-    audit -->|3 to 12 wrong of 60| provisional([Provisional])
-    audit -->|13 or more wrong of 60| stopped([Stopped, kept on legacy titles])
-    audit -->|60 titles or fewer, all labeled| labeled([Approved, each with its label])
+    audit -->|every title audited| labeled([Approved, each with its label])
+    audit -->|60 titles or fewer, all audited| nostatus([The path gets no status])
+    audit -->|at most 2 wrong of 60| confirmed([The rest Confirmed])
+    audit -->|3 to 12 wrong of 60| provisional([The rest Provisional])
+    audit -->|13 or more wrong of 60| stopped([Stopped, the rest kept on legacy titles by default])
     people -->|audit labels| learning[Learning]
     rules -.->|golden titles scored again| golden[Golden set]
     rules -.->|answers and routes recorded| statefile[(State file)]
-    {ACTING_STYLE}
-    class ml_match,fallback,rules,agent,people,audit,golden,learning,statefile acting
+    {_styled(WAVE2_ACTING)}
 """
 
 CLOSE_FLOWCHART = f"""\
@@ -677,7 +828,7 @@ flowchart TD
     queue([Review queue]) --> people[People]
     people -->|a role, Approved| decisions([One final decision per title])
     people -->|decisions join| learning[Learning]
-    learning --> golden[Golden set]
+    learning -.->|then| golden[Golden set]
     golden -->|one more pass, no agent| ml_match[ML match]
     ml_match --> fallback[LLM fallback]
     fallback --> rules[Rules]
@@ -692,8 +843,7 @@ flowchart TD
     decisions --> report[Report]
     release --> files([Load file, reverse file, exceptions list, review queue])
     decisions -.->|recorded| statefile[(State file)]
-    {ACTING_STYLE}
-    class people,learning,golden,ml_match,fallback,rules,generic,release,report,statefile acting
+    {_styled(CLOSE_ACTING)}
 """
 
 
@@ -703,9 +853,9 @@ class StagePage:
 
     design is its row of the table in DESIGN.md 1.10 (the row design_wave),
     word for word; left_out names what DESIGN.md 2.2 leaves out of the mock
-    from that row. acting are the nodes of the components that act in it,
-    the nodes its flowchart styles; its page lists them in the order of
-    COMPONENTS.
+    from that row, if anything. acting are the nodes of the components that
+    act in it, the nodes its flowchart styles; its page lists them in the
+    order of COMPONENTS.
     """
 
     slug: str
@@ -713,7 +863,7 @@ class StagePage:
     name: str
     design_wave: str
     design: str
-    left_out: tuple[str, ...]
+    left_out: str
     acting: tuple[str, ...]
     flowchart: str
     facts: tuple[Fact, ...]
@@ -726,14 +876,14 @@ STAGES = (
         name="Set-up",
         design_wave="Set-up",
         design="Catalog approved; release thresholds signed; a small pilot timed; golden set drawn",
-        left_out=("the set-up pilot",),
-        acting=("prepare", "lookup", "golden", "switch", "statefile"),
+        left_out="the set-up pilot",
+        acting=SETUP_ACTING,
         flowchart=SETUP_FLOWCHART,
         facts=(
-            Count("Title rows prepared", _TITLE_ROWS),
+            _TITLE_ROWS,
             Count("Titles on the Wave 1 list", _ON_WAVE1_LIST),
-            Count("Titles in the golden set", _IN_GOLDEN_SET),
-            Count("Entries from the seed look-up", _LOOKUP_JOINED, (Stage.SETUP,)),
+            _GOLDEN_TITLES,
+            _SEED_ENTRIES,
             Count("Settings recorded", _ROWS_IN["settings"]),
             Count("Thresholds recorded", _ROWS_IN["thresholds"]),
             _LLM_SETTING,
@@ -750,28 +900,17 @@ STAGES = (
             "one. The golden set is labeled. The agent only recommends. A dry run scores "
             "every title once and releases nothing, to size the Wave 2 review queue."
         ),
-        left_out=("the dry run",),
-        acting=(
-            "lookup",
-            "ml_match",
-            "fallback",
-            "rules",
-            "agent",
-            "people",
-            "golden",
-            "learning",
-            "statefile",
-        ),
+        left_out="the dry run",
+        acting=WAVE1_ACTING,
         flowchart=WAVE1_FLOWCHART,
         facts=(
-            Count("Look-up hits", _IN_ROW, (TableRow.LOOKUP,)),
+            _LOOKUP_HITS,
             Count("Titles scored by the models", _SCORED, (Stage.WAVE1,)),
             Count("LLM answers", _ANSWERS, (Stage.WAVE1, _CHOOSE)),
             Count("Agent reviews", _ANSWERS, (Stage.WAVE1, _REVIEW)),
-            Count("Wave 1 approvals", _DECIDED, (pipeline.OCCASION_WAVE1,)),
-            Count("Golden-set labels", _DECIDED, (pipeline.OCCASION_GOLDEN,)),
-            Count("Look-up entries learned", _LOOKUP_JOINED, (Stage.WAVE1,)),
-            Count("Examples learned", _EXAMPLES_JOINED, (Stage.WAVE1,)),
+            _WAVE1_APPROVALS,
+            _GOLDEN_LABELS,
+            *_learned(Stage.WAVE1),
         ),
     ),
     StagePage(
@@ -784,32 +923,17 @@ STAGES = (
             "released. Everything else goes to a review queue. From here the agent's answer "
             "stands."
         ),
-        left_out=(),
-        acting=(
-            "ml_match",
-            "fallback",
-            "rules",
-            "agent",
-            "people",
-            "golden",
-            "audit",
-            "learning",
-            "statefile",
-        ),
+        left_out="",
+        acting=WAVE2_ACTING,
         flowchart=WAVE2_FLOWCHART,
         facts=(
             Count("Titles scored by the models", _SCORED, (Stage.WAVE2,)),
             Count("On the models-agree path", _ROUTED, (Stage.WAVE2, MachinePath.MODELS_AGREE)),
             Count("On the agent-settled path", _ROUTED, (Stage.WAVE2, MachinePath.AGENT_SETTLED)),
-            Count("Sent to a person", _ROUTED, (Stage.WAVE2, Route.PERSON)),
+            Count("Scored and sent to a person", _ROUTED, (Stage.WAVE2, Route.PERSON)),
             Count("Agent reviews", _ANSWERS, (Stage.WAVE2, _REVIEW)),
-            Count("Audited on the models-agree path", _AUDITED, (MachinePath.MODELS_AGREE,)),
-            _audit_outcome("Outcome of the models-agree path", MachinePath.MODELS_AGREE),
-            Count("Audited on the agent-settled path", _AUDITED, (MachinePath.AGENT_SETTLED,)),
-            _audit_outcome("Outcome of the agent-settled path", MachinePath.AGENT_SETTLED),
-            Count("Audit labels", _DECIDED, (pipeline.OCCASION_AUDIT,)),
-            Count("Look-up entries learned", _LOOKUP_JOINED, (Stage.WAVE2,)),
-            Count("Examples learned", _EXAMPLES_JOINED, (Stage.WAVE2,)),
+            *_AUDITS,
+            *_learned(Stage.WAVE2),
         ),
     ),
     StagePage(
@@ -818,37 +942,23 @@ STAGES = (
         name="Close",
         design_wave="Wave 3",
         design="People clear the queue; leftovers take a generic family role; final release",
-        left_out=(),
-        acting=(
-            "people",
-            "golden",
-            "generic",
-            "release",
-            "learning",
-            "ml_match",
-            "fallback",
-            "rules",
-            "statefile",
-            "report",
-        ),
+        left_out="",
+        acting=CLOSE_ACTING,
         flowchart=CLOSE_FLOWCHART,
         facts=(
-            Count("Review-queue decisions", _DECIDED, (pipeline.OCCASION_QUEUE,)),
+            _QUEUE_DECISIONS,
             Count("Given a role", _DECIDED_AS, (pipeline.OCCASION_QUEUE, HumanAnswer.ROLE)),
-            Count(
-                "Could not decide", _DECIDED_AS, (pipeline.OCCASION_QUEUE, HumanAnswer.UNDECIDED)
-            ),
+            _UNDECIDED,
             Count(
                 "No suitable role",
                 _DECIDED_AS,
                 (pipeline.OCCASION_QUEUE, HumanAnswer.NO_SUITABLE_ROLE),
             ),
-            Count("Look-up entries learned", _LOOKUP_JOINED, (Stage.CLOSE,)),
-            Count("Examples learned", _EXAMPLES_JOINED, (Stage.CLOSE,)),
+            *_learned(Stage.CLOSE),
             Count("Golden-set titles scored again", _SCORED, (Stage.CLOSE,)),
-            Count("Given a generic family role", _IN_ROW, (TableRow.GENERIC,)),
-            Count("Left on a legacy title", _IN_ROW, (TableRow.LEGACY,)),
-            Count("Titles in the review-queue file", _QUEUE_FILE),
+            _GENERIC,
+            _LEGACY,
+            _QUEUE_FILE,
         ),
     ),
 )
@@ -866,7 +976,7 @@ IDEA = (
     "Every title carries a status, so anyone using it knows how far to rely on it.",
 )
 OVERVIEW_FACTS = (
-    Count("Title rows", _TITLE_ROWS),
+    _TITLE_ROWS,
     _ANSWER_LABELS,
     _LLM_SETTING,
     _EMBEDDER_SETTING,
@@ -911,6 +1021,8 @@ def _component_href(component: Component) -> str:
 
 
 def _nav(current: str) -> _Html:
+    # Each link has an id, so that htmx gives the focus back to the link followed
+    # once the navigation is swapped in.
     def items(pages: Iterable[tuple[str, str, str]]) -> _Html:
         return _join(
             _Html(f"<li>{_e(_link(href, name, nav_id=nav_id, current=href == current))}</li>\n")
@@ -968,29 +1080,51 @@ def _quote(texts: Iterable[str], source: str) -> _Html:
     )
 
 
-def _value(connection: sqlite3.Connection, fact: Fact) -> str:
+def _queries(fact: Fact) -> tuple[str, ...]:
+    return (fact.sql,) if isinstance(fact, Count) else tuple(sql for sql, _, _ in fact.options)
+
+
+def written_at_the_end(fact: Fact) -> bool:
+    """Whether a fact reads a table that a run writes only at its end."""
+    tables = set(WRITTEN_AT_THE_END)
+    return any(word in tables for sql in _queries(fact) for word in sql.split())
+
+
+def _value(connection: sqlite3.Connection, fact: Fact, *, finished: bool) -> str:
+    if not finished and written_at_the_end(fact):
+        return NOT_YET
     if isinstance(fact, Count):
         return str(_count(connection, fact.sql, fact.params))
     found = [shown for sql, params, shown in fact.options if _count(connection, sql, params)]
     return ", ".join(found) or "none"
 
 
+# The heading of a table of counts, by whether the run wrote its final decisions,
+# and what a count shows that the run writes only at its end.
+FINISHED_HEADING = "From this run's state file"
+UNFINISHED_HEADING = (
+    "From the state file of a run that has not finished, as it stood at its last completed step"
+)
+NOT_YET = "not yet: written when the run finishes"
+
+
 def _facts(connection: sqlite3.Connection, facts: Iterable[Fact]) -> _Html:
+    finished = bool(_count(connection, _ROWS_IN["decisions"], ()))
     rows = _join(
         _Html(
             f'<tr><th scope="row">{_e(fact.label)}</th>'
-            f"<td>{_e(_value(connection, fact))}</td></tr>\n"
+            f"<td>{_e(_value(connection, fact, finished=finished))}</td></tr>\n"
         )
         for fact in facts
     )
     return _Html(
-        "<h2>From this run's state file</h2>\n"
+        f"<h2>{_e(FINISHED_HEADING if finished else UNFINISHED_HEADING)}</h2>\n"
         '<table class="counts">\n<tbody>\n'
         f"{_e(rows)}</tbody>\n</table>\n"
     )
 
 
-def _design_section(number: str, detail: str) -> str:
+def _design_section(number: str, detail: str = "") -> str:
     named = f"{number} {DESIGN_SECTIONS[number]}"
     return f"{named}, {detail}" if detail else named
 
@@ -999,12 +1133,13 @@ def _overview(connection: sqlite3.Connection) -> _Html:
     stages = _join(
         _Html(f"<li>{_e(_link(_stage_href(s), s.name))}: {_e(s.design)}</li>\n") for s in STAGES
     )
+    run, idea = (f"DESIGN.md {_design_section(number)}" for number in ("2.6", "1.1"))
     return _Html(
         '<p class="kicker">Overview</p>\n'
         "<h1>Architecture of a run</h1>\n"
-        f"{_e(_quote([RUN_TEXT], 'DESIGN.md 2.6 What a run shows'))}"
-        "<h2>The idea in four lines</h2>\n"
-        f"{_e(_quote(IDEA, 'DESIGN.md 1.1 The idea in four lines'))}"
+        f"{_e(_quote([RUN_TEXT], run))}"
+        f"<h2>{_e(DESIGN_SECTIONS['1.1'])}</h2>\n"
+        f"{_e(_quote(IDEA, idea))}"
         "<h2>Stages</h2>\n"
         f'<ol class="stages">\n{_e(stages)}</ol>\n'
         f"{_e(_facts(connection, OVERVIEW_FACTS))}"
@@ -1014,10 +1149,11 @@ def _overview(connection: sqlite3.Connection) -> _Html:
 def _stage_panel(connection: sqlite3.Connection, stage: StagePage) -> _Html:
     acting = [c for c in COMPONENTS if c.node in stage.acting]
     listed = _join(_Html(f"<li>{_e(_link(_component_href(c), c.name))}</li>\n") for c in acting)
+    in_and_out, row = _design_section("2.2"), _design_section("1.10", f"row {stage.design_wave}")
     left_out = (
         _Html(
-            f'<p class="left-out">Left out of the mock (DESIGN.md 2.2 In and out): '
-            f"{_e(', '.join(stage.left_out))}.</p>\n"
+            f'<p class="left-out">Left out of the mock (DESIGN.md {_e(in_and_out)}): '
+            f"{_e(stage.left_out)}.</p>\n"
         )
         if stage.left_out
         else _Html("")
@@ -1025,7 +1161,7 @@ def _stage_panel(connection: sqlite3.Connection, stage: StagePage) -> _Html:
     return _Html(
         '<p class="kicker">Stage</p>\n'
         f"<h1>{_e(stage.name)}</h1>\n"
-        f"{_e(_quote([stage.design], f'DESIGN.md 1.10 Waves, row {stage.design_wave}'))}"
+        f"{_e(_quote([stage.design], f'DESIGN.md {row}'))}"
         f"{_e(left_out)}"
         '<figure class="flowchart">\n'
         f'<pre class="mermaid">{_e(stage.flowchart)}</pre>\n'
@@ -1041,7 +1177,6 @@ def _stage_panel(connection: sqlite3.Connection, stage: StagePage) -> _Html:
 def _component_panel(connection: sqlite3.Connection, component: Component) -> _Html:
     stages = [s for s in STAGES if component.node in s.acting]
     acts_in = _join((_link(_stage_href(s), s.name) for s in stages), ", ")
-    modules = _join((_Html(f"<code>{_e(m)}</code>") for m in component.modules), ", ")
     sections = "; ".join(_design_section(*each) for each in component.design)
     return _Html(
         '<p class="kicker">Component</p>\n'
@@ -1049,7 +1184,7 @@ def _component_panel(connection: sqlite3.Connection, component: Component) -> _H
         "<h2>Its job</h2>\n"
         f"{_e(_quote(component.job, f'DESIGN.md {sections}'))}"
         '<dl class="facts">\n'
-        f"<dt>Module</dt><dd>{_e(modules)}</dd>\n"
+        f"<dt>Module</dt><dd><code>{_e(component.module)}</code></dd>\n"
         f"<dt>Record entries</dt><dd>docs/build-decisions.md "
         f"{_e(', '.join(component.entries))}</dd>\n"
         f"<dt>Acts in</dt><dd>{_e(acts_in)}</dd>\n"
@@ -1067,7 +1202,7 @@ def _not_found() -> _Html:
 
 
 # The pages, by address: (title, panel).
-_PAGES: dict[str, tuple[str, Callable[[sqlite3.Connection], _Html]]] = {
+PAGES: dict[str, tuple[str, Callable[[sqlite3.Connection], _Html]]] = {
     "/": ("Overview", _overview),
     **{
         _stage_href(s): (s.name, lambda connection, s=s: _stage_panel(connection, s))
@@ -1078,7 +1213,6 @@ _PAGES: dict[str, tuple[str, Callable[[sqlite3.Connection], _Html]]] = {
         for c in COMPONENTS
     },
 }
-PAGES = tuple(_PAGES)
 
 
 # --- The state file ---------------------------------------------------------------
@@ -1100,32 +1234,21 @@ def _reading(path: Path) -> Iterator[sqlite3.Connection]:
         connection = sqlite3.connect(f"{path.resolve().as_uri()}?mode=ro", uri=True)
     except sqlite3.Error as error:
         raise ExplorerError(f"{path} cannot be opened: {error}") from error
-    try:
+    with contextlib.closing(connection):
         try:
-            missing = [t for t in TABLES if not _count(connection, _TABLE_EXISTS, (t,))]
-            live = (
-                _count(connection, _LABELLED, (LABEL_LIVE,))
-                + _count(connection, _ANSWERED_BY, (LABEL_LIVE,))
-                + _count(connection, _SETTING, ("llm", _LIVE_LLM))
-            )
+            made = _count(connection, _TABLES_MADE, TABLES)
+            free = _count(connection, _FREE_SETTING, ("llm", *_FREE_LLMS))
+            live = _count(connection, _LABELLED, (LABEL_LIVE,))
         except sqlite3.Error as error:
             raise ExplorerError(f"{path} is not a state file of this program: {error}") from error
-        if missing:
+        if made != len(TABLES):
             raise ExplorerError(f"{path} is not a state file of this program")
-        if live:
+        if not free or live:
             raise ExplorerError(
-                f"{path} is the state of a live run; the page shows only a free run, "
-                "with stand-in or recorded answers"
+                f"{path} is not the state of a free run; the page shows only a run with "
+                f"llm = {' or '.join(_FREE_LLMS)}, whose answers are stand-ins or recorded"
             )
         yield connection
-    finally:
-        connection.close()
-
-
-def check_state(path: Path) -> None:
-    """Raise ExplorerError unless path holds a free run's state file."""
-    with _reading(Path(path)):
-        pass
 
 
 # --- The application ---------------------------------------------------------------
@@ -1136,7 +1259,7 @@ _REFUSED_HOST = f"This page answers only at {ADDRESS}\n"
 _REFUSED_METHOD = "This page answers only GET.\n"
 _NO_FILE = "This file is missing from the static folder.\n"
 _NO_STATE = (
-    "The state file is missing, cannot be read or is the state of a live run. "
+    "The state file is missing, cannot be read or is not the state of a free run. "
     "Make a free run with python3 -m titlestd run, then load the page again.\n"
 )
 
@@ -1170,7 +1293,7 @@ def _answer(state_path: Path, environ: dict) -> _Response:
             return _response("200 OK", (STATIC_DIR / name).read_bytes(), content_type)
         except OSError:
             return _text("404 Not Found", _NO_FILE)
-    page = _PAGES.get(path)
+    page = PAGES.get(path)
     try:
         with _reading(state_path) as connection:
             if page is None:
@@ -1189,7 +1312,8 @@ def make_app(state_path: Path) -> Callable:
     Raises ExplorerError at once when the file is not a free run's state.
     """
     state_path = Path(state_path)
-    check_state(state_path)
+    with _reading(state_path):
+        pass
 
     def application(environ: dict, start_response: Callable) -> list[bytes]:
         status, headers, body = _answer(state_path, environ)
@@ -1199,16 +1323,33 @@ def make_app(state_path: Path) -> Callable:
     return application
 
 
-def main() -> int:
-    """Serve the state file of the default output folder until Ctrl+C."""
-    path = Settings().out_dir / store.STATE_FILE
+class ThreadingServer(socketserver.ThreadingMixIn, WSGIServer):
+    """wsgiref's server, taking each request in a thread of its own (Decided here)."""
+
+    daemon_threads = True
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    """Serve the state file of the output folder the settings give until Ctrl+C."""
+    parser = argparse.ArgumentParser(
+        prog="python3 -m titlestd.explorer",
+        description=f"Serve the state file of a free run, read-only, at {ADDRESS}. It takes "
+        "the settings of every command and uses only --out-dir, the folder of the run.",
+    )
+    add_setting_arguments(parser)
+    arguments = parser.parse_args(argv)
+    try:
+        path = settings_from_arguments(arguments).out_dir / store.STATE_FILE
+    except SettingsError as error:
+        sys.stderr.write(f"titlestd.explorer: {error}\n")
+        return 2
     try:
         application = make_app(path)
     except ExplorerError as error:
         sys.stderr.write(f"titlestd.explorer: {error}\n")
         return 1
     try:
-        server = make_server(HOST, PORT, application)
+        server = make_server(HOST, PORT, application, server_class=ThreadingServer)
     except OSError as error:
         sys.stderr.write(f"titlestd.explorer: cannot listen at {ADDRESS}: {error}\n")
         return 1

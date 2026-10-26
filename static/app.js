@@ -17,3 +17,21 @@ htmx.onLoad(function (element) {
     mermaid.run({nodes: charts});
   }
 });
+
+// htmx swaps no error into the page: a 404, the 503 of a state that is gone or
+// not a free run's, or a page that stopped. The address is loaded in full
+// instead, so its answer is seen.
+for (const name of ["htmx:responseError", "htmx:sendError"]) {
+  document.addEventListener(name, function (event) {
+    window.location.assign(event.detail.pathInfo.requestPath);
+  });
+}
+document.addEventListener("htmx:historyCacheMissLoadError", function () {
+  window.location.reload();
+});
+// A history restore that cannot reach the page fires no htmx event of its own.
+document.addEventListener("htmx:historyCacheMiss", function (event) {
+  event.detail.xhr.addEventListener("error", function () {
+    window.location.reload();
+  });
+});

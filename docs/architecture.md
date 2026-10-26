@@ -15,10 +15,14 @@ python3 -m titlestd.explorer
 ```
 
 Open http://127.0.0.1:7654/ and stop the page with Ctrl+C. It opens `out/state.sqlite`
-read-only and answers only at that address and only to GET. It does not start without a state
-file, and it refuses a state whose answers came from a live model: a run with stand-in or
-recorded answers is what it shows. A later run replaces the file, and the page then shows the
-new one.
+read-only and answers only at that address and only to GET. For a run made with `--out-dir`,
+pass the page the same `--out-dir`. It does not start without a state file, and it shows only a
+free run: one whose `llm` setting is `offline` or `replay` and none of whose answers is labelled
+live. A later run replaces the file, and the page then shows the new one. While that run is
+under way, or when a run stopped, the page shows the state as it stood at the last completed
+step, and says so above each table of counts. What a run writes only at its end, such as the
+final decisions and the audits, then reads "not yet". Until set-up has recorded the run's
+settings, the page answers that the state is not a free run's.
 
 ## What it shows
 
@@ -36,7 +40,9 @@ description, quote or other text of a record is shown.
 
 These are the flowcharts the page draws, word for word; a test holds the two equal. Each draws
 one stage as `titlestd/pipeline.py` runs it. The nodes with a heavy border are the components
-acting in that stage; the others are inputs, lists and outcomes.
+acting in that stage; the others are inputs, lists and outcomes. They are drawn from the code.
+The two older diagrams in `docs/`, `architecture-microsoft.png` and
+`architecture-tech-agnostic.png`, are the ones `DESIGN.md` says not to copy.
 
 ### Set-up
 
@@ -97,10 +103,11 @@ flowchart TD
     agree --> audit[Random audit]
     settled --> audit
     people[People] -->|blind labels| audit
-    audit -->|at most 2 wrong of 60| confirmed([Confirmed])
-    audit -->|3 to 12 wrong of 60| provisional([Provisional])
-    audit -->|13 or more wrong of 60| stopped([Stopped, kept on legacy titles])
-    audit -->|60 titles or fewer, all labeled| labeled([Approved, each with its label])
+    audit -->|every title audited| labeled([Approved, each with its label])
+    audit -->|60 titles or fewer, all audited| nostatus([The path gets no status])
+    audit -->|at most 2 wrong of 60| confirmed([The rest Confirmed])
+    audit -->|3 to 12 wrong of 60| provisional([The rest Provisional])
+    audit -->|13 or more wrong of 60| stopped([Stopped, the rest kept on legacy titles by default])
     people -->|audit labels| learning[Learning]
     rules -.->|golden titles scored again| golden[Golden set]
     rules -.->|answers and routes recorded| statefile[(State file)]
@@ -118,7 +125,7 @@ flowchart TD
     queue([Review queue]) --> people[People]
     people -->|a role, Approved| decisions([One final decision per title])
     people -->|decisions join| learning[Learning]
-    learning --> golden[Golden set]
+    learning -.->|then| golden[Golden set]
     golden -->|one more pass, no agent| ml_match[ML match]
     ml_match --> fallback[LLM fallback]
     fallback --> rules[Rules]
